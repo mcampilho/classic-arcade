@@ -1,15 +1,15 @@
 class_name InvadersGame
 extends Node2D
-## Lógica do Space Invaders (Taito, 1978), independente do visual.
-## Tudo é calculado em "unidades" do ecrã original (224x240) e desenhado a SCALE píxeis por unidade.
+## Space Invaders (Taito, 1978) logic, independent of the visuals.
+## Everything is computed in "units" of the original screen (224x240) and drawn at SCALE pixels per unit.
 ##
-## Regras do original:
-##  - 5 filas x 11 invasores: cima 30 pts, meio 20, baixo 10
-##  - a frota marcha em bloco; quanto menos invasores, mais depressa (e mais rápida a "batida")
-##  - ao tocar na margem, desce uma linha e inverte; se chegar ao chão, é o fim
-##  - 1 tiro do jogador de cada vez, até 3 bombas inimigas, 4 abrigos que se desfazem
-##  - disco voador com pontos "misteriosos" (dependem do número de tiros disparados)
-##  - vida extra aos 1500 pontos; cada onda nova começa mais abaixo
+## Rules of the original:
+##  - 5 rows x 11 invaders: top 30 pts, middle 20, bottom 10
+##  - the fleet marches as a block; the fewer invaders, the faster (and the faster the "beat")
+##  - on touching the edge, it moves down a row and turns; if it reaches the ground, it is over
+##  - 1 player shot at a time, up to 3 enemy bombs, 4 shelters that crumble
+##  - saucer with "mystery" points (they depend on the number of shots fired)
+##  - extra life at 1500 points; each new wave starts lower
 
 signal match_started
 signal turn_started(player: int)
@@ -30,7 +30,7 @@ enum Mode { DEMO, ONE, TWO }
 enum State { READY, PLAY, DYING, CLEARED, OVER }
 
 const SCALE := 3.0
-const ORIGIN := Vector2(304, 0)          # canto do campo no ecrã 1280x720
+const ORIGIN := Vector2(304, 0)          # field corner on the 1280x720 screen
 const FIELD := Vector2(224, 240)
 const COLS := 11
 const ROWS := 5
@@ -64,11 +64,11 @@ var paused := false
 var skin: InvadersSkin
 var best := 0
 
-## Pontuação e vidas por jogador; o estado da onda (frota, abrigos) é guardado à parte em `wave_state`.
+## Score and lives per player; the wave state (fleet, shelters) is kept separately in `wave_state`.
 var players: Array[Dictionary] = []
 var current := 0
 
-# Onda em curso (do jogador atual)
+# Current wave (of the current player)
 var aliens := PackedByteArray()
 var fleet_pos := FLEET_START
 var fleet_dir := 1.0
@@ -77,9 +77,9 @@ var anim_frame := 0
 var march_note := 0
 
 var player_x := FIELD.x / 2
-var shot: Variant = null                 # Vector2 (topo do tiro) ou null
+var shot: Variant = null                 # Vector2 (top of the shot) or null
 var bombs: Array[Dictionary] = []        # {pos, kind, frame}
-var ufo: Variant = null                  # {x, dir} ou null
+var ufo: Variant = null                  # {x, dir} or null
 var timer := 0.0                         # usado por READY / DYING / CLEARED / OVER
 
 var _step_timer := 0.0
@@ -131,7 +131,7 @@ static func _joy_axis(axis: JoyAxis, value: float) -> InputEventJoypadMotion:
 	return e
 
 
-# ---------------------------------------------------------------- partida
+# ---------------------------------------------------------------- match
 
 func start(p_mode: Mode, lives := 3) -> void:
 	mode = p_mode
@@ -210,7 +210,7 @@ func _reset_turn() -> void:
 	timer = 1.4
 
 
-# ---------------------------------------------------------------- consultas (para os skins)
+# ---------------------------------------------------------------- queries (for the skins)
 
 func to_px(u: Vector2) -> Vector2:
 	return ORIGIN + u * SCALE
@@ -259,7 +259,7 @@ func is_ai() -> bool:
 	return mode == Mode.DEMO
 
 
-# ---------------------------------------------------------------- ciclo
+# ---------------------------------------------------------------- loop
 
 func _process(delta: float) -> void:
 	if paused:
@@ -308,7 +308,7 @@ func _step(dt: float) -> void:
 					reset_match()
 
 
-# ---------------------------------------------------------------- jogador
+# ---------------------------------------------------------------- player
 
 func _move_player(dt: float) -> void:
 	if is_ai():
@@ -328,7 +328,7 @@ func _try_fire() -> void:
 		return
 	var want := false
 	if is_ai():
-		# A CPU da demonstração não dispara contra os próprios abrigos.
+		# The demo CPU does not shoot its own shelters.
 		var blocked: Variant = _bunker_hit(Rect2(player_x - 0.5, BUNKER_Y, 1, BUNKER_H), true)
 		want = absf(player_x - _ai_target) < 2.5 and blocked == null
 	else:
@@ -346,7 +346,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion and not emulated:
 		_target_x = (event.position.x - ORIGIN.x) / SCALE
 	elif event is InputEventScreenTouch and not emulated:
-		_touching = event.pressed                          # dedo no ecrã = disparo automático
+		_touching = event.pressed                          # finger on the screen = autofire
 	elif event is InputEventScreenDrag and not emulated:
 		_target_x = null
 		player_x += event.relative.x / SCALE * TOUCH_GAIN
@@ -357,14 +357,14 @@ func _move_shot(dt: float) -> void:
 		return
 	shot.y -= SHOT_SPEED * dt
 	var r := shot_rect()
-	# invasores
+	# invaders
 	for row in ROWS:
 		for col in COLS:
 			if aliens[row * COLS + col] == 1 and alien_rect(row, col).intersects(r):
 				_kill_alien(row, col)
 				shot = null
 				return
-	# disco voador
+	# flying saucer
 	if ufo != null and ufo_rect().intersects(r):
 		var pts: int = UFO_POINTS[(player().shots - 1) % UFO_POINTS.size()]
 		var pos := ufo_rect().get_center()
@@ -373,7 +373,7 @@ func _move_shot(dt: float) -> void:
 		_add_score(pts)
 		ufo_killed.emit(pos, pts)
 		return
-	# bombas
+	# bombs
 	for b in bombs:
 		if bomb_rect(b).intersects(r):
 			bombs.erase(b)
@@ -381,7 +381,7 @@ func _move_shot(dt: float) -> void:
 			shot = null
 			shot_blocked.emit(p, false)
 			return
-	# abrigos
+	# shelters
 	var hit: Variant = _bunker_hit(r, true)
 	if hit != null:
 		_erode(hit[0], hit[1], hit[2])
@@ -416,15 +416,15 @@ func _add_score(pts: int) -> void:
 		extra_life.emit()
 
 
-# ---------------------------------------------------------------- frota
+# ---------------------------------------------------------------- fleet
 
 func _march(dt: float) -> void:
 	_step_timer -= dt
 	if _step_timer > 0.0:
 		return
 	var n := alive_count()
-	# No original move-se um invasor por fotograma: a frota inteira demora tantos fotogramas
-	# quantos invasores houver. Por isso acelera à medida que vão caindo.
+	# In the original one invader moves per frame: the whole fleet takes as many frames
+	# as there are invaders. That is why it speeds up as they fall.
 	_step_timer = maxf(n, 1) / 60.0
 	var dx := 3.0 if n == 1 else 2.0
 	var bounds := _fleet_bounds()
@@ -439,7 +439,7 @@ func _march(dt: float) -> void:
 	march_note = (march_note + 1) % 4
 	_aliens_crush_bunkers()
 	if _fleet_bottom() >= PLAYER_Y:
-		# Invasão: o jogador perde todas as vidas.
+		# Invasion: the player loses all lives.
 		player().lives = 1
 		_kill_player()
 
@@ -484,7 +484,7 @@ func _aliens_crush_bunkers() -> void:
 				bunkers[i] = bk
 
 
-# ---------------------------------------------------------------- bombas
+# ---------------------------------------------------------------- bombs
 
 func _drop_bombs(dt: float) -> void:
 	_bomb_timer -= dt
@@ -493,7 +493,7 @@ func _drop_bombs(dt: float) -> void:
 	var n := alive_count()
 	var progress := 1.0 - float(n) / (ROWS * COLS)
 	_bomb_timer = lerpf(1.1, 0.45, progress) * randf_range(0.7, 1.3)
-	# Uma bomba em cada três é apontada à coluna do jogador; as outras saem de colunas ao acaso.
+	# One bomb in three is aimed at the player's column; the others come from random columns.
 	var col := -1
 	if _bomb_kind == 0:
 		var best_d := INF
@@ -547,9 +547,9 @@ func _move_bombs(dt: float) -> void:
 			shot_blocked.emit(Vector2(b.pos.x, GROUND_Y), false)
 
 
-# ---------------------------------------------------------------- abrigos
+# ---------------------------------------------------------------- shelters
 
-## Procura o primeiro ponto aceso de um abrigo dentro de `r` (a subir: o mais de baixo; a descer: o mais de cima).
+## Finds the first lit dot of a shelter inside `r` (going up: the lowest; going down: the highest).
 func _bunker_hit(r: Rect2, going_up: bool) -> Variant:
 	for i in 4:
 		var o := bunker_origin(i)
@@ -582,7 +582,7 @@ func _erode(i: int, cx: int, cy: int) -> void:
 	bunkers[i] = bk
 
 
-# ---------------------------------------------------------------- disco voador
+# ---------------------------------------------------------------- flying saucer
 
 func _move_ufo(dt: float) -> void:
 	if ufo == null:
@@ -600,7 +600,7 @@ func _move_ufo(dt: float) -> void:
 		ufo_gone.emit()
 
 
-# ---------------------------------------------------------------- morte / vez
+# ---------------------------------------------------------------- death / turn
 
 func _kill_player() -> void:
 	if state != State.PLAY:
@@ -635,13 +635,13 @@ func _after_death() -> void:
 	turn_started.emit(current)
 
 
-# ---------------------------------------------------------------- CPU da demonstração
+# ---------------------------------------------------------------- demo CPU
 
 func _ai(dt: float) -> void:
 	_ai_think -= dt
 	if _ai_think <= 0.0:
 		_ai_think = 0.25
-		# Escolhe a coluna com o invasor mais baixo mais próximo.
+		# Picks the column with the nearest lowest invader.
 		var best_d := INF
 		for c in COLS:
 			var row := _bottom_alien(c)
@@ -653,7 +653,7 @@ func _ai(dt: float) -> void:
 				best_d = d
 				_ai_target = x
 	var target := _ai_target
-	# Foge das bombas que vêm direitas a ele.
+	# Dodges the bombs heading straight for it.
 	for b in bombs:
 		if b.pos.y > PLAYER_Y - 70.0 and absf(b.pos.x - player_x) < 10.0:
 			target = player_x + (14.0 if b.pos.x <= player_x else -14.0)

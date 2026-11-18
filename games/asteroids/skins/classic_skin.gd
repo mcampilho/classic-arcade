@@ -1,6 +1,6 @@
 extends AsteroidsSkin
-## Clássico 1979: monitor vetorial — linhas brancas finas e brilhantes sobre preto, com um leve
-## rasto de fósforo. Algarismos traçados a vetor, explosões em pontos e a nave a desfazer-se em segmentos.
+## Classic 1979: vector monitor — thin, bright white lines on black, with a faint
+## phosphor trail. Vector-drawn digits, dotted explosions and the ship breaking into segments.
 
 const LINE := Color(0.88, 0.92, 1.0)
 const GLOW := Color(0.6, 0.75, 1.0, 0.18)
@@ -18,8 +18,8 @@ const DIGITS := {
 }
 
 var fx: Node2D
-var dots: Array[Dictionary] = []        # explosões em pontos
-var segments: Array[Dictionary] = []    # nave desfeita
+var dots: Array[Dictionary] = []        # dotted explosions
+var segments: Array[Dictionary] = []    # broken-up ship
 var flicker := false
 
 
@@ -63,7 +63,7 @@ func _build_sfx() -> void:
 	sfx.extra = Synth.concat(beeps)
 
 
-# ---------------------------------------------------------------- eventos
+# ---------------------------------------------------------------- events
 
 func _on_match_started() -> void:
 	dots.clear()
@@ -110,7 +110,7 @@ func _tick(dt: float) -> void:
 	fx.queue_redraw()
 
 
-# ---------------------------------------------------------------- desenho
+# ---------------------------------------------------------------- drawing
 
 func _draw() -> void:
 	draw_rect(Rect2(0, 0, W, H), Color.BLACK)
@@ -121,7 +121,7 @@ func _draw_fx() -> void:
 	_draw_world(fx, GLOW, 5.0)
 
 
-## O mundo é traçado duas vezes: linhas finas e nítidas + linhas largas e ténues (o brilho do fósforo).
+## The world is drawn twice: thin sharp lines + wide faint lines (the phosphor glow).
 func _draw_world(ci: CanvasItem, c: Color, width: float) -> void:
 	var g := game
 	for r in g.rocks:
@@ -159,14 +159,14 @@ func _draw_hud(ci: CanvasItem, c: Color, width: float) -> void:
 	_number(ci, maxi(g.best, g.player().score), Vector2(W / 2, 30), 3.5, c, width * 0.8, false)
 	if g.players.size() > 1:
 		_number(ci, g.players[1].score, Vector2(W - 40, 30), 6.0, Color(c, c.a * (1.0 if g.current == 1 else 0.5)), width, true)
-	# vidas: naves pequenas por baixo da pontuação do jogador atual
+	# lives: small ships under the current player's score
 	var x0 := 110.0 if g.current == 0 else W - 200.0
 	for i in mini(g.player().lives, 8):
 		var pts := g.ship_points(Vector2(x0 + i * 22.0, 92), -PI / 2, 0.75)
 		ci.draw_polyline(closed(pts), c, width * 0.8, true)
 
 
-## Escreve um número a vetor. right_align: alinha à direita de `pos`.
+## Writes a vector number. right_align: aligns to the right of `pos`.
 func _number(ci: CanvasItem, n: int, pos: Vector2, cell: float, c: Color, width: float, right_align: bool) -> void:
 	var text := "%02d" % n
 	var adv := cell * 6.0

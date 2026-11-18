@@ -1,6 +1,6 @@
 extends PongSkin
-## Clássico 1972: fundo preto, tudo branco, bola quadrada, rede tracejada,
-## marcador em blocos e os três "bips" de onda quadrada da máquina original.
+## Classic 1972: black background, everything white, square ball, dashed net,
+## block score and the three square-wave "beeps" of the original machine.
 
 const WHITE := Color(0.96, 0.96, 0.96)
 const CELL := 14.0
@@ -19,14 +19,14 @@ const DIGITS := {
 
 
 func _build_sfx() -> void:
-	# Frequências e durações aproximadas dos sons do circuito original.
+	# Approximate frequencies and durations of the original circuit's sounds.
 	sfx.paddle = Synth.tone(459.0, 0.096, {"wave": "square", "volume": 0.3})
 	sfx.wall = Synth.tone(226.0, 0.016, {"wave": "square", "volume": 0.3})
 	sfx.score = Synth.tone(490.0, 0.257, {"wave": "square", "volume": 0.3})
 
 
 func _on_game_over(_winner: int) -> void:
-	pass  # o original não tinha som de vitória
+	pass  # the original had no victory sound
 
 
 func _draw() -> void:

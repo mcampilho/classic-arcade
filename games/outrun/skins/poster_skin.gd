@@ -1,7 +1,7 @@
 extends OutRunSkin
-## Cartaz de Viagem: a estrada como um cartaz turístico Art Déco dos anos 30 — céu em faixas
-## lisas, sol com raios, montanhas recortadas com traço a tinta, papel com grão e um HUD de
-## placas, com velocímetro de mostrador.
+## Travel Poster: the road as a 1930s Art Deco tourism poster — sky in flat
+## bands, sun with rays, cut-out mountains with ink lines, grainy paper and a HUD of
+## plaques, with a dial speedometer.
 
 const INK := Color("1d2b45")
 const PAPER := Color("f3e9d2")
@@ -50,7 +50,7 @@ func _build_sfx() -> void:
 		Synth.render(0.0, 1.0, {"wave": "noise", "volume": 0.04, "lowpass": 0.05, "attack": 0.0, "release": 0.0}),
 	]))
 	sfx.skid = Synth.to_stream(Synth.render(0.0, 0.5, {"wave": "noise", "volume": 0.15, "lowpass": 0.3, "attack": 0.0, "release": 0.0}))
-	# buzina de época para a partida
+	# period horn for the start
 	sfx.beep = Synth.to_stream(Synth.mix([
 		Synth.render(440.0, 0.25, {"wave": "saw", "volume": 0.08, "lowpass": 0.2}),
 		Synth.render(554.0, 0.25, {"wave": "saw", "volume": 0.08, "lowpass": 0.2}),
@@ -66,7 +66,7 @@ func _build_sfx() -> void:
 	]))
 	sfx.bump = Synth.tone(0.0, 0.18, {"wave": "noise", "volume": 0.3, "lowpass": 0.15, "decay": 20.0})
 	sfx.gear = Synth.tone(0.0, 0.06, {"wave": "noise", "volume": 0.18, "lowpass": 0.3, "decay": 50.0})
-	# campainha de chegada à etapa
+	# bell on reaching a stage
 	var bell := []
 	for f in [1046.0, 1318.0, 1568.0]:
 		bell.append(Synth.render(f, 0.35, {"wave": "sine", "volume": 0.18, "decay": 6.0}))
@@ -113,11 +113,11 @@ func frame_colors() -> Dictionary:
 func _draw_background() -> void:
 	var hy := horizon_y()
 	var sky: Array = col("sky")
-	# céu em três faixas lisas
+	# sky in three flat bands
 	draw_rect(Rect2(0, 0, W, hy * 0.42), sky[0])
 	draw_rect(Rect2(0, hy * 0.42, W, hy * 0.33), sky[1])
 	draw_rect(Rect2(0, hy * 0.75, W, H - hy * 0.75), sky[2])
-	# sol com raios
+	# sun with rays
 	var sun := Vector2(fposmod(W * 0.62 - bg_scroll * 0.4 + 400.0, 2000.0) - 400.0, hy - 70)
 	var rays := 22
 	for i in rays:
@@ -128,7 +128,7 @@ func _draw_background() -> void:
 	draw_circle(sun, 92, INK)
 	draw_circle(sun, 88, PAPER)
 	draw_circle(sun, 70, Color(GOLD, 0.35))
-	# nuvens Déco
+	# Deco clouds
 	for i in 3:
 		var cx := fposmod(i * 520.0 + 150.0 - bg_scroll * 0.6 + time * 4.0, 1700.0) - 200.0
 		_cloud(Vector2(cx, 110.0 + i * 38.0), 1.0 - i * 0.18)
@@ -225,7 +225,7 @@ func _draw_player() -> void:
 		draw_rect(Rect2(0, 0, W, H), Color(PAPER, flash * 2.0))
 
 
-# ---------------------------------------------------------------- HUD de placas
+# ---------------------------------------------------------------- plaque HUD
 
 func plaque(r: Rect2) -> void:
 	var n := 10.0
@@ -250,7 +250,7 @@ func spaced(text: String) -> String:
 
 func _draw_hud() -> void:
 	var g := game
-	# moldura do cartaz
+	# poster frame
 	draw_texture_rect(grain, Rect2(0, 0, W, H), true)
 	var m := 10.0
 	draw_rect(Rect2(0, 0, W, m), PAPER)
@@ -258,20 +258,20 @@ func _draw_hud() -> void:
 	draw_rect(Rect2(0, 0, m, H), PAPER)
 	draw_rect(Rect2(W - m, 0, m, H), PAPER)
 	draw_rect(Rect2(m, m, W - m * 2, H - m * 2), INK, false, 3.0)
-	# tempo
+	# time
 	plaque(Rect2(W / 2 - 95, 22, 190, 104))
-	deco_text(spaced(I18n.t("TEMPO")), W / 2, 48, 16, INK)
+	deco_text(spaced(I18n.t("TIME")), W / 2, 48, 16, INK)
 	var warn := g.time_left < 10.0 and fmod(time, 0.5) < 0.25
 	deco_text(str(ceili(g.time_left)), W / 2, 112, 62, RED if not warn else GOLD)
-	# pontos
+	# points
 	plaque(Rect2(34, 22, 240, 78))
-	deco_text(spaced(I18n.t("PONTOS")), 154, 48, 15, INK)
+	deco_text(spaced(I18n.t("SCORE")), 154, 48, 15, INK)
 	deco_text("%d" % g.score, 154, 86, 32, INK)
-	# etapa e mapa
+	# stage and map
 	plaque(Rect2(W - 284, 22, 250, 150))
-	deco_text(I18n.t("ETAPA %d · %s") % [g.stage + 1, I18n.t(OutRunGame.THEME_NAMES[g.theme]).to_upper()], W - 159, 48, 16, INK)
+	deco_text(I18n.t("STAGE %d · %s") % [g.stage + 1, I18n.t(OutRunGame.THEME_NAMES[g.theme]).to_upper()], W - 159, 48, 16, INK)
 	draw_route_map(Vector2(W - 240, 110), Vector2(40, 22), Color(INK, 0.35), Color(INK, 0.6), RED, 2.0, 4.0)
-	# velocímetro de mostrador
+	# dial speedometer
 	var c := Vector2(120, H - 112)
 	draw_circle(c, 88, INK)
 	draw_circle(c, 83, PAPER)
@@ -290,13 +290,13 @@ func _draw_hud() -> void:
 	deco_text("km/h", c.x, c.y + 60, 13, INK)
 	if g.manual_gears:
 		plaque(Rect2(222, H - 70, 130, 44))
-		deco_text(I18n.t("ALTA") if g.high_gear else I18n.t("BAIXA"), 287, H - 40, 20, INK)
+		deco_text(I18n.t("HI") if g.high_gear else I18n.t("LO"), 287, H - 40, 20, INK)
 	for p in popups:
 		var a := clampf(float(p.life), 0.0, 1.0)
 		var rr := Rect2(W / 2 - 170, 140, 340, 46)
 		draw_rect(rr, Color(RED, a))
 		draw_rect(rr, Color(INK, a), false, 3.0)
-		deco_text(I18n.t("TEMPO EXTRA ") + str(p.text) + " s", W / 2, 172, 24, Color(PAPER, a))
+		deco_text(I18n.t("EXTRA TIME ") + str(p.text) + " s", W / 2, 172, 24, Color(PAPER, a))
 
 
 func ui_palette() -> Dictionary:

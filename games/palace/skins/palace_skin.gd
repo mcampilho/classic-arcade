@@ -1,16 +1,16 @@
 class_name PalaceSkin
-extends Node2D
-## Base dos estilos da Fuga do Palácio: personagens como esqueletos animados por poses
-## (interpoladas, para uma animação suave "cinemática"), o ecrã de 10 x 3 casas gravado numa
-## textura, portões, espinhos, portas, poções e sons. Os estilos escolhem como desenhar.
+extends SkinBase
+## Base of the Palace Escape styles: characters as skeletons animated by poses
+## (interpolated, for a smooth "cinematic" animation), the 10 x 3 cell screen baked into a
+## texture, gates, spikes, doors, potions and sounds. The styles choose how to draw.
 
 const OFF_Y := 20.0
 const ROOM_W := PalaceGame.TW * PalaceGame.ROOM_COLS
 const ROOM_H := PalaceGame.RH * PalaceGame.ROOM_ROWS
 const BONES := {"torso": 54.0, "thigh": 44.0, "shin": 44.0, "upper": 34.0, "fore": 32.0}
 
-## Poses: lean (tronco), hip (descida da anca), th/sh (coxa e canela, f = da frente, b = de trás),
-## ua/fa (braço e antebraço). Ângulos em radianos a partir da vertical, positivos para a frente.
+## Poses: lean (torso), hip (hip drop), th/sh (thigh and shin, f = front, b = back),
+## ua/fa (upper arm and forearm). Angles in radians from vertical, positive forwards.
 const POSES := {
 	"stand": {"lean": 0.05, "hip": 0.0, "th_f": 0.1, "sh_f": 0.05, "th_b": -0.08, "sh_b": 0.05, "ua_f": 0.12, "fa_f": 0.2, "ua_b": -0.12, "fa_b": 0.15},
 	"run0": {"lean": 0.25, "hip": 6.0, "th_f": 0.7, "sh_f": 0.2, "th_b": -0.5, "sh_b": 0.9, "ua_f": -0.6, "fa_f": 0.8, "ua_b": 0.8, "fa_b": 0.9},
@@ -33,11 +33,8 @@ const POSES := {
 }
 
 var game: PalaceGame
-var sfx := {}
 var time := 0.0
 var sparks: Array[Dictionary] = []
-var _players: Array[AudioStreamPlayer] = []
-var _next_player := 0
 var vp: SubViewport
 var _paint: Node2D
 var _painted_room := Vector2i(-1, -1)
@@ -45,10 +42,7 @@ var _painted_room := Vector2i(-1, -1)
 
 func attach(g: PalaceGame) -> void:
 	game = g
-	for i in 8:
-		var p := AudioStreamPlayer.new()
-		add_child(p)
-		_players.append(p)
+	add_voices(8)
 	vp = SubViewport.new()
 	vp.size = Vector2i(int(ROOM_W), int(ROOM_H))
 	vp.disable_3d = true
@@ -82,12 +76,7 @@ func attach(g: PalaceGame) -> void:
 	g.player_died.connect(func(_h: String) -> void: play("die"))
 	g.level_done.connect(func() -> void: play("level"))
 	g.won.connect(func() -> void: play("win"))
-	var cached: Variant = Synth.cache_get(get_script().resource_path)
-	if cached != null:
-		sfx = cached
-	else:
-		_build_sfx()
-		Synth.cache_set(get_script().resource_path, sfx)
+	load_sfx()
 	_setup()
 	rebake()
 
@@ -100,15 +89,9 @@ func rebake() -> void:
 	_paint.queue_redraw()
 
 
-func play(id: String, pitch := 1.0, volume_db := 0.0) -> void:
-	if game == null or game.mode == PalaceGame.Mode.DEMO or not sfx.has(id):
-		return
-	var p := _players[_next_player]
-	_next_player = (_next_player + 1) % _players.size()
-	p.stream = sfx[id]
-	p.pitch_scale = pitch
-	p.volume_db = volume_db
-	p.play()
+## The menu demo is silent.
+func _is_silent() -> bool:
+	return game == null or game.mode == PalaceGame.Mode.DEMO
 
 
 func _process(delta: float) -> void:
@@ -129,17 +112,17 @@ func _spark(p: Vector2, c: Color) -> void:
 		sparks.append({"pos": scr(p), "vel": Vector2.from_angle(randf() * TAU) * randf_range(80, 260), "life": 0.3, "color": c})
 
 
-## Posição no ecrã de um ponto do nível.
+## On-screen position of a level point.
 func scr(p: Vector2) -> Vector2:
 	return p - Vector2(game.room.x * ROOM_W, game.room.y * ROOM_H) + Vector2(0, OFF_Y)
 
 
-## Retângulo (no referencial do ecrã gravado) de uma casa do ecrã atual.
+## Rectangle (in the baked screen's frame) of a cell of the current screen.
 func cell_rect(c: int, r: int) -> Rect2:
 	return Rect2(c * PalaceGame.TW, r * PalaceGame.RH, PalaceGame.TW, PalaceGame.RH)
 
 
-# ---------------------------------------------------------------- esqueleto
+# ---------------------------------------------------------------- skeleton
 
 static func lerp_pose(a: Dictionary, b: Dictionary, t: float) -> Dictionary:
 	var out := {}
@@ -154,7 +137,7 @@ func cycle(names: Array, speed: float, t: float) -> Dictionary:
 	return lerp_pose(POSES[names[i]], POSES[names[(i + 1) % names.size()]], ph - i)
 
 
-## Pose do herói conforme o estado.
+## The hero's pose for the state.
 func hero_pose() -> Dictionary:
 	var g := game
 	var A := PalaceGame.Act
@@ -223,7 +206,7 @@ func guard_pose(gd: Dictionary) -> Dictionary:
 	return POSES.stand
 
 
-## Articulações (no ecrã) de uma pose: anca, pescoço, cabeça, joelhos, pés, ombro, cotovelos, mãos.
+## Joints (on screen) of a pose: hip, neck, head, knees, feet, shoulder, elbows, hands.
 func joints(feet: Vector2, facing: int, pose: Dictionary, lying := 0.0) -> Dictionary:
 	var f := float(facing)
 	var hip := Vector2(0, -(BONES.thigh + BONES.shin) + float(pose.hip))
@@ -244,7 +227,7 @@ func joints(feet: Vector2, facing: int, pose: Dictionary, lying := 0.0) -> Dicti
 		j["sh_" + s] = sh
 		j["elbow_" + s] = elbow
 		j["hand_" + s] = hand
-	# deitado (morto): roda tudo à volta dos pés
+	# lying down (dead): rotates everything around the feet
 	var base := scr(feet)
 	for k: String in j.keys():
 		var v: Vector2 = j[k]
@@ -255,7 +238,7 @@ func joints(feet: Vector2, facing: int, pose: Dictionary, lying := 0.0) -> Dicti
 	return j
 
 
-# ---------------------------------------------------------------- desenho
+# ---------------------------------------------------------------- drawing
 
 func _draw() -> void:
 	if game == null or game.tiles.is_empty():
@@ -295,7 +278,7 @@ func _hero_visible() -> bool:
 	return game.state != PalaceGame.State.OVER
 
 
-## Percorre as casas visíveis (do ecrã atual) chamando f(c, r, ch, rect).
+## Goes through the visible cells (of the current screen) calling f(c, r, ch, rect).
 func each_tile(room: Vector2i, f: Callable) -> void:
 	for r in PalaceGame.ROOM_ROWS:
 		for c in PalaceGame.ROOM_COLS:
@@ -304,7 +287,7 @@ func each_tile(room: Vector2i, f: Callable) -> void:
 			f.call(gc, gr, game.tile(gc, gr), cell_rect(c, r))
 
 
-## Objetos que mudam (portões, espinhos, porta, poções, espada) desenhados por cima do ecrã gravado.
+## Changing objects (gates, spikes, door, potions, sword) drawn on top of the baked screen.
 func _draw_dynamic() -> void:
 	var g := game
 	each_tile(g.room, _dyn_tile)
@@ -334,13 +317,9 @@ func _dyn_tile(gc: int, gr: int, ch: String, rect: Rect2) -> void:
 			_draw_plate(Rect2(r.position.x + 24, floor_y - 6, r.size.x - 48, 8), on)
 
 
-# ---------------------------------------------------------------- para os estilos reescreverem
+# ---------------------------------------------------------------- for the styles to override
 
 func _setup() -> void:
-	pass
-
-
-func _build_sfx() -> void:
 	pass
 
 
@@ -399,6 +378,3 @@ func _draw_front() -> void:
 func _draw_hud() -> void:
 	pass
 
-
-func ui_palette() -> Dictionary:
-	return UI.LAUNCHER_PALETTE

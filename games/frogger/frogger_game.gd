@@ -1,21 +1,21 @@
 class_name FroggerGame
 extends Node2D
-## Lógica do Frogger (1981), independente do visual.
-## Unidades do ecrã original (224 x 224), em casas de 16, desenhadas a SCALE píxeis por unidade.
+## Frogger (1981) logic, independent of the visuals.
+## Units of the original screen (224 x 224), in cells of 16, drawn at SCALE pixels per unit.
 ##
-## Regras do original:
-##  - atravessar a estrada (5 faixas) e o rio (troncos e tartarugas) até às 5 tocas
-##  - 10 pontos por cada salto para uma linha nova, 50 por rã em casa + 10 por cada
-##    meio segundo que sobre no relógio; 1000 ao encher as 5 tocas (e sobe o nível)
-##  - mosca numa toca: +200; a partir do nível 2 aparece um crocodilo nas tocas
-##  - algumas tartarugas mergulham; cair à água, ser atropelado, sair do ecrã ou ficar
-##    sem tempo custa uma vida; vida extra aos 10 000 pontos
+## Rules of the original:
+##  - cross the road (5 lanes) and the river (logs and turtles) to the 5 homes
+##  - 10 points for each hop to a new row, 50 per frog home + 10 for each
+##    half second left on the clock; 1000 for filling the 5 homes (and the level goes up)
+##  - fly in a home: +200; from level 2 a crocodile appears in the homes
+##  - some turtles dive; falling in the water, being run over, leaving the screen or running
+##    out of time costs a life; extra life at 10,000 points
 
 signal match_started
 signal turn_started(player: int)
 signal hopped(pos: Vector2)
 signal frog_home(bay: int, points: int, fly: bool)
-signal frog_died(pos: Vector2, cause: String)     # "carro", "agua", "tempo", "toca"
+signal frog_died(pos: Vector2, cause: String)     # "carro" (vehicle), "agua" (water), "tempo" (time), "toca" (home)
 signal time_warning
 signal extra_life
 signal level_cleared
@@ -28,16 +28,16 @@ const SCALE := 3.0
 const ORIGIN := Vector2(304, 24)
 const CELL := 16.0
 const W := 224.0
-const ROWS := 13                       # 0 tocas, 1-5 rio, 6 margem, 7-11 estrada, 12 partida
-const START := Vector2(112, 12)        # x em unidades, linha
+const ROWS := 13                       # 0 homes, 1-5 river, 6 bank, 7-11 road, 12 start
+const START := Vector2(112, 12)        # x in units, row
 const BAYS := [16.0, 64.0, 112.0, 160.0, 208.0]
 const HOP_TIME := 0.12
-const SPAN := 320.0                    # largura da volta dos objetos (campo + margem)
+const SPAN := 320.0                    # wrap width for objects (field + margin)
 const MARGIN := 96.0
 const EXTRA_LIFE_AT := 10000
 const TOUCH_MIN := 22.0
 
-## Faixas: linha -> [tipo, velocidade (u/s, + direita), comprimento (casas), posições iniciais, tartarugas que mergulham]
+## Lanes: row -> [kind, speed (u/s, + right), length (cells), start positions, diving turtles]
 const LANES := {
 	1: ["log", 28.0, 3, [0.0, 106.0, 212.0], []],
 	2: ["turtle", -34.0, 2, [0.0, 64.0, 128.0, 192.0, 256.0], [2]],
@@ -61,7 +61,7 @@ var best := 0
 var players: Array[Dictionary] = []    # score, lives, level, extra, homes (Array[bool])
 var current := 0
 var objects: Array[Dictionary] = []    # row, x, len, kind, dive (bool), phase
-var frog := Vector2(START)             # x em unidades, y = linha (fracionária durante o salto)
+var frog := Vector2(START)             # x in units, y = row (fractional during a hop)
 var frog_face := Vector2i.UP
 var hop_t := -1.0
 var hop_from := Vector2.ZERO
@@ -121,13 +121,13 @@ static func _joy_axis(axis: JoyAxis, value: float) -> InputEventJoypadMotion:
 	return e
 
 
-# ---------------------------------------------------------------- consultas
+# ---------------------------------------------------------------- queries
 
 func to_px(u: Vector2) -> Vector2:
 	return ORIGIN + u * SCALE
 
 
-## Posição do centro da rã em unidades.
+## Position of the frog's centre in units.
 func frog_center() -> Vector2:
 	return Vector2(frog.x, frog.y * CELL + CELL / 2)
 
@@ -140,7 +140,7 @@ func object_rect(o: Dictionary) -> Rect2:
 	return Rect2(o.x, o.row * CELL + 1, o.len * CELL, CELL - 2)
 
 
-## Tartarugas: 0 à tona, 1 a afundar, 2 submersas, 3 a subir.
+## Turtles: 0 afloat, 1 sinking, 2 under water, 3 rising.
 func turtle_stage(o: Dictionary) -> int:
 	if not o.dive:
 		return 0
@@ -170,7 +170,7 @@ func time_limit() -> float:
 	return maxf(25.0, 40.0 - (level() - 1) * 2.0)
 
 
-# ---------------------------------------------------------------- partida
+# ---------------------------------------------------------------- match
 
 func start(p_mode: Mode, lives := 3) -> void:
 	mode = p_mode
@@ -206,7 +206,7 @@ func _build_objects() -> void:
 		var xs: Array = lane[3]
 		var divers: Array = lane[4]
 		for i in xs.size():
-			# mais tartarugas mergulham nos níveis mais altos
+			# more turtles dive in higher levels
 			var dive: bool = i in divers or (lane[0] == "turtle" and level() >= 3 and i % 2 == 0)
 			objects.append({"row": row, "x": xs[i], "len": lane[2], "kind": lane[0], "dive": dive, "phase": randf() * 5.0})
 
@@ -231,7 +231,7 @@ func _reset_frog() -> void:
 	timer = 0.8
 
 
-# ---------------------------------------------------------------- ciclo
+# ---------------------------------------------------------------- loop
 
 func _process(delta: float) -> void:
 	if paused:
@@ -312,7 +312,7 @@ func _free_bays(exclude: Array) -> Array:
 	return out
 
 
-# ---------------------------------------------------------------- rã
+# ---------------------------------------------------------------- frog
 
 func _frog_update(dt: float) -> void:
 	time_left -= dt
@@ -362,7 +362,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event.device == InputEvent.DEVICE_ID_EMULATION:
 		return
-	# Toque: deslizar = saltar nessa direção; tocar sem deslizar = saltar em frente.
+	# Touch: swipe = hop in that direction; tap without swiping = hop forward.
 	if event is InputEventScreenTouch:
 		if event.pressed:
 			_touch_start = event.position
@@ -431,7 +431,7 @@ func _reach_bay() -> void:
 	_die("toca")
 
 
-## No rio, a rã é levada pelo tronco ou pelas tartarugas.
+## On the river, the frog is carried by the log or the turtles.
 func _ride(dt: float) -> void:
 	var row := int(round(frog.y))
 	if row < 1 or row > 5 or hop_t >= 0.0 and hop_t < HOP_TIME * 0.5:
@@ -455,7 +455,7 @@ func _platform_under() -> Variant:
 
 func _check_death() -> void:
 	if hop_t >= 0.0:
-		return     # a meio do salto só se morre na estrada (ver abaixo)
+		return     # mid-hop you can only die on the road (see below)
 	var row := int(frog.y)
 	if row >= 1 and row <= 5:
 		if frog.x < 0.0 or frog.x > W:
@@ -513,9 +513,9 @@ func _add_score(pts: int) -> void:
 		extra_life.emit()
 
 
-# ---------------------------------------------------------------- CPU da demonstração
+# ---------------------------------------------------------------- demo CPU
 
-## Prevê se a rã estará segura em (x, linha) daqui a `t` segundos e durante `hold` segundos.
+## Predicts whether the frog will be safe at (x, row) in `t` seconds and for `hold` seconds.
 func _safe_at(x: float, row: int, t: float, hold := 0.35) -> bool:
 	if row == 0:
 		for i in 5:
@@ -557,7 +557,7 @@ func _ai_dir(dt: float) -> Vector2i:
 	_ai_wait = 0.08
 	var row := int(frog.y)
 	var here_safe := _safe_at(frog.x, row, 0.0, 0.4)
-	# na margem de cima do rio, alinha-se com uma toca livre antes de saltar
+	# on the upper river bank, lines up with a free home before hopping
 	if row == 1:
 		var target := -1.0
 		for i in 5:
@@ -565,21 +565,21 @@ func _ai_dir(dt: float) -> Vector2i:
 				target = BAYS[i]
 		if target >= 0.0 and absf(target - frog.x) <= 4.0 and _safe_at(frog.x, 0, HOP_TIME):
 			return Vector2i.UP
-		# aproxima-se da toca saltando ao longo do tronco
+		# approaches the home by hopping along the log
 		if target >= 0.0 and absf(target - frog.x) > 10.0:
 			var step := Vector2i.RIGHT if target > frog.x else Vector2i.LEFT
 			if _safe_at(frog.x + step.x * CELL, 1, HOP_TIME):
 				return step
 	var can_up := _safe_at(frog.x, row - 1, HOP_TIME)
 	if row == 2 and can_up:
-		# a corrente da última linha leva para a direita: só sobe se houver uma toca livre à frente
+		# the last row's current flows right: only goes up if there is a free home ahead
 		can_up = false
 		for i in 5:
 			if not homes[i] and croc_bay != i and BAYS[i] >= frog.x - 4.0 and BAYS[i] - frog.x < 70.0:
 				can_up = true
 	if can_up:
 		return Vector2i.UP
-	# no rio, afasta-se da margem para onde a corrente o leva
+	# on the river, moves away from the edge the current carries it to
 	if row >= 1 and row <= 5:
 		var drift := signf(lane_speed(row))
 		var edge_dist := (W - frog.x) if drift > 0.0 else frog.x

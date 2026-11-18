@@ -1,51 +1,54 @@
 extends Node
-## Ecrã inicial do Arcade Clássico: lista de jogos.
-## Cada jogo é um Node com o sinal `exit_requested` e o método `go_back()`.
+## Classic Arcade start screen: the list of games.
+## Each game is a Node with the `exit_requested` signal and the `go_back()` method (see GameShell).
 
 const GAMES := [
-	{"title": "Raquetes", "year": "1972", "arg": "pong", "script": "res://games/pong/pong_main.gd"},
-	{"title": "Quebra-Tijolos", "year": "1976", "arg": "breakout", "script": "res://games/breakout/breakout_main.gd"},
-	{"title": "Ataque Alienígena", "year": "1978", "arg": "invaders", "script": "res://games/invaders/invaders_main.gd"},
-	{"title": "Meteoros", "year": "1979", "arg": "asteroids", "script": "res://games/asteroids/asteroids_main.gd"},
-	{"title": "Enxame", "year": "1979", "arg": "galaxian", "script": "res://games/galaxian/galaxian_main.gd"},
-	{"title": "Pirilampo", "year": "1980", "arg": "firefly", "script": "res://games/firefly/firefly_main.gd"},
-	{"title": "Travessia", "year": "1981", "arg": "frogger", "script": "res://games/frogger/frogger_main.gd"},
-	{"title": "Cogumelos", "year": "1981", "arg": "centipede", "script": "res://games/centipede/centipede_main.gd"},
-	{"title": "Incursão", "year": "1982", "arg": "penetrator", "script": "res://games/penetrator/penetrator_main.gd"},
-	{"title": "Galinheiro", "year": "1983", "arg": "chuckie", "script": "res://games/chuckie/chuckie_main.gd"},
-	{"title": "Astronauta a Jato", "year": "1983", "arg": "jetpac", "script": "res://games/jetpac/jetpac_main.gd"},
-	{"title": "Torre das Relíquias", "year": "1984", "arg": "relics", "script": "res://games/relics/relics_main.gd"},
-	{"title": "Encaixe", "year": "1984", "arg": "blocks", "script": "res://games/blocks/blocks_main.gd"},
-	{"title": "Sarilhos na Escola", "year": "1985", "arg": "school", "script": "res://games/school/school_main.gd"},
-	{"title": "Estrada do Sol", "year": "1986", "arg": "outrun", "script": "res://games/outrun/outrun_main.gd"},
-	{"title": "Espada do Vale", "year": "1986", "arg": "vale", "script": "res://games/vale/vale_main.gd"},
-	{"title": "Fuga do Palácio", "year": "1989", "arg": "palace", "script": "res://games/palace/palace_main.gd"},
-	{"title": "Rebanho", "year": "1991", "arg": "flock", "script": "res://games/flock/flock_main.gd"},
+	{"title": "Paddles", "year": "1972", "arg": "pong", "script": "res://games/pong/pong_main.gd"},
+	{"title": "Brick Breaker", "year": "1976", "arg": "breakout", "script": "res://games/breakout/breakout_main.gd"},
+	{"title": "Alien Attack", "year": "1978", "arg": "invaders", "script": "res://games/invaders/invaders_main.gd"},
+	{"title": "Meteors", "year": "1979", "arg": "asteroids", "script": "res://games/asteroids/asteroids_main.gd"},
+	{"title": "Swarm", "year": "1979", "arg": "galaxian", "script": "res://games/galaxian/galaxian_main.gd"},
+	{"title": "Firefly", "year": "1980", "arg": "firefly", "script": "res://games/firefly/firefly_main.gd"},
+	{"title": "The Crossing", "year": "1981", "arg": "frogger", "script": "res://games/frogger/frogger_main.gd"},
+	{"title": "Mushrooms", "year": "1981", "arg": "centipede", "script": "res://games/centipede/centipede_main.gd"},
+	{"title": "Incursion", "year": "1982", "arg": "penetrator", "script": "res://games/penetrator/penetrator_main.gd"},
+	{"title": "Hen House", "year": "1983", "arg": "chuckie", "script": "res://games/chuckie/chuckie_main.gd"},
+	{"title": "Jet Astronaut", "year": "1983", "arg": "jetpac", "script": "res://games/jetpac/jetpac_main.gd"},
+	{"title": "Tower of Relics", "year": "1984", "arg": "relics", "script": "res://games/relics/relics_main.gd"},
+	{"title": "Stack", "year": "1984", "arg": "blocks", "script": "res://games/blocks/blocks_main.gd"},
+	{"title": "School Trouble", "year": "1985", "arg": "school", "script": "res://games/school/school_main.gd"},
+	{"title": "Sun Road", "year": "1986", "arg": "outrun", "script": "res://games/outrun/outrun_main.gd"},
+	{"title": "Sword of the Valley", "year": "1986", "arg": "vale", "script": "res://games/vale/vale_main.gd"},
+	{"title": "Palace Escape", "year": "1989", "arg": "palace", "script": "res://games/palace/palace_main.gd"},
+	{"title": "Flock", "year": "1991", "arg": "flock", "script": "res://games/flock/flock_main.gd"},
 ]
 
 var ui: CanvasLayer
 var root: Control
 var first_button: Button
 var current: Node
-# rodapé "inspirado em"
+# "inspired by" footer
 var info_title: Label
 var info_story: Label
 var info_wiki: Button
 var _info_game := {}
-var _buttons := {}                     # arg -> botão do jogo
+var _buttons := {}                     # arg -> the game's button
 var _last_button: Button
 var _touch := false
 
 
 func _ready() -> void:
-	var lang: String = Settings.get_value("general", "lang", "")
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--settings="):   # e.g. smoke tests that must not touch the player's file
+			Settings.use_file(a.get_slice("=", 1))
+	var lang := str(Settings.get_value("general", "lang", ""))
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--lang="):
 			lang = a.get_slice("=", 1)
 	I18n.setup(lang if lang != "" else I18n.system_lang())
 	_build_ui()
 	var args := OS.get_cmdline_user_args()
-	# atalhos para desenvolvimento: abrir diretamente um jogo
+	# development shortcuts: open a game directly
 	for g: Dictionary in GAMES:
 		if "--" + String(g.arg) in args:
 			_open(g)
@@ -77,13 +80,13 @@ func _build_ui() -> void:
 	var head := HBoxContainer.new()
 	head.alignment = BoxContainer.ALIGNMENT_CENTER
 	head.add_theme_constant_override("separation", 22)
-	head.add_child(UI.label(I18n.t("ARCADE CLÁSSICO"), 46, UI.LAUNCHER_PALETTE.accent))
-	var sub := UI.label(I18n.t("os clássicos, modernizados"), 20, Color(1, 1, 1, 0.55))
+	head.add_child(UI.label(I18n.t("CLASSIC ARCADE"), 46, UI.LAUNCHER_PALETTE.accent))
+	var sub := UI.label(I18n.t("the classics, modernised"), 20, Color(1, 1, 1, 0.55))
 	sub.size_flags_vertical = Control.SIZE_SHRINK_END
 	head.add_child(sub)
 	box.add_child(head)
 
-	# os jogos numa grelha de 3 colunas
+	# the games in a 3-column grid
 	var grid := GridContainer.new()
 	grid.columns = 3
 	grid.add_theme_constant_override("h_separation", 12)
@@ -97,7 +100,7 @@ func _build_ui() -> void:
 		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		b.add_theme_font_size_override("font_size", 19)
 		cell.add_child(b)
-		# no ecrã tátil, tocar no jogo abre-o logo: o "i" mostra a informação
+		# on a touch screen, tapping a game opens it at once: the "i" shows the information
 		if _touch:
 			var i := UI.button("i", func() -> void: _show_info(g))
 			i.custom_minimum_size = Vector2(48, 46)
@@ -107,7 +110,7 @@ func _build_ui() -> void:
 		grid.add_child(cell)
 		_buttons[g.arg] = b
 		b.focus_entered.connect(_show_info.bind(g))
-		# o rato dá o foco ao botão: só um botão fica realçado de cada vez
+		# the mouse gives focus to the button: only one button is highlighted at a time
 		b.mouse_entered.connect(func() -> void:
 			if b.has_focus():
 				_show_info(g)
@@ -121,11 +124,11 @@ func _build_ui() -> void:
 	var bottom := HBoxContainer.new()
 	bottom.add_theme_constant_override("separation", 16)
 	box.add_child(bottom)
-	var hint := UI.label(I18n.t("F11: ecrã inteiro"), 16, Color(1, 1, 1, 0.35))
+	var hint := UI.label(I18n.t("F11: full screen"), 16, Color(1, 1, 1, 0.35))
 	hint.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	if OS.get_name() != "Web":
-		var quit := UI.button(I18n.t("Sair"), get_tree().quit)
+		var quit := UI.button(I18n.t("Quit"), get_tree().quit)
 		quit.custom_minimum_size = Vector2(220, 44)
 		quit.mouse_entered.connect(func() -> void: quit.grab_focus())
 		bottom.add_child(quit)
@@ -138,7 +141,7 @@ func _build_ui() -> void:
 	first_button.call_deferred("grab_focus")
 
 
-# ---------------------------------------------------------------- rodapé "inspirado em"
+# ---------------------------------------------------------------- "inspired by" footer
 
 func _build_info() -> PanelContainer:
 	var panel := PanelContainer.new()
@@ -176,8 +179,8 @@ func _build_info() -> PanelContainer:
 	info_story.autowrap_mode = TextServer.AUTOWRAP_WORD
 	info_story.custom_minimum_size.x = 1170
 	v.add_child(info_story)
-	info_title.text = I18n.t("Os clássicos que inspiraram estes jogos")
-	info_story.text = (I18n.t("Toca no botão i ao lado de um jogo") if _touch else I18n.t("Passa o rato ou o foco por um jogo")) + I18n.t(" para veres o clássico em que foi inspirado, uma breve história e a ligação para a Wikipédia.")
+	info_title.text = I18n.t("The classics that inspired these games")
+	info_story.text = (I18n.t("Tap the i button next to a game") if _touch else I18n.t("Hover or focus a game")) + I18n.t(" to see the classic it was inspired by, a short history and the Wikipedia link.")
 	return panel
 
 
@@ -186,24 +189,22 @@ func _show_info(g: Dictionary) -> void:
 	if info.is_empty() or g == _info_game:
 		return
 	_info_game = g
-	info_title.text = I18n.t("%s  —  inspirado em %s (%s)") % [I18n.t(g.title), info.name, info.by]
+	info_title.text = I18n.t("%s  —  inspired by %s (%s)") % [I18n.t(g.title), info.name, info.by]
 	info_story.text = I18n.t(info.story)
 	var other := not _wiki_url(info).contains(I18n.lang + ".wikipedia")
-	info_wiki.text = I18n.t("Wikipédia (em inglês) ↗") if other else I18n.t("Wikipédia ↗")
+	info_wiki.text = I18n.t("Wikipedia (English) ↗") if other else I18n.t("Wikipedia ↗")
 	info_wiki.visible = true
 
 
-## Página da Wikipédia no idioma escolhido (ou em inglês, quando não existe).
+## Wikipedia page in the chosen language ("wiki_pt", "wiki_es"), or the English one ("wiki").
 func _wiki_url(info: Dictionary) -> String:
-	if I18n.lang == "pt":
-		return info.wiki
 	return info.get("wiki_" + I18n.lang, info.wiki)
 
 
 func _set_lang(i: int) -> void:
 	I18n.setup(I18n.LANGS[i])
 	Settings.set_value("general", "lang", I18n.lang)
-	# reconstrói o ecrã inicial no novo idioma, mantendo o foco no seletor
+	# rebuilds the start screen in the new language, keeping focus on the selector
 	ui.queue_free()
 	_buttons.clear()
 	first_button = null
@@ -237,7 +238,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _notification(what: int) -> void:
-	# Botão "voltar" do Android
+	# Android "back" button
 	if what == NOTIFICATION_WM_GO_BACK_REQUEST:
 		if current:
 			current.go_back()

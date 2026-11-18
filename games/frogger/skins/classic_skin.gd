@@ -1,6 +1,6 @@
 extends FroggerSkin
-## Clássico 1981: rio azul-noite, estrada negra, passeios roxos, sebe verde com 5 tocas,
-## veículos e rã em píxeis, barra de tempo e uma melodia de chip (original) em fundo.
+## Classic 1981: midnight-blue river, black road, purple pavements, green hedge with 5 homes,
+## pixel vehicles and frog, time bar and an (original) chip melody in the background.
 
 const RIVER := Color("00104a")
 const ROAD := Color.BLACK
@@ -61,7 +61,7 @@ func _build_sfx() -> void:
 	for f in [523.25, 659.25, 783.99, 1046.5, 783.99, 1046.5, 1318.5]:
 		fan.append(Synth.render(f, 0.11, {"wave": "square", "volume": 0.12, "lowpass": 0.35}))
 	sfx.clear = Synth.concat(fan)
-	# melodia original, saltitante, em dó maior
+	# original bouncy melody in C major
 	var tune := [659.3, 784.0, 880.0, 784.0, 659.3, 587.3, 523.3, 587.3, 659.3, 659.3, 784.0, 659.3, 587.3, 523.3, 587.3, 523.3]
 	var bass := [130.8, 130.8, 174.6, 174.6, 196.0, 196.0, 130.8, 130.8]
 	var melody := PackedFloat32Array()
@@ -76,7 +76,7 @@ func _build_sfx() -> void:
 func _draw() -> void:
 	var g := game
 	draw_rect(Rect2(0, 0, 1280, 720), Color.BLACK)
-	# cenário
+	# scenery
 	draw_rect(row_rect(0), HEDGE)
 	for i in 5:
 		draw_rect(bay_rect(i), BAY)
@@ -90,7 +90,7 @@ func _draw() -> void:
 		var rr := row_rect(r)
 		for x in range(0, int(rr.size.x), 24):
 			draw_rect(Rect2(rr.position + Vector2(x + 2, 2), Vector2(20, rr.size.y - 4)), PURPLE.lightened(0.15), false, 2.0)
-	# objetos
+	# objects
 	for o in g.objects:
 		if o.kind == "log":
 			var r := obj_rect(o)
@@ -108,7 +108,7 @@ func _draw() -> void:
 			var pal: Dictionary = VEHICLE[o.kind]
 			for part in vehicle_parts(o):
 				draw_rect(part[0], pal[part[1]])
-	# tocas
+	# homes
 	for i in 5:
 		var c := bay_rect(i).get_center()
 		if g.homes[i]:
@@ -117,7 +117,7 @@ func _draw() -> void:
 			draw_texture(tex.fly, c - tex.fly.get_size() / 2)
 		elif g.croc_bay == i:
 			draw_texture(tex.croc, c - tex.croc.get_size() / 2)
-	# rã
+	# frog
 	if g.state == FroggerGame.State.DYING:
 		_draw_death()
 	elif g.state != FroggerGame.State.OVER and g.state != FroggerGame.State.CLEARED:
@@ -149,22 +149,22 @@ func _draw_hud() -> void:
 	var g := game
 	var lx := panel_left_x()
 	var rx := panel_right_x()
-	PixelFont.draw(self, I18n.t("PONTOS<1>"), lx, 60, 3, Color(LABEL_C, 1.0 if (g.current == 0 or g.players.size() == 1) else 0.4))
+	PixelFont.draw(self, I18n.t("SCORE<1>"), lx, 60, 3, Color(LABEL_C, 1.0 if (g.current == 0 or g.players.size() == 1) else 0.4))
 	PixelFont.draw(self, "%05d" % g.players[0].score, lx, 100, 4, TEXT_C)
-	PixelFont.draw(self, I18n.t("RECORDE"), lx, 180, 3, LABEL_C)
+	PixelFont.draw(self, I18n.t("HI-SCORE"), lx, 180, 3, LABEL_C)
 	PixelFont.draw(self, "%05d" % maxi(g.best, g.player().score), lx, 220, 4, TEXT_C)
 	if g.players.size() > 1:
-		PixelFont.draw(self, I18n.t("PONTOS<2>"), rx, 60, 3, Color(LABEL_C, 1.0 if g.current == 1 else 0.4))
+		PixelFont.draw(self, I18n.t("SCORE<2>"), rx, 60, 3, Color(LABEL_C, 1.0 if g.current == 1 else 0.4))
 		PixelFont.draw(self, "%05d" % g.players[1].score, rx, 100, 4, TEXT_C)
-	PixelFont.draw(self, I18n.t("NIVEL %d") % g.level(), rx, 180, 3, LABEL_C)
+	PixelFont.draw(self, I18n.t("LEVEL %d") % g.level(), rx, 180, 3, LABEL_C)
 	for i in mini(maxi(g.player().lives - 1, 0), 6):
 		draw_texture(tex.frog0, Vector2(lx - 110 + (i % 3) * 50, 560 + (i / 3) * 44))
-	# barra de tempo na faixa de baixo
+	# time bar in the bottom strip
 	var hud := row_rect(13)
 	var frac := clampf(g.time_left / g.time_limit(), 0.0, 1.0)
 	var bar_c := Color("51cf66") if g.time_left > 8.0 else Color("ff6b6b")
 	draw_rect(Rect2(hud.end.x - 12 - 420 * frac, hud.position.y + 14, 420 * frac, 20), bar_c)
-	PixelFont.draw(self, I18n.t("TEMPO"), hud.end.x - 470 - 60, hud.position.y + 14, 3, LABEL_C)
+	PixelFont.draw(self, I18n.t("TIME"), hud.end.x - 470 - 60, hud.position.y + 14, 3, LABEL_C)
 
 
 func ui_palette() -> Dictionary:

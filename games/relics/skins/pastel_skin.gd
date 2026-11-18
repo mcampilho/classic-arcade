@@ -1,7 +1,7 @@
 extends RelicsSkin
-## Pastel Geométrico: a torre como uma ilustração geométrica suave — céu em degradê, chão em
-## xadrez de tons pastel, cubos com três tons de luz, sombras macias e personagens contornados.
-## O céu acompanha o dia: amanhecer, meio-dia, entardecer e noite.
+## Geometric Pastel: the tower as a soft geometric illustration — gradient sky, pastel
+## checkerboard floor, cubes with three light tones, soft shadows and outlined characters.
+## The sky follows the day: dawn, midday, dusk and night.
 
 const INK := Color("4a3f5c")
 const SKY := [Color("ffd9c2"), Color("cfe6f5"), Color("ffc9b9"), Color("3c3a66")]
@@ -73,7 +73,7 @@ func _draw_back() -> void:
 	var bot := _sky(SKY2)
 	for i in 16:
 		draw_rect(Rect2(0, 45.0 * i, 1280, 46), top.lerp(bot, i / 15.0))
-	# a torre "flutua": base em forma de ilha
+	# the tower "floats": an island-shaped base
 	var n := float(RelicsGame.ROOM)
 	draw_colored_polygon(PackedVector2Array([iso(Vector3(0, n, 0)), iso(Vector3(n, n, 0)), iso(Vector3(n, n, -1.6)), iso(Vector3(0, n, -0.8))]), Color("b4a2d6"))
 	draw_colored_polygon(PackedVector2Array([iso(Vector3(n, n, 0)), iso(Vector3(n, 0, 0)), iso(Vector3(n, 0, -0.8)), iso(Vector3(n, n, -1.6))]), Color("9a88c2"))
@@ -84,7 +84,7 @@ func _draw_floor() -> void:
 		for x in RelicsGame.ROOM:
 			var q := PackedVector2Array([iso(Vector3(x, y, 0)), iso(Vector3(x + 1, y, 0)), iso(Vector3(x + 1, y + 1, 0)), iso(Vector3(x, y + 1, 0))])
 			draw_colored_polygon(q, FLOOR_A if (x + y) % 2 == 0 else FLOOR_B)
-	# sombras macias dos blocos no chão
+	# soft block shadows on the floor
 	for b in game.blocks:
 		var p: Vector3 = b.pos
 		var s: Vector3 = b.size
@@ -96,7 +96,7 @@ func _draw_floor() -> void:
 
 func _wall_quad(side: String, q: PackedVector2Array, _z0: float, _z1: float) -> void:
 	draw_colored_polygon(q, WALL_L if side == "W" else WALL_R)
-	# faixa decorativa
+	# decorative band
 	var t0 := 0.78
 	var t1 := 0.86
 	draw_colored_polygon(PackedVector2Array([q[0].lerp(q[3], t0), q[1].lerp(q[2], t0), q[1].lerp(q[2], t1), q[0].lerp(q[3], t1)]), Color(Color.WHITE, 0.3))
@@ -196,9 +196,9 @@ func _draw_hud() -> void:
 	pill(Rect2(460, 652, 360, 60), Color(Color.WHITE, 0.45))
 	_draw_hud_common(ink, GOLD, Color(INK, 0.18), func(t: String, p: Vector2) -> void: label(t, p + Vector2(0, -4), 26, ink))
 	pill(Rect2(20, 590, 200, 110), Color(Color.WHITE, 0.45))
-	label(I18n.t("PONTOS %06d") % g.score, Vector2(120, 626), 20, INK)
-	label(I18n.t("vidas %d") % g.lives, Vector2(120, 656), 18, INK)
-	label(I18n.t("dia %d de %d") % [g.day(), RelicsGame.DAYS], Vector2(120, 686), 18, INK)
+	label(I18n.t("SCORE %06d") % g.score, Vector2(120, 626), 20, INK)
+	label(I18n.t("lives %d") % g.lives, Vector2(120, 656), 18, INK)
+	label(I18n.t("day %d of %d") % [g.day(), RelicsGame.DAYS], Vector2(120, 686), 18, INK)
 	var c := Vector2(120, 520)
 	var a := g.day_phase() * TAU - PI / 2
 	draw_arc(c, 40, PI, TAU, 24, Color(ink, 0.4), 2.0)

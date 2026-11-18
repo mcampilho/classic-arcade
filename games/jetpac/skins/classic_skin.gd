@@ -1,6 +1,6 @@
 extends JetpacSkin
-## Clássico 1983: fundo preto, plataformas verdes, chão amarelo, cores puras dos micros de 8 bits
-## (o foguete muda de cor a cada modelo) e sons de altifalante.
+## Classic 1983: black background, green platforms, yellow ground, pure 8-bit home computer colours
+## (the rocket changes colour with each model) and speaker beeps.
 
 const GREEN := Color("00d700")
 const YELLOW := Color("ffff00")
@@ -64,7 +64,7 @@ func _draw_hud() -> void:
 	PixelFont.draw(self, "%06d" % g.score, 120, 28, 3, YELLOW)
 	PixelFont.draw(self, "HI", 640, 8, 2, WHITE)
 	PixelFont.draw(self, "%06d" % maxi(g.best, g.score), 640, 28, 3, CYAN)
-	PixelFont.draw(self, I18n.t("NIVEL %d") % g.level, 1120, 8, 2, WHITE)
+	PixelFont.draw(self, I18n.t("LEVEL %d") % g.level, 1120, 8, 2, WHITE)
 	for i in mini(g.lives - 1, 6):
 		draw_texture_rect(tex.man_stand, Rect2(1060 + i * 26, 26, 20, 32), false)
 	for p in popups:

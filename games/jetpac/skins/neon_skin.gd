@@ -1,6 +1,6 @@
 extends JetpacSkin
-## Neon: espaço profundo com estrelas, plataformas em tubos de luz, astronauta, foguete e
-## alienígenas com halo, e um laser às cores.
+## Neon: deep space with stars, light-tube platforms, astronaut, rocket and
+## aliens with a halo, and a multicoloured laser.
 
 const BG := Color("04020c")
 const CYAN := Color("19f5ff")
@@ -125,7 +125,7 @@ func _draw_hud() -> void:
 	neon_text("%06d" % g.score, 120, 28, 3, WHITE)
 	neon_text("HI", 640, 8, 2, CYAN)
 	neon_text("%06d" % maxi(g.best, g.score), 640, 28, 3, WHITE)
-	neon_text(I18n.t("NIVEL %d") % g.level, 1120, 8, 2, YELLOW)
+	neon_text(I18n.t("LEVEL %d") % g.level, 1120, 8, 2, YELLOW)
 	for i in mini(g.lives - 1, 6):
 		draw_texture_rect(tex.man_stand, Rect2(1060 + i * 26, 26, 20, 32), false)
 	for p in popups:

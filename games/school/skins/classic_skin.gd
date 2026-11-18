@@ -1,15 +1,15 @@
 extends SchoolSkin
-## Clássico 1985: as cores fortes dos computadores de 8 bits — cada sala pintada numa cor
-## "de atributo" (ciano, amarelo, verde, magenta...), pisos e paredes grossos, escadas em degraus,
-## e as personagens desenhadas só a tinta preta por cima, como nos jogos da época. Professores
-## de beca e barrete; letras de píxeis; sons de altifalante.
+## Classic 1985: the strong colours of 8-bit computers — each room painted in an
+## "attribute" colour (cyan, yellow, green, magenta...), thick floors and walls, stepped stairs,
+## and the characters drawn only in black ink on top, as in the games of the time. Teachers
+## in gowns and mortarboards; pixel lettering; speaker beeps.
 
 const BLACK := Color("000000")
 const WHITE := Color("ffffff")
 const PAPER := {
-	"Sala do Mapa": Color("d7d700"), "Sala de Leitura": Color("00d7d7"), "Gabinete do Diretor": Color("d700d7"),
-	"Sala Branca": Color("d7d7d7"), "Sala de Exames": Color("00d700"), "Laboratório": Color("d7d700"),
-	"Refeitório": Color("00d7d7"), "Átrio": Color("d7d7d7"), "Recreio": Color("00d7d7"),
+	"Map Room": Color("d7d700"), "Reading Room": Color("00d7d7"), "Head's Study": Color("d700d7"),
+	"White Room": Color("d7d7d7"), "Exam Room": Color("00d700"), "Science Lab": Color("d7d700"),
+	"Dining Hall": Color("00d7d7"), "Hall": Color("d7d7d7"), "Playground": Color("00d7d7"),
 }
 const BRICK := Color("d70000")
 const FLOOR := Color("0000d7")
@@ -48,14 +48,14 @@ func _draw_back() -> void:
 func _paint_world(ci: CanvasItem) -> void:
 	var W := SchoolGame.WORLD_W
 	var BW := SchoolGame.BUILDING_W
-	# céu e recreio
+	# sky and playground
 	ci.draw_rect(Rect2(BW, 0, W - BW, 600), Color("0000d7"))
 	for k in 30:
 		var x := BW + 40.0 + (k * 97) % int(W - BW - 60.0)
 		var y := 30.0 + (k * 53) % 200
 		ci.draw_rect(Rect2(x, y, 4, 4), WHITE)
-	ci.draw_rect(Rect2(BW, 390, W - BW, 180), PAPER["Recreio"])
-	# muro do recreio, árvore e baliza
+	ci.draw_rect(Rect2(BW, 390, W - BW, 180), PAPER["Playground"])
+	# playground wall, tree and goal
 	for x in range(int(BW), int(W), 40):
 		ci.draw_rect(Rect2(x, 470, 38, 18), BRICK)
 		ci.draw_rect(Rect2(x + 20, 490, 38, 18), BRICK)
@@ -66,23 +66,23 @@ func _paint_world(ci: CanvasItem) -> void:
 	ci.draw_rect(Rect2(2900, 450, 6, 120), WHITE)
 	ci.draw_rect(Rect2(3060, 450, 6, 120), WHITE)
 	ci.draw_rect(Rect2(2900, 450, 166, 6), WHITE)
-	# salas
+	# rooms
 	for r: Dictionary in SchoolGame.ROOMS:
-		if r.name == "Recreio":
+		if r.name == "Playground":
 			continue
 		var f := int(r.floor)
 		var top := floor_top(f)
 		ci.draw_rect(Rect2(r.x0, top, float(r.x1) - float(r.x0), SchoolGame.ROOM_H), PAPER[r.name])
 		PixelFont.draw(ci, I18n.t(String(r.name)).to_upper(), (float(r.x0) + float(r.x1)) * 0.5, top + 14, 2, BLACK)
-	# telhado
+	# roof
 	ci.draw_colored_polygon(PackedVector2Array([Vector2(-20, 10), Vector2(BW + 30, 10), Vector2(BW + 30, -40), Vector2(-20, -40)]), BRICK)
-	# pisos (lajes)
+	# floors (slabs)
 	for f in 3:
 		var y: float = SchoolGame.FLOOR_Y[f]
 		ci.draw_rect(Rect2(0, y, BW if f < 2 else W, 10), FLOOR)
 		ci.draw_rect(Rect2(0, floor_top(f) - 10, BW, 10), FLOOR)
 	ci.draw_rect(Rect2(0, 580, W, 20), BLACK)
-	# paredes entre salas (com passagem por baixo)
+	# walls between rooms (with a passage underneath)
 	for r: Dictionary in SchoolGame.ROOMS:
 		var f := int(r.floor)
 		for x: float in [float(r.x0), float(r.x1)]:
@@ -95,7 +95,7 @@ func _paint_world(ci: CanvasItem) -> void:
 				ci.draw_rect(Rect2(x - 8, top, 16, SchoolGame.ROOM_H), BRICK)
 	ci.draw_rect(Rect2(-4, 0, 14, 600), BRICK)
 	ci.draw_rect(Rect2(BW - 8, floor_top(0) - 10, 16, 2 * SchoolGame.ROOM_H + 10), BRICK)
-	# escadas
+	# ladders
 	for s: Dictionary in SchoolGame.STAIRS:
 		var f := int(s.f)
 		var a := Vector2(s.top, SchoolGame.FLOOR_Y[f])
@@ -105,7 +105,7 @@ func _paint_world(ci: CanvasItem) -> void:
 			var w := 16.0
 			ci.draw_rect(Rect2(p.x - w * 0.5, p.y, w, 6), BLACK)
 		ci.draw_line(a + Vector2(0, -44), b + Vector2(0, -44), BLACK, 3.0)
-	# quadros e carteiras
+	# boards and desks
 	for i in SchoolGame.ROOMS.size():
 		var r: Dictionary = SchoolGame.ROOMS[i]
 		var y: float = SchoolGame.FLOOR_Y[int(r.floor)]
@@ -119,22 +119,22 @@ func _paint_world(ci: CanvasItem) -> void:
 				ci.draw_rect(Rect2(sx - 36, y - 24, 4, 24), Color("d70000"))
 				ci.draw_rect(Rect2(sx - 6, y - 18, 14, 4), BLACK)
 				ci.draw_rect(Rect2(sx + 5, y - 18, 3, 18), BLACK)
-		elif r.name == "Refeitório":
+		elif r.name == "Dining Hall":
 			for k in 3:
 				ci.draw_rect(Rect2(float(r.x0) + 260 + k * 250, y - 34, 190, 8), Color("d70000"))
 				ci.draw_rect(Rect2(float(r.x0) + 270 + k * 250, y - 26, 6, 26), Color("d70000"))
 				ci.draw_rect(Rect2(float(r.x0) + 434 + k * 250, y - 26, 6, 26), Color("d70000"))
-		elif r.name == "Gabinete do Diretor":
+		elif r.name == "Head's Study":
 			ci.draw_rect(Rect2(1900, y - 40, 160, 10), Color("d7d700"))
 			ci.draw_rect(Rect2(1910, y - 30, 8, 30), Color("d7d700"))
 			ci.draw_rect(Rect2(2042, y - 30, 8, 30), Color("d7d700"))
 			ci.draw_rect(Rect2(2160, y - 150, 90, 70), WHITE)
 			ci.draw_rect(Rect2(2166, y - 144, 78, 58), Color("0000d7"))
-		elif r.name == "Átrio":
+		elif r.name == "Hall":
 			for k in 8:
 				ci.draw_rect(Rect2(1500 + k * 44, y - 100, 40, 100), Color("0000d7"))
 				ci.draw_rect(Rect2(1500 + k * 44 + 30, y - 60, 4, 10), WHITE)
-	# janelas nas paredes de fora
+	# windows on the outer walls
 	for f in 2:
 		var y := floor_top(f) + 40
 		ci.draw_rect(Rect2(BW - 4, y, 8, 70), Color("0000d7"))
@@ -167,7 +167,7 @@ func _draw_safe(p: Vector2, open: bool) -> void:
 		draw_circle(r.get_center(), 14, WHITE)
 		draw_circle(r.get_center(), 9, BLACK)
 		draw_line(r.get_center(), r.get_center() + Vector2.from_angle(time * 0.7) * 9.0, WHITE, 2.0)
-	PixelFont.draw(self, I18n.t("COFRE"), p.x, r.position.y - 16, 2, BLACK)
+	PixelFont.draw(self, I18n.t("SAFE"), p.x, r.position.y - 16, 2, BLACK)
 
 
 func _limb(a: Vector2, b: Vector2, w: float) -> void:
@@ -186,7 +186,7 @@ func _draw_person(c: Dictionary, j: Dictionary) -> void:
 	var neck: Vector2 = j.neck
 	var side := (neck - hip).orthogonal().normalized()
 	if c.role == "teacher":
-		# beca
+		# gown
 		var knee: Vector2 = (j.knee_f + j.knee_b) * 0.5
 		var kside := side * 13.0 * s
 		draw_colored_polygon(PackedVector2Array([neck + side * 9.0 * s, neck - side * 9.0 * s, knee - kside + (knee - neck) * 0.15, knee + kside + (knee - neck) * 0.15]), BLACK)
@@ -201,14 +201,14 @@ func _draw_person(c: Dictionary, j: Dictionary) -> void:
 	draw_circle(head, 9.5 * s, BLACK)
 	draw_circle(head + Vector2(f * 3.0, -1.0), 2.2 * s, WHITE)
 	if c.role == "teacher":
-		# barrete
+		# mortarboard
 		var up := (head - neck).normalized()
 		var t := head + up * 9.0 * s
 		var sd := up.orthogonal() * 14.0 * s
 		draw_line(t - sd, t + sd, BLACK, 5.0)
 		draw_rect(Rect2(t - Vector2(5, 5) * s, Vector2(10, 7) * s), BLACK)
 	elif c.role == "hero":
-		# boné com pala
+		# peaked cap
 		var up := (head - neck).normalized()
 		draw_line(head + up * 8.0 * s, head + up * 8.0 * s + up.orthogonal() * -f * 13.0, BLACK, 4.0)
 	elif c.role == "swot":
@@ -243,18 +243,18 @@ func _draw_hud() -> void:
 	PixelFont.draw(self, period_text(), 400, 612, 3, Color("ffff00"))
 	draw_rect(Rect2(110, 642, 580, 10), Color("0000d7"))
 	draw_rect(Rect2(110, 642, 580 * period_left(), 10), Color("00ffff"))
-	PixelFont.draw(self, I18n.t("DIA %d") % g.day, 60, 640, 2, WHITE)
-	PixelFont.draw(self, I18n.t("ESCUDOS %d/%d") % [g.shields_done(), SchoolGame.SHIELDS.size()], 200, 668, 3, Color("00ffff"))
-	PixelFont.draw(self, I18n.t("COFRE  ") + code_text(), 560, 668, 3, WHITE)
-	PixelFont.draw(self, I18n.t("LINHAS %d") % g.lines, 960, 612, 3, Color("ff0000"))
+	PixelFont.draw(self, I18n.t("DAY %d") % g.day, 60, 640, 2, WHITE)
+	PixelFont.draw(self, I18n.t("SHIELDS %d/%d") % [g.shields_done(), SchoolGame.SHIELDS.size()], 200, 668, 3, Color("00ffff"))
+	PixelFont.draw(self, I18n.t("SAFE  ") + code_text(), 560, 668, 3, WHITE)
+	PixelFont.draw(self, I18n.t("LINES %d") % g.lines, 960, 612, 3, Color("ff0000"))
 	draw_rect(Rect2(820, 642, 280, 10), Color("5a0000"))
 	draw_rect(Rect2(820, 642, 280.0 * g.lines / SchoolGame.MAX_LINES, 10), Color("ff0000"))
-	PixelFont.draw(self, I18n.t("PONTOS %d") % g.score, 960, 668, 3, Color("00ff00"))
-	PixelFont.draw(self, I18n.t("RECORDE %d") % maxi(g.best, g.score), 960, 698, 2, Color("d7d7d7"))
+	PixelFont.draw(self, I18n.t("SCORE %d") % g.score, 960, 668, 3, Color("00ff00"))
+	PixelFont.draw(self, I18n.t("HI-SCORE %d") % maxi(g.best, g.score), 960, 698, 2, Color("d7d7d7"))
 	if g.state == SchoolGame.State.OVER:
 		draw_rect(Rect2(340, 230, 600, 120), BLACK)
 		draw_rect(Rect2(340, 230, 600, 120), Color("ff0000"), false, 4.0)
-		PixelFont.draw(self, I18n.t("EXPULSO!"), 640, 262, 7, Color("ff0000"))
+		PixelFont.draw(self, I18n.t("EXPELLED!"), 640, 262, 7, Color("ff0000"))
 
 
 func ui_palette() -> Dictionary:

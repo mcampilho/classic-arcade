@@ -1,6 +1,6 @@
 extends PenetratorSkin
-## Neon: céu estrelado em paralaxe, terreno escuro com contornos de luz (um par de cores por zona),
-## nave, mísseis e discos com halo.
+## Neon: parallax starry sky, dark terrain with light outlines (a pair of colours per zone),
+## ship, missiles and saucers with a halo.
 
 const ZONE_NEON := [
 	[Color("19f5ff"), Color("0a2a40")],
@@ -155,9 +155,9 @@ func _draw_hud() -> void:
 	draw_rect(Rect2(0, 0, PenetratorGame.W, PenetratorGame.TOP - 4), BG)
 	var zc := zone_colors()
 	draw_line(Vector2(0, PenetratorGame.TOP - 4), Vector2(PenetratorGame.W, PenetratorGame.TOP - 4), Color(zc[0], 0.6), 2.0)
-	neon_text(I18n.t("PONTOS %06d") % g.score, 170, 12, 3, WHITE)
-	neon_text(I18n.t("REC %06d") % maxi(g.best, g.score), 170, 40, 2, Color("19f5ff"))
-	neon_text(I18n.t("MISSAO %d") % g.mission, 1120, 12, 3, Color("ff3df2"))
+	neon_text(I18n.t("SCORE %06d") % g.score, 170, 12, 3, WHITE)
+	neon_text(I18n.t("HI %06d") % maxi(g.best, g.score), 170, 40, 2, Color("19f5ff"))
+	neon_text(I18n.t("MISSION %d") % g.mission, 1120, 12, 3, Color("ff3df2"))
 	for i in mini(g.lives - 1, 6):
 		draw_tex_center(tex.ship, Vector2(1040 + i * 30, 46), 1.0)
 	var x0 := 420.0

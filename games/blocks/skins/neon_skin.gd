@@ -1,7 +1,7 @@
 extends BlocksSkin
-## Neon: tubos de luz sobre um fundo escuro com uma grelha em perspetiva a correr ao fundo;
-## cada peça brilha na sua cor, a sombra é só um contorno, e as linhas completas explodem em
-## faíscas. Música de sintetizador com bateria.
+## Neon: light tubes on a dark background with a perspective grid scrolling behind;
+## each piece glows in its colour, the ghost is just an outline, and completed lines burst into
+## sparks. Synthesizer music with drums.
 
 const COLS := [Color("ff3ea5"), Color("ffe14d"), Color("a46bff"), Color("3effa0"), Color("ff6a3e"), Color("3e8bff"), Color("3ef0ff")]
 const FRAME := Color("3ef0ff")
@@ -36,7 +36,7 @@ func piece_color(k: int) -> Color:
 func _draw_back() -> void:
 	draw_polygon(PackedVector2Array([Vector2(0, 0), Vector2(1280, 0), Vector2(1280, 720), Vector2(0, 720)]),
 		PackedColorArray([Color("0a0618"), Color("0a0618"), Color("1e0a30"), Color("1e0a30")]))
-	# grelha em perspetiva no chão
+	# perspective grid on the floor
 	var hz := 470.0
 	var c := Color("ff3ea5", 0.25)
 	for k in 13:
@@ -123,7 +123,7 @@ func _draw_part(p: Dictionary) -> void:
 
 func _draw_over() -> void:
 	draw_rect(WELL, Color(0, 0, 0, 0.6))
-	label(I18n.t("FIM DE JOGO"), Vector2(WELL.get_center().x, WELL.get_center().y - 30), 40.0, true)
+	label(I18n.t("GAME OVER"), Vector2(WELL.get_center().x, WELL.get_center().y - 30), 40.0, true)
 
 
 func ui_palette() -> Dictionary:

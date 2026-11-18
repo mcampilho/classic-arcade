@@ -1,7 +1,7 @@
 extends GalaxianSkin
-## Oceano (estilo próprio): a batalha passa-se no fundo do mar. A formação é um cardume —
-## peixes, medusas, caranguejos e um tamboril com a sua lanterna — e o jogador pilota um
-## pequeno submarino que dispara torpedos. Bolhas, raios de luz, tinta e sons de sonar.
+## Ocean (original style): the battle takes place on the sea floor. The formation is a shoal —
+## fish, jellyfish, crabs and an anglerfish with its lantern — and the player pilots a
+## small submarine that fires torpedoes. Bubbles, light rays, ink and sonar sounds.
 
 const DEEP_TOP := Color("0b4f6c")
 const DEEP_BOTTOM := Color("051a2e")
@@ -11,19 +11,19 @@ const INK := Color("2a1033")
 const BUBBLE := Color("cdeffd")
 
 const CREATURES := [
-	[   # 0 tamboril (almirante)
+	[   # 0 anglerfish (flagship)
 		["......L......", ".....L.......", "....C........", "...BBBBBBB...", "..BBEBBBEBB..", ".BBBBBBBBBBB.", "BBWBWBWBWBWBB", ".BBBBBBBBBBB.", "..BBBBBBBBB..", "...C.....C..."],
 		["......L......", ".......L.....", "........C....", "...BBBBBBB...", "..BBEBBBEBB..", ".BBBBBBBBBBB.", "BBWBWBWBWBWBB", ".BBBBBBBBBBB.", "..BBBBBBBBB..", "..C.......C.."],
 	],
-	[   # 1 caranguejo (escolta)
+	[   # 1 crab (escort)
 		["B.........B", "BB.......BB", ".B.BBBBB.B.", "..BBEBEBB..", ".BBBBBBBBB.", "B.BBBBBBB.B", "..C.C.C.C..", ".C.......C."],
 		[".B.......B.", "BB.......BB", "B..BBBBB..B", "..BBEBEBB..", ".BBBBBBBBB.", ".BBBBBBBBB.", ".C.C...C.C.", "C.........C"],
 	],
-	[   # 2 medusa (emissário)
+	[   # 2 jellyfish (emissary)
 		["...BBBBB...", "..BBBBBBB..", ".BBEBBBEBB.", ".BBBBBBBBB.", ".C.C.C.C.C.", ".C.C.C.C.C.", "C.C.C.C.C..", "..C...C...."],
 		["...BBBBB...", "..BBBBBBB..", ".BBEBBBEBB.", ".BBBBBBBBB.", "..C.C.C.C..", ".C.C.C.C.C.", "..C.C.C.C.C", "....C...C.."],
 	],
-	[   # 3 peixe (zangão)
+	[   # 3 fish (drone)
 		["....CCC....", ".....C.....", "....BBB....", "...BBBBB...", "..BBBBBBB..", "..BEBBBEB..", "...BBBBB...", "....BBB...."],
 		["...CCC.....", "....C......", "....BBB....", "...BBBBB...", "..BBBBBBB..", "..BEBBBEB..", "...BBBBB...", "....BBB...."],
 	],
@@ -161,14 +161,14 @@ func _tick(dt: float) -> void:
 	fx.queue_redraw()
 
 
-# ---------------------------------------------------------------- desenho
+# ---------------------------------------------------------------- drawing
 
 func _draw_background() -> void:
 	bg.draw_polygon(PackedVector2Array([Vector2.ZERO, Vector2(1280, 0), Vector2(1280, 720), Vector2(0, 720)]),
 		PackedColorArray([DEEP_TOP, DEEP_TOP, DEEP_BOTTOM, DEEP_BOTTOM]))
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 42
-	# areia e algas nas laterais
+	# sand and seaweed on the sides
 	for side in [0, 1]:
 		var x0 := 0.0 if side == 0 else 976.0
 		bg.draw_rect(Rect2(x0, 680, 304, 40), SAND.darkened(0.45))
@@ -180,7 +180,7 @@ func _draw_background() -> void:
 				pts.append(base + Vector2(sin(t * 0.7 + k) * 8.0, -h * t / 11.0))
 			bg.draw_polyline(pts, Color("2f9e44", 0.5).darkened(rng.randf() * 0.4), rng.randf_range(4, 9), true)
 	bg.draw_rect(Rect2(304, 708, 672, 12), SAND.darkened(0.3))
-	# vigias de latão para os painéis
+	# brass portholes for the panels
 	for cx in [152.0, 1128.0]:
 		bg.draw_circle(Vector2(cx, 190), 128.0, BRASS.darkened(0.35), true, -1.0, true)
 		bg.draw_circle(Vector2(cx, 190), 118.0, BRASS, true, -1.0, true)
@@ -216,12 +216,12 @@ func _torpedo(p: Vector2) -> void:
 
 
 func _draw_fx() -> void:
-	# raios de luz vindos da superfície
+	# light rays from the surface
 	for i in 4:
 		var x := 340.0 + i * 170.0 + sin(time * 0.4 + i) * 30.0
 		fx.draw_colored_polygon(PackedVector2Array([Vector2(x, 0), Vector2(x + 60, 0), Vector2(x + 180, 720), Vector2(x + 90, 720)]),
 			Color(0.6, 0.9, 1.0, 0.03 + 0.015 * sin(time * 0.9 + i * 1.7)))
-	# lanterna dos tamboris
+	# anglerfish lantern
 	for a in game.aliens:
 		if a.alive and a.kind == 0:
 			fx.draw_circle(px(a.pos + Vector2(6.5, 0.5)), 14.0 + 3.0 * sin(time * 5.0), Color(1.0, 0.95, 0.5, 0.18), true, -1.0, true)
@@ -240,18 +240,18 @@ func _draw_panels() -> void:
 	var g := game
 	var lx := 152.0
 	var rx := 1128.0
-	_text(I18n.t("JOGADOR 1"), Vector2(lx, 140), 18, Color(BUBBLE, 1.0 if (g.current == 0 or g.players.size() == 1) else 0.45))
+	_text(I18n.t("PLAYER 1"), Vector2(lx, 140), 18, Color(BUBBLE, 1.0 if (g.current == 0 or g.players.size() == 1) else 0.45))
 	_text(str(g.players[0].score), Vector2(lx, 192), 44, Color("ffd43b", 1.0 if (g.current == 0 or g.players.size() == 1) else 0.45))
-	_text(I18n.t("RECORDE ") + str(maxi(g.best, g.player().score)), Vector2(lx, 240), 16, Color(BUBBLE, 0.8))
+	_text(I18n.t("HI-SCORE ") + str(maxi(g.best, g.player().score)), Vector2(lx, 240), 16, Color(BUBBLE, 0.8))
 	if g.players.size() > 1:
-		_text(I18n.t("JOGADOR 2"), Vector2(rx, 140), 18, Color(BUBBLE, 1.0 if g.current == 1 else 0.45))
+		_text(I18n.t("PLAYER 2"), Vector2(rx, 140), 18, Color(BUBBLE, 1.0 if g.current == 1 else 0.45))
 		_text(str(g.players[1].score), Vector2(rx, 192), 44, Color("ffd43b", 1.0 if g.current == 1 else 0.45))
-		_text(I18n.t("VAGA %d") % g.player().wave, Vector2(rx, 240), 16, Color(BUBBLE, 0.8))
+		_text(I18n.t("WAVE %d") % g.player().wave, Vector2(rx, 240), 16, Color(BUBBLE, 0.8))
 	else:
-		_text(I18n.t("VAGA"), Vector2(rx, 150), 18, BUBBLE)
+		_text(I18n.t("WAVE"), Vector2(rx, 150), 18, BUBBLE)
 		_text(str(g.player().wave), Vector2(rx, 210), 52, Color("ffd43b"))
 	var n := mini(maxi(g.player().lives, 0), 5)
-	_text(I18n.t("SUBMARINOS"), Vector2(lx, 420), 16, Color(BUBBLE, 0.8))
+	_text(I18n.t("SUBS"), Vector2(lx, 420), 16, Color(BUBBLE, 0.8))
 	for i in n:
 		draw_texture(tex.sub, Vector2(lx - (n - 1) * 24.0 + i * 48.0 - 19.5, 440))
 

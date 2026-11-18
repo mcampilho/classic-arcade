@@ -1,7 +1,7 @@
 class_name UI
 extends RefCounted
-## Utilitários de interface partilhados por todos os jogos.
-## Cada estilo visual fornece uma "palete" (Dictionary) e o tema é gerado a partir dela.
+## Interface helpers shared by all games.
+## Each visual style provides a "palette" (Dictionary) and the theme is generated from it.
 
 const LAUNCHER_PALETTE := {
 	"panel": Color(0.07, 0.08, 0.11, 0.96),
@@ -90,8 +90,8 @@ static func button(text: String, callback: Callable) -> Button:
 	return b
 
 
-## Cria um ecrã sobreposto: escurecimento opcional + painel centrado com uma coluna.
-## Devolve {"root": Control, "box": VBoxContainer, "dim": ColorRect}.
+## Creates an overlay screen: optional dimming + a centred panel with one column.
+## Returns {"root": Control, "box": VBoxContainer, "dim": ColorRect}.
 static func overlay(parent: Node, min_width := 560.0) -> Dictionary:
 	var root := Control.new()
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)

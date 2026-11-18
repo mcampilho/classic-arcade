@@ -1,8 +1,8 @@
 extends FlockSkin
-## Bloco de Notas: o nível é um rabisco a lápis numa folha pautada — terreno sombreado com
-## tracejado de grafite, aço riscado a esferográfica azul, tijolos a caneta vermelha, ovelhas
-## desenhadas como nuvenzinhas com contorno tremido (a "ferver", como nos desenhos animados
-## feitos à mão) e um painel de botões rabiscados, com a função escolhida rodeada a vermelho.
+## Notepad: the level is a pencil doodle on lined paper — terrain shaded with
+## graphite hatching, steel scribbled in blue ballpoint, bricks in red pen, sheep
+## drawn as little clouds with a wobbly outline ("boiling", as in hand-drawn
+## cartoons) and a panel of doodled buttons, with the chosen skill circled in red.
 
 const PAPER := Color("f6f1e2")
 const RULE := Color("9cc0e0")
@@ -17,7 +17,7 @@ func _setup() -> void:
 
 
 func _build_sfx() -> void:
-	# assobios (seno) e riscos de lápis (ruído filtrado)
+	# whistles (sine) and pencil scratches (filtered noise)
 	sfx.start = Synth.concat([Synth.render(784.0, 0.1, {"wave": "sine", "volume": 0.25}), Synth.render(988.0, 0.1, {"wave": "sine", "volume": 0.25}), Synth.render(1175.0, 0.2, {"wave": "sine", "volume": 0.25, "decay": 6.0})])
 	sfx.release = Synth.tone(1400.0, 0.12, {"wave": "sine", "freq_end": 1000.0, "volume": 0.15})
 	sfx.assign = Synth.tone(0.0, 0.07, {"wave": "noise", "volume": 0.25, "lowpass": 0.6, "decay": 30.0})
@@ -36,12 +36,12 @@ func _build_sfx() -> void:
 	sfx.win = Synth.concat(w)
 
 
-## Semente que muda algumas vezes por segundo: o traço "ferve".
+## Seed that changes a few times per second: the line "boils".
 func boil(id: int) -> int:
 	return id * 31 + int(time * 6.0)
 
 
-## Linha tremida a lápis (dois traços ligeiramente desencontrados).
+## Wobbly pencil line (two slightly offset strokes).
 func sk_line(a: Vector2, b: Vector2, col: Color, w: float, seed: int) -> void:
 	for k in 2:
 		var j1 := Vector2(hash01(seed, k, 1) - 0.5, hash01(seed, k, 2) - 0.5) * 3.0
@@ -59,7 +59,7 @@ func sk_rect(r: Rect2, col: Color, w: float, seed: int) -> void:
 		sk_line(a - d, b + d, col, w, seed + k * 7)
 
 
-## Contorno tremido de uma elipse.
+## Wobbly outline of an ellipse.
 func sk_oval(c: Vector2, r: Vector2, col: Color, w: float, seed: int, fill := Color(0, 0, 0, 0)) -> void:
 	var pts := PackedVector2Array()
 	var n := 14
@@ -126,13 +126,13 @@ func _draw_exit_back(p: Vector2) -> void:
 	draw_colored_polygon(pts, Color(PAPER, 0.9))
 	for k in 4:
 		sk_line(pts[k], pts[k + 1], PENCIL, 2.5, 60 + k)
-	# telhado a vermelho
+	# roof in red
 	sk_line(b + Vector2(-50, -42), b + Vector2(0, -84), RED, 3.0, 70)
 	sk_line(b + Vector2(0, -84), b + Vector2(50, -42), RED, 3.0, 71)
 	var door := Rect2(b + Vector2(-15, -38), Vector2(30, 38))
 	draw_rect(door, Color(PENCIL, 0.75))
 	sk_rect(door, PENCIL, 2.0, 72)
-	# bandeirinha
+	# little flag
 	sk_line(b + Vector2(0, -84), b + Vector2(0, -112), PENCIL, 2.0, 73)
 	var wave := sin(time * 5.0) * 3.0
 	draw_colored_polygon(PackedVector2Array([b + Vector2(0, -112), b + Vector2(22, -106 + wave), b + Vector2(0, -98)]), Color(RED, 0.8))
@@ -182,7 +182,7 @@ func _draw_sheep(s: Dictionary, p: Vector2, hov: bool) -> void:
 				var sw := sin(ph + k * PI) * 4.0 if job == FlockGame.Job.WALK else 0.0
 				sk_line(Vector2(lx, -12 - bob), Vector2(lx + sw * d, 0), ink, 2.0, sd + 10 + k)
 		sk_oval(Vector2(0, -20 - bob), Vector2(15, 10), ink, 2.0, sd, fill)
-		# caracóis da lã
+		# wool curls
 		for k in 3:
 			draw_arc(Vector2(-7 + k * 6, -21 - bob), 3.0, PI * 0.2, PI * 1.6, 6, Color(PENCIL, a * 0.6), 1.2)
 		var hp := Vector2(d * 15, -24 - bob)

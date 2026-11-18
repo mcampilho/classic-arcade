@@ -1,7 +1,7 @@
 extends ValeSkin
-## Aguarela: cada ecrã é pintado como a ilustração de um livro de contos — manchas de aguarela
-## sobre papel, árvores e rochas com traço a tinta castanha, água em camadas azuis — e um HUD
-## escrito à mão na margem do papel.
+## Watercolour: each screen is painted like a storybook illustration — watercolour washes
+## on paper, trees and rocks outlined in brown ink, water in blue layers — and a HUD
+## hand-written in the paper margin.
 
 const PAPER := Color("f4ecd8")
 const INK := Color("4a3426")
@@ -41,7 +41,7 @@ func _setup() -> void:
 
 
 func _build_sfx() -> void:
-	# instrumentos suaves: flauta (seno) e harpa (triângulo com decaimento)
+	# soft instruments: flute (sine) and harp (decaying triangle)
 	sfx.step = Synth.tone(0.0, 0.03, {"wave": "noise", "volume": 0.04, "lowpass": 0.15, "decay": 60.0})
 	sfx.swing = Synth.tone(0.0, 0.14, {"wave": "noise", "volume": 0.14, "lowpass": 0.35, "decay": 15.0})
 	sfx.hit = Synth.tone(330.0, 0.12, {"wave": "triangle", "freq_end": 220.0, "volume": 0.2, "decay": 12.0})
@@ -98,7 +98,7 @@ func _draw_back() -> void:
 	draw_texture_rect(paper, Rect2(0, 0, 1280, 720), true)
 
 
-## Mancha de aguarela: vários círculos sobrepostos com transparência e bordo mais escuro.
+## Watercolour wash: several overlapping transparent circles with a darker edge.
 func _wash(ci: CanvasItem, c: Vector2, r: float, col: Color, rng: RandomNumberGenerator, a := 0.35) -> void:
 	for i in 3:
 		var o := Vector2(rng.randf_range(-r, r), rng.randf_range(-r, r)) * 0.25
@@ -116,7 +116,7 @@ func _paint_room(ci: CanvasItem, tl: Array[String], dungeon: bool) -> void:
 	var rng := RandomNumberGenerator.new()
 	ci.draw_rect(Rect2(Vector2.ZERO, FIELD), PAPER)
 	ci.draw_texture_rect(paper, Rect2(Vector2.ZERO, FIELD), true)
-	# fundo
+	# background
 	ci.draw_rect(Rect2(Vector2.ZERO, FIELD), Color(Color("e8dcc4") if dungeon else GREEN[2], 0.35))
 	for y in tl.size():
 		var row: String = tl[y]
@@ -137,7 +137,7 @@ func _paint_room(ci: CanvasItem, tl: Array[String], dungeon: bool) -> void:
 				_wash(ci, c, 36.0, OCHRE, rng, 0.25)
 			elif rng.randf() < 0.35:
 				_wash(ci, c + Vector2(rng.randf_range(-20, 20), rng.randf_range(-20, 20)), 56.0, GREEN[rng.randi() % 4], rng, 0.18)
-	# objetos
+	# objects
 	for y in tl.size():
 		var row: String = tl[y]
 		for x in row.length():
@@ -210,7 +210,7 @@ func _draw_frame() -> void:
 	draw_texture_rect(paper, Rect2(0, 0, ORIGIN.x, 720), true)
 	draw_texture_rect(paper, Rect2(ORIGIN.x + FIELD.x, 0, 1280 - ORIGIN.x - FIELD.x, 720), true)
 	draw_texture_rect(paper, Rect2(0, 0, 1280, ORIGIN.y), true)
-	# moldura de traço à mão
+	# hand-drawn frame
 	var r := Rect2(ORIGIN, FIELD).grow(4)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 3
@@ -234,14 +234,14 @@ func label(text: String, p: Vector2, size: int, c: Color, align := HORIZONTAL_AL
 
 func _draw_hud() -> void:
 	var g := game
-	label(I18n.t("Espada do Vale"), Vector2(132, 32), 26, INK)
-	label(I18n.t("a masmorra do guardião") if g.in_dungeon else I18n.t("o vale"), Vector2(132, 62), 18, Color(INK, 0.7))
+	label(I18n.t("Sword of the Valley"), Vector2(132, 32), 26, INK)
+	label(I18n.t("the guardian's dungeon") if g.in_dungeon else I18n.t("the valley"), Vector2(132, 62), 18, Color(INK, 0.7))
 	draw_hearts(Vector2(470, 22), Color.WHITE, Color(1, 1, 1, 0.25), 30.0)
 	draw_texture_rect(tex.coin, Rect2(760, 18, 18, 24), false)
 	label("%d" % g.coins, Vector2(786, 40), 22, INK)
 	draw_texture_rect(tex.key, Rect2(840, 16, 18, 26), false)
 	label("%d" % g.keys, Vector2(866, 40), 22, INK)
-	label(I18n.t("%d pontos") % g.score, Vector2(930, 40), 20, INK)
+	label(I18n.t("%d points") % g.score, Vector2(930, 40), 20, INK)
 	draw_minimap(Vector2(1160, 100), Vector2(26, 20), Color(GREEN[3], 0.6), Color(INK, 0.15), RED)
 	for i in mini(g.lives - 1, 4):
 		draw_texture_rect(tex.hero_down0, Rect2(1166 + i * 26, 190, 24, 28), false)

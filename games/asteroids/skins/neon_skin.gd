@@ -1,6 +1,6 @@
 extends AsteroidsSkin
-## Neon: asteroides de luz em cores elétricas, rasto do motor, tiros com cauda, faíscas,
-## ondas de choque, ecrã a tremer e pontos a flutuar.
+## Neon: light asteroids in electric colours, engine trail, shots with tails, sparks,
+## shock waves, screen shake and floating points.
 
 const BG_TOP := Color("0a0320")
 const BG_BOTTOM := Color("1b0639")
@@ -81,7 +81,7 @@ func rock_color(r: Dictionary) -> Color:
 	return ROCK_COLORS[int(r.tint * ROCK_COLORS.size()) % ROCK_COLORS.size()]
 
 
-# ---------------------------------------------------------------- eventos
+# ---------------------------------------------------------------- events
 
 func _on_match_started() -> void:
 	sparks.clear()
@@ -136,7 +136,7 @@ func _burst(pos: Vector2, c: Color, n: int, speed: float) -> void:
 		sparks.append({"pos": pos, "vel": Vector2.from_angle(randf() * TAU) * randf_range(speed * 0.2, speed), "life": life, "max": life, "color": c})
 
 
-# ---------------------------------------------------------------- animação
+# ---------------------------------------------------------------- animation
 
 func _tick(dt: float) -> void:
 	time += dt
@@ -170,7 +170,7 @@ func _tick(dt: float) -> void:
 	fx.queue_redraw()
 
 
-# ---------------------------------------------------------------- desenho
+# ---------------------------------------------------------------- drawing
 
 func _draw() -> void:
 	var a := Vector2(-80, -80)
@@ -184,7 +184,7 @@ func _draw() -> void:
 	for s in stars:
 		var tw := 0.5 + 0.5 * sin(time * 2.0 + s.x)
 		draw_rect(Rect2(s.x, s.y, 2, 2), Color(0.8, 0.85, 1.0, s.z * (0.3 + 0.4 * tw)))
-	# interior escuro dos asteroides (o contorno brilhante é desenhado na camada aditiva)
+	# dark inside of the asteroids (the bright outline is drawn on the additive layer)
 	for r in game.rocks:
 		for off in wrap_offsets(r.pos, r.r):
 			draw_colored_polygon(game.rock_points(r, off), Color(rock_color(r).darkened(0.75), 0.85))

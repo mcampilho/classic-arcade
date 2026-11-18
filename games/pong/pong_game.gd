@@ -1,8 +1,8 @@
 class_name PongGame
 extends Node2D
-## Lógica do Pong, independente do visual.
-## O desenho e os sons ficam a cargo de um "skin" (PongSkin), que reage aos sinais abaixo.
-## Assim as três versões (Clássico, Neon, Papel & Tinta) partilham exatamente a mesma jogabilidade.
+## Pong logic, independent of the visuals.
+## Drawing and sounds are done by a "skin" (PongSkin), which reacts to the signals below.
+## So the three versions (Classic, Neon, Paper & Ink) share exactly the same gameplay.
 
 signal match_started
 signal served
@@ -16,22 +16,22 @@ enum State { SERVE, PLAY, OVER }
 
 const FIELD := Vector2(1280, 720)
 const PADDLE_SIZE := Vector2(16, 96)
-const PADDLE_X := 64.0          # distância do centro da raquete à margem
+const PADDLE_X := 64.0          # distance from the paddle centre to the edge
 const BALL_SIZE := 16.0
-const PADDLE_SPEED := 760.0     # teclado / comando (px/s)
-const TOUCH_SPEED := 2600.0     # ecrã tátil segue o dedo (como o botão rotativo original)
-const WIN_SCORE := 11           # como no original de 1972
+const PADDLE_SPEED := 760.0     # keyboard / gamepad (px/s)
+const TOUCH_SPEED := 2600.0     # the touch screen follows the finger (like the original rotary knob)
+const WIN_SCORE := 11           # as in the 1972 original
 const SERVE_DELAY := 1.0
-# Tal como no Pong original, a bola acelera após 4 e 12 toques na mesma jogada.
+# As in the original Pong, the ball speeds up after 4 and 12 hits in the same rally.
 const SPEEDS := [520.0, 680.0, 860.0]
-# A raquete divide-se em 8 segmentos; cada um devolve a bola com um ângulo fixo.
+# The paddle is split into 8 segments; each returns the ball at a fixed angle.
 const BOUNCE_ANGLES := [-55.0, -40.0, -25.0, -10.0, 10.0, 25.0, 40.0, 55.0]
-# speed: velocidade da raquete · react: tempo de reação · error: imprecisão no alvo
-# miss: probabilidade de, numa jogada, a CPU calcular mal e falhar a bola
+# speed: paddle speed · react: reaction time · error: aiming inaccuracy
+# miss: chance that, in a rally, the CPU misjudges and misses the ball
 const AI_PARAMS := [
-	{"speed": 430.0, "react": 0.30, "error": 40.0, "miss": 0.22},   # Fácil
+	{"speed": 430.0, "react": 0.30, "error": 40.0, "miss": 0.22},   # Easy
 	{"speed": 600.0, "react": 0.16, "error": 30.0, "miss": 0.11},   # Normal
-	{"speed": 820.0, "react": 0.07, "error": 18.0, "miss": 0.045},  # Difícil
+	{"speed": 820.0, "react": 0.07, "error": 18.0, "miss": 0.045},  # Hard
 ]
 
 var mode := Mode.DEMO
@@ -50,7 +50,7 @@ var winner := -1
 var _serve_timer := 0.0
 var _serve_dir := 1.0
 var _over_timer := 0.0
-var _touch_side := {}                 # índice do dedo -> lado
+var _touch_side := {}                 # finger index -> side
 var _touch_target: Array = [null, null]
 var _ai_goal := PackedFloat32Array([FIELD.y / 2, FIELD.y / 2])
 var _ai_delay := PackedFloat32Array([0.0, 0.0])
@@ -103,12 +103,12 @@ func is_ai(side: int) -> bool:
 	return mode == Mode.DEMO or (mode == Mode.VS_CPU and side == 1)
 
 
-# ---------------------------------------------------------------- ciclo
+# ---------------------------------------------------------------- loop
 
 func _process(delta: float) -> void:
 	if paused:
 		return
-	# Sub-passos fixos: colisões fiáveis mesmo com a bola rápida ou FPS baixos.
+	# Fixed sub-steps: reliable collisions even with a fast ball or low FPS.
 	var steps := maxi(1, ceili(delta * 240.0))
 	var dt := delta / steps
 	for i in steps:
@@ -163,7 +163,7 @@ func _move_ball(dt: float) -> void:
 		var r := paddle_rect(side)
 		if not ball_rect().intersects(r):
 			continue
-		# Só conta se a bola vinha da frente da raquete (não por trás).
+		# Only counts if the ball came from the front of the paddle (not from behind).
 		var came_from_front := prev.x - half >= r.end.x - 2.0 if side == 0 else prev.x + half <= r.position.x + 2.0
 		if came_from_front:
 			_bounce(side, r)
@@ -190,7 +190,7 @@ func _bounce(side: int, r: Rect2) -> void:
 
 func _score(side: int) -> void:
 	scores[side] += 1
-	_serve_dir = -1.0 if side == 1 else 1.0  # serve para quem sofreu o ponto
+	_serve_dir = -1.0 if side == 1 else 1.0  # serves towards whoever lost the point
 	point_scored.emit(side)
 	if scores[side] >= WIN_SCORE:
 		state = State.OVER
@@ -202,7 +202,7 @@ func _score(side: int) -> void:
 		_serve_timer = SERVE_DELAY
 
 
-# ---------------------------------------------------------------- raquetes
+# ---------------------------------------------------------------- paddles
 
 func _update_paddles(dt: float) -> void:
 	var limit := PADDLE_SIZE.y / 2
@@ -214,7 +214,7 @@ func _update_paddles(dt: float) -> void:
 			y = move_toward(y, float(_touch_target[side]), TOUCH_SPEED * dt)
 		else:
 			var axis := Input.get_axis("p1_up", "p1_down") if side == 0 else Input.get_axis("p2_up", "p2_down")
-			if mode == Mode.VS_CPU:  # sozinho, qualquer conjunto de teclas serve
+			if mode == Mode.VS_CPU:  # playing alone, either set of keys works
 				axis = clampf(axis + Input.get_axis("p2_up", "p2_down"), -1.0, 1.0)
 			y += axis * PADDLE_SPEED * dt
 		paddle_y[side] = clampf(y, limit, FIELD.y - limit)
@@ -237,7 +237,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _side_for_touch(pos: Vector2) -> int:
-	# Zona do botão de pausa (topo ao centro) não mexe nas raquetes.
+	# The pause button area (top centre) does not move the paddles.
 	if absf(pos.x - FIELD.x / 2) < 60.0 and pos.y < 90.0:
 		return -1
 	if mode == Mode.VS_HUMAN:
@@ -271,7 +271,7 @@ func _ai_axis(side: int, dt: float) -> float:
 	return clampf(diff / 30.0, -1.0, 1.0)
 
 
-## Prevê onde a bola vai cruzar a raquete, contando com os ressaltos nas paredes.
+## Predicts where the ball will cross the paddle, counting the wall bounces.
 func _predict_y(side: int) -> float:
 	var half := BALL_SIZE / 2
 	var target_x := paddle_x(side) + (PADDLE_SIZE.x / 2 + half) * (1.0 if side == 0 else -1.0)

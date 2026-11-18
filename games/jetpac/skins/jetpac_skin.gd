@@ -1,7 +1,7 @@
 class_name JetpacSkin
-extends Node2D
-## Base dos estilos do Jetpac: desenhos originais (astronauta, foguetes, combustível, gemas e
-## oito tipos de alienígenas), explosões e sons. Os estilos escolhem paletas, cenário e HUD.
+extends SkinBase
+## Base of the Jetpac styles: original drawings (astronaut, rockets, fuel, gems and
+## eight kinds of aliens), explosions and sounds. The styles choose palettes, scenery and HUD.
 
 const S := JetpacGame.SCALE
 
@@ -103,13 +103,10 @@ const ALIENS := {
 }
 
 var game: JetpacGame
-var sfx := {}
 var tex := {}
 var time := 0.0
-var booms: Array[Dictionary] = []      # pos (unidades), life, max, color, size
+var booms: Array[Dictionary] = []      # pos (units), life, max, color, size
 var popups: Array[Dictionary] = []
-var _players: Array[AudioStreamPlayer] = []
-var _next_player := 0
 var _thrust: AudioStreamPlayer
 var _rocket_model := -1
 var _alien_level := -1
@@ -117,10 +114,7 @@ var _alien_level := -1
 
 func attach(g: JetpacGame) -> void:
 	game = g
-	for i in 10:
-		var p := AudioStreamPlayer.new()
-		add_child(p)
-		_players.append(p)
+	add_voices(10)
 	_thrust = AudioStreamPlayer.new()
 	_thrust.volume_db = -12.0
 	add_child(_thrust)
@@ -138,25 +132,14 @@ func attach(g: JetpacGame) -> void:
 	g.player_died.connect(_on_player_died)
 	g.takeoff.connect(func() -> void: play("takeoff"))
 	g.extra_life.connect(func() -> void: play("extra"))
-	var cached: Variant = Synth.cache_get(get_script().resource_path)
-	if cached != null:
-		sfx = cached
-	else:
-		_build_sfx()
-		Synth.cache_set(get_script().resource_path, sfx)
+	load_sfx()
 	_setup()
 	_refresh()
 
 
-func play(id: String, pitch := 1.0, volume_db := 0.0) -> void:
-	if game == null or game.mode == JetpacGame.Mode.DEMO or not sfx.has(id):
-		return
-	var p := _players[_next_player]
-	_next_player = (_next_player + 1) % _players.size()
-	p.stream = sfx[id]
-	p.pitch_scale = pitch
-	p.volume_db = volume_db
-	p.play()
+## The menu demo is silent.
+func _is_silent() -> bool:
+	return game == null or game.mode == JetpacGame.Mode.DEMO
 
 
 func _process(delta: float) -> void:
@@ -191,7 +174,7 @@ func thrusting() -> bool:
 	return game.state == JetpacGame.State.PLAY and game.vel.y < -1.0
 
 
-## Volta a criar as texturas que dependem do nível (foguete e alienígenas).
+## Recreates the level-dependent textures (rocket and aliens).
 func _refresh() -> void:
 	if game.rocket_model() != _rocket_model:
 		_rocket_model = game.rocket_model()
@@ -226,7 +209,7 @@ func man_frame() -> String:
 	return "stand"
 
 
-## Desenha uma textura com a base em `feet` (unidades), centrada.
+## Draws a texture with its base at `feet` (units), centred.
 func draw_feet(t: Texture2D, feet: Vector2, flip := false, modulate_c := Color.WHITE) -> void:
 	var size := t.get_size() * S / tex_scale()
 	var pos := px(feet) - Vector2(size.x / 2, size.y)
@@ -245,7 +228,7 @@ func draw_center(t: Texture2D, c: Vector2, flip := false, modulate_c := Color.WH
 		draw_texture_rect(t, Rect2(pos, size), false, modulate_c)
 
 
-## Texturas do astronauta, do combustível e das gemas.
+## Textures of the astronaut, the fuel and the gems.
 func build_common(man_pal: Dictionary, fuel_pal: Dictionary, gem_cols: Array) -> void:
 	for f: String in MAN_LEGS:
 		tex["man_" + f] = make_tex(man_rows(f), man_pal)
@@ -264,7 +247,7 @@ func make_tex(rows: Array, pal: Dictionary) -> Texture2D:
 	return PixelArt.texture(rows, pal, 1)
 
 
-# ---------------------------------------------------------------- desenho
+# ---------------------------------------------------------------- drawing
 
 func _draw() -> void:
 	if game == null:
@@ -288,7 +271,7 @@ func _draw_rocket() -> void:
 	var n := g.rocket_stage if g.state != JetpacGame.State.TAKEOFF and g.state != JetpacGame.State.LANDING else 3
 	for i in n:
 		draw_feet(parts[i], base - Vector2(0, i * 16))
-	# combustível: o foguete enche-se de cor de baixo para cima
+	# fuel: the rocket fills with colour from the bottom up
 	if g.rocket_stage >= 3 and g.fuel > 0 and g.state == JetpacGame.State.PLAY:
 		var h := 48.0 * g.fuel / JetpacGame.FUEL_NEEDED
 		var r := Rect2(px(base + Vector2(-5, -h - 2)), Vector2(10, h) * S)
@@ -333,7 +316,7 @@ func _draw_lasers() -> void:
 		_hline(x0, x1, l.y, Color(c, a))
 
 
-## Linha horizontal com a volta ao ecrã.
+## Horizontal line with screen wrap.
 func _hline(x0: float, x1: float, y: float, c: Color, w := 1.0) -> void:
 	var lo := minf(x0, x1)
 	var hi := maxf(x0, x1)
@@ -382,13 +365,9 @@ func _draw_booms() -> void:
 			draw_rect(Rect2(c + d - Vector2(s, s) / 2, Vector2(s, s)), Color(b.color, 1.0 - k))
 
 
-# ---------------------------------------------------------------- para os estilos reescreverem
+# ---------------------------------------------------------------- for the styles to override
 
 func _setup() -> void:
-	pass
-
-
-func _build_sfx() -> void:
 	pass
 
 
@@ -431,10 +410,6 @@ func flame_color() -> Color:
 
 func laser_colors() -> Array:
 	return [Color.WHITE, Color.CYAN, Color.YELLOW, Color.MAGENTA]
-
-
-func ui_palette() -> Dictionary:
-	return UI.LAUNCHER_PALETTE
 
 
 func _on_match_started() -> void:

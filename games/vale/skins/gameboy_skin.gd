@@ -1,6 +1,6 @@
 extends "res://games/vale/skins/classic_skin.gd"
-## Consola Portátil: os mesmos desenhos em apenas 4 tons de verde, com a grelha de píxeis do ecrã
-## de cristal líquido e a moldura cinzenta das consolas portáteis de 1989.
+## Handheld Console: the same drawings in just 4 shades of green, with the pixel grid of the
+## liquid-crystal screen and the grey frame of 1989 handheld consoles.
 
 const C0 := Color("0f380f")
 const C1 := Color("306230")
@@ -72,7 +72,7 @@ func _draw_frame() -> void:
 	draw_rect(Rect2(ORIGIN.x + FIELD.x, 0, 1280 - ORIGIN.x - FIELD.x, 720), body)
 	draw_rect(Rect2(0, 0, 1280, ORIGIN.y), body)
 	draw_rect(Rect2(ORIGIN - Vector2(6, 6), FIELD + Vector2(12, 12)), Color("5a5a6a"), false, 6.0)
-	# botões decorativos
+	# decorative buttons
 	draw_circle(Vector2(1215, 300), 22, Color("8a2a5a"))
 	draw_circle(Vector2(1240, 250), 22, Color("8a2a5a"))
 	draw_rect(Rect2(30, 290, 60, 20), Color("2a2a32"))
@@ -86,10 +86,10 @@ func _draw_hud() -> void:
 	PixelFont.draw(self, "X%d" % g.coins, 350, 18, 3, C0)
 	draw_texture_rect(tex.key, Rect2(300, 46, 18, 26), false)
 	PixelFont.draw(self, "X%d" % g.keys, 350, 50, 3, C0)
-	PixelFont.draw(self, I18n.t("-VIDA-"), 840, 10, 3, C0)
+	PixelFont.draw(self, I18n.t("-LIFE-"), 840, 10, 3, C0)
 	draw_hearts(Vector2(760, 40), Color.WHITE, Color(1, 1, 1, 0.3), 28.0)
 	PixelFont.draw(self, "%06d" % g.score, 560, 18, 3, C0)
-	PixelFont.draw(self, I18n.t("MASMORRA") if g.in_dungeon else I18n.t("VALE"), 560, 50, 2, C1)
+	PixelFont.draw(self, I18n.t("DUNGEON") if g.in_dungeon else I18n.t("VALLEY"), 560, 50, 2, C1)
 	for i in mini(g.lives - 1, 4):
 		draw_texture_rect(tex.hero_down0, Rect2(1172, 110 + i * 40, 30, 35), false)
 

@@ -1,6 +1,6 @@
 extends InvadersSkin
-## Neon: invasores de luz que pulsam ao ritmo da marcha, faíscas, ondas de choque,
-## pontos a flutuar e uma linha de baixo sintetizada no lugar das 4 notas originais.
+## Neon: light invaders pulsing to the march, sparks, shock waves,
+## floating points and a synth bass line in place of the original 4 notes.
 
 const BG_TOP := Color("0a0320")
 const BG_BOTTOM := Color("1b0639")
@@ -18,8 +18,8 @@ var beat := 0.0
 var shake := 0.0
 var flash := 0.0
 var flash_color := Color.WHITE
-var tex := {}        # texturas nítidas
-var glow := {}       # texturas desfocadas (brilho)
+var tex := {}        # sharp textures
+var glow := {}       # blurred textures (glow)
 var sparks: Array[Dictionary] = []
 var rings: Array[Dictionary] = []
 var floaters: Array[Dictionary] = []
@@ -84,7 +84,7 @@ func _build_sfx() -> void:
 	sfx.extra = Synth.concat(up)
 
 
-# ---------------------------------------------------------------- eventos
+# ---------------------------------------------------------------- events
 
 func _on_match_started() -> void:
 	super()
@@ -147,7 +147,7 @@ func _burst(pos: Vector2, c: Color, n: int) -> void:
 		sparks.append({"pos": pos, "vel": Vector2.from_angle(randf() * TAU) * randf_range(30.0, 160.0), "life": life, "max": life, "color": c})
 
 
-# ---------------------------------------------------------------- animação
+# ---------------------------------------------------------------- animation
 
 func _tick(dt: float) -> void:
 	time += dt
@@ -178,7 +178,7 @@ func _tick(dt: float) -> void:
 	fx.queue_redraw()
 
 
-# ---------------------------------------------------------------- desenho
+# ---------------------------------------------------------------- drawing
 
 func _draw() -> void:
 	var a := Vector2(-80, -80)
@@ -195,7 +195,7 @@ func _draw() -> void:
 	_draw_sprites(self, false)
 
 
-## Os sprites são desenhados duas vezes: nítidos na camada normal e desfocados na camada aditiva.
+## Sprites are drawn twice: sharp on the normal layer and blurred on the additive layer.
 func _draw_sprites(ci: CanvasItem, glowing: bool) -> void:
 	var g := game
 	var k := 1.0 + beat * 0.6
@@ -227,7 +227,7 @@ func _draw_fx() -> void:
 	var g := game
 	if flash > 0.0:
 		fx.draw_rect(Rect2(-80, -80, 1440, 880), Color(flash_color, flash * 0.14))
-	# chão
+	# ground
 	var gy := px(Vector2(0, InvadersGame.GROUND_Y))
 	fx.draw_rect(Rect2(gy, Vector2(InvadersGame.FIELD.x * S, 3)), Color(PLAYER_C, 0.7))
 	fx.draw_rect(Rect2(gy - Vector2(0, 3), Vector2(InvadersGame.FIELD.x * S, 9)), Color(PLAYER_C, 0.12))
@@ -268,17 +268,17 @@ func _draw_panels() -> void:
 	var rx := panel_right_x()
 	var label_c := Color("8a5cff").lerp(Color.WHITE, 0.3)
 	var a0 := 1.0 if (g.current == 0 or g.players.size() == 1) else 0.4
-	_text(I18n.t("JOGADOR 1"), lx, 80, label_c, 20, a0)
+	_text(I18n.t("PLAYER 1"), lx, 80, label_c, 20, a0)
 	_text(str(g.players[0].score), lx, 140, Color("19f0ff"), 52, a0)
-	_text(I18n.t("RECORDE"), lx, 230, label_c, 20, 0.9)
+	_text(I18n.t("HI-SCORE"), lx, 230, label_c, 20, 0.9)
 	_text(str(maxi(g.best, g.players[0].score)), lx, 280, Color("ffc53d"), 40, 0.9)
 	if g.players.size() > 1:
 		var a1 := 1.0 if g.current == 1 else 0.4
-		_text(I18n.t("JOGADOR 2"), rx, 80, label_c, 20, a1)
+		_text(I18n.t("PLAYER 2"), rx, 80, label_c, 20, a1)
 		_text(str(g.players[1].score), rx, 140, Color("ff2bd6"), 52, a1)
-	_text(I18n.t("VAGA"), rx, 230, label_c, 20, 0.9)
+	_text(I18n.t("WAVE"), rx, 230, label_c, 20, 0.9)
 	_text(str(g.player().wave), rx, 280, Color("3dffa0"), 40, 0.9)
-	_text(I18n.t("VIDAS"), lx, 560, label_c, 20, 0.9)
+	_text(I18n.t("LIVES"), lx, 560, label_c, 20, 0.9)
 	var lives: int = maxi(g.player().lives, 0)
 	for i in mini(lives, 6):
 		var u := (Vector2(lx - (mini(lives, 6) - 1) * 24.0 + i * 48.0 - 19.5, 590) - InvadersGame.ORIGIN) / S

@@ -1,6 +1,6 @@
 extends PongSkin
-## Neon: luz brilhante sobre fundo escuro, rasto da bola, faíscas, ondas de choque,
-## ecrã a tremer e sons sintetizados que sobem de tom à medida que a jogada aquece.
+## Neon: bright light on a dark background, ball trail, sparks, shock waves,
+## screen shake and synth sounds that rise in pitch as the rally heats up.
 
 const BG_TOP := Color("0a0320")
 const BG_BOTTOM := Color("1b0639")
@@ -10,7 +10,7 @@ const NET := Color(0.75, 0.55, 1.0)
 const COLORS := [Color("19f0ff"), Color("ff2bd6")]
 const BALL_WHITE := Color("fff4d6")
 
-var fx: Node2D            # camada com mistura aditiva para o brilho
+var fx: Node2D            # additive-blend layer for the glow
 var font: Font
 var time := 0.0
 var shake := 0.0
@@ -52,7 +52,7 @@ func _build_sfx() -> void:
 	sfx.win = Synth.concat(win)
 
 
-# ---------------------------------------------------------------- eventos
+# ---------------------------------------------------------------- events
 
 func _on_match_started() -> void:
 	ball_color = BALL_WHITE
@@ -104,7 +104,7 @@ func _burst(pos: Vector2, dir: Vector2, c: Color, count: int) -> void:
 		})
 
 
-# ---------------------------------------------------------------- animação
+# ---------------------------------------------------------------- animation
 
 func _tick(dt: float) -> void:
 	time += dt
@@ -136,7 +136,7 @@ func _tick(dt: float) -> void:
 	fx.queue_redraw()
 
 
-# ---------------------------------------------------------------- desenho
+# ---------------------------------------------------------------- drawing
 
 func _draw() -> void:
 	var f := PongGame.FIELD
@@ -157,7 +157,7 @@ func _draw_fx() -> void:
 	if flash > 0.0:
 		fx.draw_rect(Rect2(Vector2(-80, -80), f + Vector2(160, 160)), Color(flash_color, flash * 0.16))
 
-	# paredes e rede
+	# walls and net
 	for i in 2:
 		var y := 0.0 if i == 0 else f.y - 4.0
 		var k := snappedf(wall_glow[i], 0.05)
@@ -167,12 +167,12 @@ func _draw_fx() -> void:
 		_glow(fx, Rect2(f.x / 2 - 3, ny, 6, 18), NET, 8, 3, 0.45)
 		ny += 34.0
 
-	# marcador
+	# score
 	for side in 2:
 		var size := int(110 + 30 * score_pop[side])
 		_glow_text(str(game.scores[side]), f.x / 2 + (-170.0 if side == 0 else 170.0), 130.0, COLORS[side], size)
 
-	# rasto
+	# trail
 	for i in trail.size():
 		var t := float(i + 1) / trail.size()
 		fx.draw_circle(trail[i], game.BALL_SIZE * 0.55 * t, Color(ball_color, 0.28 * t), true, -1.0, true)

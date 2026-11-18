@@ -1,8 +1,8 @@
 extends PongSkin
-## Papel & Tinta (estilo próprio): um Pong jogado na margem de um caderno.
-## Raquetes e bola desenhadas a tinta com traço "a ferver" (animação a 9 fps, como desenho à mão),
-## salpicos de tinta que ficam no papel a cada toque, marcador a caneta com círculo vermelho nos pontos
-## e sons acústicos: madeira, lápis a riscar e um sino.
+## Paper & Ink (original style): a Pong played in the margin of a notebook.
+## Paddles and ball drawn in ink with a "boiling" line (9 fps animation, like hand drawing),
+## ink splashes left on the paper at each hit, pen score with a red circle around points
+## and acoustic sounds: wood, a scratching pencil and a bell.
 
 const PAPER := Color("f3ebd3")
 const PAPER_EDGE := Color(0.83, 0.75, 0.56, 0.0)
@@ -54,7 +54,7 @@ func _build_sfx() -> void:
 	sfx.win = Synth.concat(notes)
 
 
-# ---------------------------------------------------------------- eventos
+# ---------------------------------------------------------------- events
 
 func _on_match_started() -> void:
 	stains.clear()
@@ -84,7 +84,7 @@ func _on_point_scored(side: int) -> void:
 	trail.clear()
 
 
-# ---------------------------------------------------------------- animação
+# ---------------------------------------------------------------- animation
 
 func _tick(dt: float) -> void:
 	_boil_t += dt
@@ -104,7 +104,7 @@ func _tick(dt: float) -> void:
 		trail.pop_front()
 
 
-# ---------------------------------------------------------------- desenho
+# ---------------------------------------------------------------- drawing
 
 func _draw() -> void:
 	var f := PongGame.FIELD
@@ -116,14 +116,14 @@ func _draw() -> void:
 		draw_line(Vector2(0, y), Vector2(f.x, y), RULE, 1.5)
 	for x in [34.0, 40.0, f.x - 40.0, f.x - 34.0]:
 		draw_line(Vector2(x, 0), Vector2(x, f.y), MARGIN, 1.5)
-	# mancha de café (porque todo o caderno tem uma)
+	# coffee stain (because every notebook has one)
 	draw_arc(Vector2(f.x - 190, f.y - 120), 64, 0.0, TAU, 72, COFFEE, 7.0, true)
 	draw_arc(Vector2(f.x - 186, f.y - 117), 59, 0.4, 5.6, 64, Color(COFFEE, 0.06), 4.0, true)
 
 	for s in stains:
 		draw_colored_polygon(s.pts, s.color)
 
-	# rede a lápis
+	# pencil net
 	var rng := _rng(1000)
 	var ny := 10.0
 	while ny < f.y:
@@ -145,7 +145,7 @@ func _draw() -> void:
 
 
 func _draw_edges(f: Vector2) -> void:
-	# escurece ligeiramente as margens da folha
+	# slightly darkens the page margins
 	var e := 70.0
 	var c0 := PAPER_EDGE_DARK
 	var c1 := PAPER_EDGE
@@ -184,7 +184,7 @@ func _ink_rect(r: Rect2, side: int) -> void:
 		for j in 4:
 			pts.append(a.lerp(b, j / 4.0) + Vector2(rng.randf_range(-1.4, 1.4), rng.randf_range(-1.4, 1.4)))
 	draw_colored_polygon(pts, Color(INK, 0.92))
-	# tracejado de luz para parecer preenchido à mão
+	# light hatching so it looks filled in by hand
 	var yy := r.position.y + 12.0
 	while yy < r.end.y - 4.0:
 		draw_line(Vector2(r.position.x + 3, yy + 5), Vector2(r.end.x - 3, yy), Color(1, 1, 1, 0.13), 1.5)

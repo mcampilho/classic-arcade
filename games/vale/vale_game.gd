@@ -1,9 +1,9 @@
 class_name ValeGame
 extends Node2D
-## Espada do Vale — aventura original de vista aérea ao estilo de 1986: um vale de 4 x 3 ecrãs e
-## uma masmorra de 6 salas. O herói luta com a espada, corta arbustos, junta moedas e chaves,
-## abre portas trancadas e enfrenta o Guardião de Pedra para recuperar o Cristal do Vale.
-## Coordenadas em casas (16 x 10 por ecrã).
+## Sword of the Valley — original top-down adventure in the 1986 style: a valley of 4 x 3 screens and
+## a 6-room dungeon. The hero fights with the sword, cuts bushes, collects coins and keys,
+## opens locked doors and faces the Stone Guardian to recover the Valley Crystal.
+## Coordinates in tiles (16 x 10 per screen).
 
 signal match_started
 signal room_changed(dungeon: bool, room: Vector2i, dir: Vector2i)
@@ -33,8 +33,8 @@ const ENEMY_HP := {"slime": 1, "bat": 1, "goblin": 2, "knight": 3, "boss": 12}
 const ENEMY_SPEED := {"slime": 2.2, "bat": 3.0, "goblin": 1.8, "knight": 2.0, "boss": 1.6}
 const POINTS := {"slime": 20, "bat": 30, "goblin": 50, "knight": 80, "boss": 1000}
 
-## Ecrãs (16 x 10): . relva, , caminho, F flores, T árvore, R rocha, W água, B arbusto,
-## D gruta, S muro, f chão, L porta trancada, X bloco; s/b/g/k/O inimigos; C moeda; h coração.
+## Screens (16 x 10): . grass, , path, F flowers, T tree, R rock, W water, B bush,
+## D cave, S wall, f floor, L locked door, X block; s/b/g/k/O enemies; C coin; h heart.
 const OVERWORLD := {
 	Vector2i(0, 0): [
 		"TTTTTTTTTTTTTTTT",
@@ -265,8 +265,8 @@ var best := 0
 
 var in_dungeon := false
 var room := START_ROOM
-var tiles: Array[String] = []          # cópia editável da sala atual
-var prev_tiles: Array[String] = []     # sala anterior (para o deslizar do ecrã)
+var tiles: Array[String] = []          # editable copy of the current room
+var prev_tiles: Array[String] = []     # previous room (for the screen slide)
 var scroll_dir := Vector2i.ZERO
 var scroll_t := 0.0
 var enemies: Array[Dictionary] = []    # kind, pos, dir, hp, t, hurt, cool
@@ -277,7 +277,7 @@ var facing := Vector2i(0, 1)
 var moving := false
 var anim := 0.0
 var swing := 0.0
-var hearts := 6                         # meios-corações
+var hearts := 6                         # half-hearts
 var max_hearts := 6
 var coins := 0
 var keys := 0
@@ -286,7 +286,7 @@ var score := 0
 var invuln := 0.0
 var knock := Vector2.ZERO
 var timer := 0.0
-var taken := {}                         # objetos únicos já apanhados / portas abertas / salas limpas
+var taken := {}                         # unique items taken / doors opened / rooms cleared
 var crystal := false
 var _attack_buffer := 0.0
 var _touch_index := -1
@@ -370,7 +370,7 @@ static func _world(d: bool) -> Dictionary:
 	return DUNGEON if d else OVERWORLD
 
 
-# ---------------------------------------------------------------- partida e salas
+# ---------------------------------------------------------------- match and rooms
 
 func start(p_mode: Mode, p_lives := 3) -> void:
 	mode = p_mode
@@ -429,7 +429,7 @@ func _load_room() -> void:
 				_:
 					out += ch
 		tiles.append(out)
-	# a chave aparece quando a sala fica limpa (salas com chave)
+	# the key appears when the room is cleared (rooms with a key)
 	if cleared and _room_has_key() and not taken.has("K" + key):
 		drops.append({"pos": Vector2(7.5, 5.0), "kind": "key", "life": -1.0, "id": "K" + key})
 	if cleared and in_dungeon and room == Vector2i(0, 0) and not crystal:
@@ -468,7 +468,7 @@ func _enter_dungeon(on: bool) -> void:
 	room_changed.emit(in_dungeon, room, Vector2i.ZERO)
 
 
-# ---------------------------------------------------------------- ciclo
+# ---------------------------------------------------------------- loop
 
 func _process(delta: float) -> void:
 	if paused:
@@ -535,7 +535,7 @@ func _step(dt: float) -> void:
 					start(Mode.DEMO, 2)
 
 
-# ---------------------------------------------------------------- herói
+# ---------------------------------------------------------------- hero
 
 func _input_dir() -> Vector2i:
 	if is_ai():
@@ -547,7 +547,7 @@ func _input_dir() -> Vector2i:
 		y = _touch_dir.y
 	if absf(x) < 0.3 and absf(y) < 0.3:
 		return Vector2i.ZERO
-	# quatro direções, como no original
+	# four directions, as in the original
 	if absf(x) > absf(y):
 		return Vector2i(signi(int(signf(x))), 0)
 	return Vector2i(0, signi(int(signf(y))))
@@ -573,7 +573,7 @@ func _move_hero(dt: float) -> void:
 		swing = SWING_TIME
 		swung.emit()
 		_sword_hits()
-	# recuo ao ser atingido
+	# knock-back when hit
 	if knock.length() > 0.01:
 		var np := pos + knock * dt
 		if _box_free(np):
@@ -585,7 +585,7 @@ func _move_hero(dt: float) -> void:
 		facing = d
 		anim += dt
 		var v := Vector2(d) * SPEED * dt
-		# alinhar ao meio-caminho no eixo perpendicular (ajuda a passar entre obstáculos)
+		# snap to the half-tile on the perpendicular axis (helps slipping between obstacles)
 		if d.x != 0:
 			var target := roundf(pos.y * 2.0) / 2.0
 			pos.y = move_toward(pos.y, target, SPEED * dt * 0.6)
@@ -595,7 +595,7 @@ func _move_hero(dt: float) -> void:
 		var np := pos + v
 		if _box_free(np):
 			pos = np
-	# saídas do ecrã
+	# screen exits
 	if pos.x < 0.0:
 		_leave(Vector2i(-1, 0))
 	elif pos.x > W:
@@ -606,7 +606,7 @@ func _move_hero(dt: float) -> void:
 		_leave(Vector2i(0, 1))
 	if state != State.PLAY:
 		return
-	# gruta da masmorra e portas trancadas
+	# dungeon cave and locked doors
 	var cell := Vector2i(floori(pos.x), floori(pos.y))
 	if not in_dungeon and tile(cell.x, cell.y) == "D":
 		_enter_dungeon(true)
@@ -631,7 +631,7 @@ func _leave(dir: Vector2i) -> void:
 
 
 func _unlock(c: Vector2i) -> void:
-	# abre a porta inteira (todas as casas "L" ligadas)
+	# opens the whole door (all the connected "L" tiles)
 	var key := room_key()
 	for y in H:
 		for x in W:
@@ -662,7 +662,7 @@ func _sword_hits() -> void:
 			hit_enemy.emit(e.pos)
 			if e.hp <= 0:
 				_kill(e)
-	# arbustos
+	# bushes
 	for y in range(floori(r.position.y), floori(r.end.y) + 1):
 		for x in range(floori(r.position.x), floori(r.end.x) + 1):
 			if tile(x, y) == "B":
@@ -779,7 +779,7 @@ func _drops(dt: float) -> void:
 			drops.remove_at(i)
 
 
-# ---------------------------------------------------------------- inimigos
+# ---------------------------------------------------------------- enemies
 
 static func enemy_size(kind: String) -> Vector2:
 	match kind:
@@ -876,7 +876,7 @@ func _move_shots(dt: float) -> void:
 		return s.kind == "fire" or not solid_at(floori(p.x), floori(p.y)))
 
 
-# ---------------------------------------------------------------- entrada
+# ---------------------------------------------------------------- input
 
 func _unhandled_input(event: InputEvent) -> void:
 	if paused or is_ai():
@@ -885,7 +885,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		_attack_buffer = 0.15
 	if event.device == InputEvent.DEVICE_ID_EMULATION:
 		return
-	# Tátil: metade esquerda = joystick, metade direita = espada.
+	# Touch: left half = joystick, right half = sword.
 	if event is InputEventScreenTouch:
 		if event.pressed:
 			if event.position.x < 640.0:
@@ -911,12 +911,12 @@ func touch_stick() -> Variant:
 	return _touch_origin if _touch_index >= 0 else null
 
 
-# ---------------------------------------------------------------- CPU da demonstração
+# ---------------------------------------------------------------- demo CPU
 
 func _ai_think(delta: float) -> void:
 	_ai_t -= delta
 	ai.dir = Vector2i.ZERO
-	# atacar o inimigo mais próximo, alinhando-se com ele
+	# attack the nearest enemy, lining up with it
 	var target: Variant = null
 	var best_d := INF
 	for e in enemies:
@@ -937,7 +937,7 @@ func _ai_think(delta: float) -> void:
 		if not _box_free(np):
 			ai.dir = Vector2i(ai.dir.y, ai.dir.x)
 		return
-	# passear para outra sala (caminho mais curto até uma saída)
+	# wander to another room (shortest path to an exit)
 	if _ai_t <= 0.0 or _ai_path.is_empty():
 		_ai_t = randf_range(4.0, 7.0)
 		_ai_plan()
@@ -987,6 +987,6 @@ func _ai_plan() -> void:
 	while c2 != here:
 		_ai_path.push_front(c2)
 		c2 = prev[c2]
-	# sair mesmo do ecrã
+	# actually leave the screen
 	var out := goal + (Vector2i(-1, 0) if goal.x == 0 else (Vector2i(1, 0) if goal.x == W - 1 else (Vector2i(0, -1) if goal.y == 0 else Vector2i(0, 1))))
 	_ai_path.append(out)

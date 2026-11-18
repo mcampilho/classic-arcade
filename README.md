@@ -579,26 +579,32 @@ In every game: **Esc / P / Start** pauses; **F11** toggles fullscreen; on Androi
 ```
 core/                  shared by all games
   main.gd / main.tscn  launcher (game list and the "inspired by" panel)
+  game_shell.gd        shared frame of every game: menu, options, styles, pause, game over, high score, messages
+  skin_base.gd         shared base of the styles: audio voices, cached sounds and play()
   inspirations.gd      the classics that inspired each game, with a short history and Wikipedia link
   synth.gd             tiny synthesizer: every sound is generated in code
   ui.gd                menu theme generated from each style's palette
   pixel_font.gd        5x7 pixel font; pixel_art.gd: multicolour pixel drawings
   settings.gd          saved preferences (user://settings.cfg)
   i18n.gd              translations (I18n.t); the texts are in i18n/strings.json
+tests/run_tests.gd     automated tests (no add-ons): settings, translations, synthesizer, Pong rules
+                       and every game opening, playing, pausing, ending and going back to the menu
 games/<game>/
   <game>_game.gd       pure game logic (rules, physics, demo AI, input) — emits signals
-  <game>_main.gd       menus, pause, game over, high score, style switching
+  <game>_main.gd       extends GameShell: the game's options, messages and game-over text
   skins/<game>_skin.gd base class of a visual style (drawing + sounds + reactions to events)
   skins/*.gd           the three styles
 ```
 
 The folders and class names keep the short internal names used during development (`pong`, `breakout`...).
 
-**New style:** extend the game's skin base class, draw in `_draw()` from `game`, create the sounds in `_build_sfx()` and add it to `SKINS` in the game's `*_main.gd`.
+**New style:** extend the game's skin base class (`PongSkin`, `BreakoutSkin`, … `OutRunSkin`, which extend `SkinBase`), draw in `_draw()` from `game`, create the sounds in `_build_sfx()` and add it to `SKINS` in the game's `*_main.gd`.
 
-**New game:** create `games/<game>/<game>_main.gd` (a `Node` with an `exit_requested` signal and a `go_back()` method), register it in `GAMES` in `core/main.gd` and add its inspiration to `core/inspirations.gd`.
+**New game:** write the logic (`<game>_game.gd`, a `Node2D` with `paused`, `skin` and `set_skin()`), its skin base class and `games/<game>/<game>_main.gd`, which extends `GameShell`: set `id`, `skins`, `title`, `tagline` and `hint` in `_init()` and override `_create_game()`, `_build_options()` (using `add_option()`), `_start_demo()`, `_start_play()` and, if needed, `_status_text()`; at game over call `show_result()` or `show_players_result()`. Then register it in `GAMES` in `core/main.gd` and add its inspiration to `core/inspirations.gd`; the tests pick it up automatically.
 
-**Translations:** the original text (Portuguese) is the key; the code wraps every visible string with `I18n.t("...")`. The English and Spanish texts live in `i18n/strings.json` (`{"Portuguese text": ["English", "Spanish"]}`); after editing it, run `python3 i18n/build.py` to regenerate `i18n/strings.gd`. A missing translation simply shows the Portuguese text. Adding a language means adding a column to the JSON and to `I18n.LANGS`/`LANG_NAMES` in `core/i18n.gd`.
+**Translations:** the original text (English) is the key; the code wraps every visible string with `I18n.t("...")`. The Portuguese and Spanish texts live in `i18n/strings.json` (`{"English text": ["português", "español"]}`); after editing it, run `python3 i18n/build.py` to regenerate `i18n/strings.gd` (CI checks they are in sync). A missing translation simply shows the English text. Adding a language means adding a column to the JSON, to `LANGS` in `i18n/build.py` and to `I18n.LANGS`/`LANG_NAMES` in `core/i18n.gd`.
+
+**Tests:** `godot --headless --path . -s res://tests/run_tests.gd` (or `./build.sh test`); the exit code is the number of failures. They use their own settings file, so the player's preferences are never touched.
 
 Renderer: *Compatibility* (OpenGL), to run on older PCs and most Android phones.
 
@@ -610,7 +616,7 @@ Export presets are in `export_presets.cfg` (Windows, Linux, Android and Web).
 - **Command line:** `./build.sh` (all) or `./build.sh windows|linux|android|web` (set `GODOT=/path/to/godot` if it is not in the PATH).
 - **Android:** needs JDK 17, the Android SDK and a debug keystore, configured in **Editor → Editor Settings → Export → Android** ([official guide](https://docs.godotengine.org/en/stable/tutorials/export/exporting_for_android.html)). The APK is signed with the debug key; publishing on the Play Store needs your own release keystore (never commit it).
 - **Web:** exported without threads (*Thread Support* off), so it runs on any static file server, GitHub Pages included, with no special headers. To try it locally, export to a folder and run `python3 -m http.server` there.
-- **GitHub Actions:** `.github/workflows/builds.yml` runs on every push to `main`: it builds Windows, Linux, Android and Web (under **Actions → Artifacts**) and publishes the web version to **GitHub Pages** (enable it once in **Settings → Pages → Source: GitHub Actions**; for this repository it is [https://mcampilho.github.io/classic-arcade/](https://mcampilho.github.io/classic-arcade/)). Pushing a `v*` tag (`git tag v1.0.0 && git push --tags`) also creates a **Release** with the downloadable files.
+- **GitHub Actions:** `.github/workflows/builds.yml` runs on every push to `main`: it runs the tests, checks that `i18n/strings.gd` matches `i18n/strings.json`, builds Windows, Linux, Android and Web (under **Actions → Artifacts**) and publishes the web version to **GitHub Pages** (enable it once in **Settings → Pages → Source: GitHub Actions**; for this repository it is [https://mcampilho.github.io/classic-arcade/](https://mcampilho.github.io/classic-arcade/)). Pushing a `v*` tag (`git tag v1.0.0 && git push --tags`) also creates a **Release** with the downloadable files.
 
 ## License
 

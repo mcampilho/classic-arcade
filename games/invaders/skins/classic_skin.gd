@@ -1,7 +1,7 @@
 extends InvadersSkin
-## Clássico 1978: monitor a preto e branco com tiras de celofane no vidro — vermelha em cima
-## (zona do disco voador) e verde em baixo (abrigos e canhão). A marcha de 4 notas graves
-## acelera à medida que a frota encolhe.
+## Classic 1978: black-and-white monitor with cellophane strips on the glass — red at the top
+## (saucer area) and green at the bottom (shelters and cannon). The 4-note bass march
+## speeds up as the fleet shrinks.
 
 const WHITE := Color(0.94, 0.94, 0.94)
 const RED := Color("e8463c")
@@ -70,14 +70,14 @@ func _draw() -> void:
 	var g := game
 	draw_rect(Rect2(Vector2.ZERO, Vector2(1280, 720)), Color.BLACK)
 
-	# chão
+	# ground
 	draw_rect(Rect2(px(Vector2(0, InvadersGame.GROUND_Y)), Vector2(InvadersGame.FIELD.x * S, S)), GREEN)
 
-	# abrigos
+	# shelters
 	for i in 4:
 		draw_bunker(i, GREEN)
 
-	# frota
+	# fleet
 	if g.state != InvadersGame.State.OVER or g.mode == InvadersGame.Mode.DEMO:
 		for row in InvadersGame.ROWS:
 			for col in InvadersGame.COLS:
@@ -94,14 +94,14 @@ func _draw() -> void:
 		var c := px(p.pos)
 		PixelFont.draw(self, p.text, c.x, c.y - 10, 3, RED)
 
-	# canhão
+	# cannon
 	var pr := g.player_rect()
 	if player_dying():
 		draw_bits(InvaderSprites.PLAYER_BOOM[dying_frame()], pr.position - Vector2(1.5, 0), GREEN)
 	elif g.state != InvadersGame.State.OVER:
 		draw_bits(InvaderSprites.PLAYER, pr.position, GREEN)
 
-	# tiros
+	# shots
 	if g.shot != null:
 		var sr := g.shot_rect()
 		draw_rect(Rect2(px(sr.position), sr.size * S), color_at(sr.position.y))
@@ -117,12 +117,12 @@ func _draw_panels() -> void:
 	var g := game
 	var lx := panel_left_x()
 	var rx := panel_right_x()
-	_score_block(I18n.t("PONTOS<1>"), g.players[0].score, lx, 40, g.current == 0 or g.players.size() == 1)
-	_score_block(I18n.t("RECORDE"), maxi(g.best, g.players[0].score), lx, 150, true)
+	_score_block(I18n.t("SCORE<1>"), g.players[0].score, lx, 40, g.current == 0 or g.players.size() == 1)
+	_score_block(I18n.t("HI-SCORE"), maxi(g.best, g.players[0].score), lx, 150, true)
 	if g.players.size() > 1:
-		_score_block(I18n.t("PONTOS<2>"), g.players[1].score, rx, 40, g.current == 1)
-	_score_block(I18n.t("VAGA"), g.player().wave, rx, 150, true)
-	# vidas, como no original: número + canhões de reserva
+		_score_block(I18n.t("SCORE<2>"), g.players[1].score, rx, 40, g.current == 1)
+	_score_block(I18n.t("WAVE"), g.player().wave, rx, 150, true)
+	# lives, as in the original: number + spare cannons
 	var lives: int = g.player().lives
 	var shown := lives if player_dying() or g.state == InvadersGame.State.OVER else lives
 	PixelFont.draw(self, str(maxi(shown, 0)), lx - 90, 640, 4, GREEN)

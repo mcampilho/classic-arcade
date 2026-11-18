@@ -1,18 +1,18 @@
 class_name InvaderSprites
 extends RefCounted
-## Desenhos em píxeis (originais) usados por todos os estilos do Space Invaders.
-## "#" = píxel aceso. Cada invasor tem 2 fotogramas que alternam a cada passo da marcha.
+## (Original) pixel drawings used by all the Space Invaders styles.
+## "#" = lit pixel. Each invader has 2 frames that alternate on every step of the march.
 
 const ALIENS := [
-	[   # tipo 0 — "olho" (fila de cima, 30 pts)
+	[   # kind 0 — "eye" (top row, 30 pts)
 		["..####..", ".#....#.", "#..##..#", "#.#..#.#", "#..##..#", ".#....#.", "..#..#..", ".#....#."],
 		["..####..", ".#....#.", "#..##..#", "#.#..#.#", "#..##..#", ".#....#.", ".#....#.", "..#..#.."],
 	],
-	[   # tipo 1 — "cúpula" (20 pts)
+	[   # kind 1 — "dome" (20 pts)
 		[".....#.....", "....###....", "..#######..", ".##.###.##.", "###########", "..#.#.#.#..", ".#.......#.", ".#.......#."],
 		[".....#.....", "....###....", "..#######..", ".##.###.##.", "###########", "..#.#.#.#..", "..#.....#..", "#.........#"],
 	],
-	[   # tipo 2 — "medusa" (fila de baixo, 10 pts)
+	[   # kind 2 — "jellyfish" (bottom row, 10 pts)
 		["....####....", "..########..", ".#.#.##.#.#.", "############", "#.########.#", "#..#....#..#", "...##..##...", "..#......#.."],
 		["....####....", "..########..", ".#.#.##.#.#.", "############", "#.########.#", "...#....#...", "..##....##..", ".#........#."],
 	],
@@ -55,7 +55,7 @@ const PLAYER_BOOM := [
 	["..#.......#.....", "......#.........", "#...#....#...#..", "......##.....#..", "..#.#####.#.....", ".###.#####.##...", "#############.#.", "################"],
 ]
 
-## Bombas dos invasores: 3 tipos, 2 fotogramas cada (3x7).
+## Invader bombs: 3 kinds, 2 frames each (3x7).
 const BOMBS := [
 	[[".#.", "#..", ".#.", "..#", ".#.", "#..", ".#."], [".#.", "..#", ".#.", "#..", ".#.", "..#", ".#."]],
 	[[".#.", ".#.", ".#.", ".#.", ".#.", "###", ".#."], [".#.", "###", ".#.", ".#.", ".#.", ".#.", ".#."]],
@@ -63,7 +63,7 @@ const BOMBS := [
 ]
 
 
-## Abrigo (22x16): octógono com uma abertura em V por baixo.
+## Shelter (22x16): octagon with a V-shaped opening at the bottom.
 static func bunker_shape() -> PackedByteArray:
 	var b := PackedByteArray()
 	b.resize(22 * 16)
@@ -78,7 +78,7 @@ static func bunker_shape() -> PackedByteArray:
 	return b
 
 
-## Converte um desenho em segmentos horizontais [x, y, comprimento] (desenho rápido).
+## Converts a drawing into horizontal segments [x, y, length] (fast drawing).
 static func runs(rows: Array) -> Array:
 	var out := []
 	for y in rows.size():
@@ -95,8 +95,8 @@ static func runs(rows: Array) -> Array:
 	return out
 
 
-## Cria uma textura a partir de um desenho, com `scale` píxeis por ponto.
-## `pixel_color` é um Callable(x, y, cor_base) -> Color opcional para pintar ponto a ponto.
+## Creates a texture from a drawing, with `scale` pixels per dot.
+## `pixel_color` is an optional Callable(x, y, base_colour) -> Color to paint dot by dot.
 static func texture(rows: Array, color: Color, scale := 3, pad := 0, pixel_color := Callable()) -> ImageTexture:
 	var w: int = (rows[0] as String).length()
 	var h := rows.size()
@@ -111,7 +111,7 @@ static func texture(rows: Array, color: Color, scale := 3, pad := 0, pixel_color
 	return ImageTexture.create_from_image(img)
 
 
-## Versão desfocada (para brilhos): desenha com margem e aplica um desfoque simples.
+## Blurred version (for glows): draws with a margin and applies a simple blur.
 static func glow_texture(rows: Array, color: Color, pad := 4, passes := 3) -> ImageTexture:
 	var w: int = (rows[0] as String).length() + pad * 2
 	var h: int = rows.size() + pad * 2

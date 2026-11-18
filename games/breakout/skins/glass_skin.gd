@@ -1,7 +1,7 @@
 extends BreakoutSkin
-## Vitral (estilo próprio): a parede de tijolos é um vitral de catedral.
-## A bola é uma esfera de luz que ilumina os vidros por onde passa; cada vidro partido
-## cai em estilhaços e deixa só a moldura de chumbo. Sons de vidro, bronze, pedra e sinos.
+## Stained Glass (original style): the brick wall is a cathedral window.
+## The ball is a sphere of light that lights up the glass it passes; each broken pane
+## falls in shards and leaves only the lead frame. Sounds of glass, bronze, stone and bells.
 
 const STONE := Color("2b2723")
 const STONE_LINE := Color(0.08, 0.07, 0.06, 0.55)
@@ -12,10 +12,10 @@ const LEAD := Color("17181b")
 const GOLD := Color("e2b350")
 const LIGHT := Color("ffd98a")
 const ROW_COLORS := [
-	Color("b3122e"), Color("c4283a"),    # rubi
-	Color("d9821c"), Color("e3a21f"),    # âmbar
-	Color("1c8a52"), Color("23a067"),    # esmeralda
-	Color("1d4fa8"), Color("2a63c4"),    # safira
+	Color("b3122e"), Color("c4283a"),    # ruby
+	Color("d9821c"), Color("e3a21f"),    # amber
+	Color("1c8a52"), Color("23a067"),    # emerald
+	Color("1d4fa8"), Color("2a63c4"),    # sapphire
 ]
 
 var font: Font
@@ -47,7 +47,7 @@ func _setup() -> void:
 	fx.draw.connect(_draw_fx)
 
 
-# ---------------------------------------------------------------- sons
+# ---------------------------------------------------------------- sounds
 
 static func _bell(f: float, dur: float, vol: float, ratios := [1.0, 2.76, 5.4]) -> PackedFloat32Array:
 	var parts := []
@@ -88,7 +88,7 @@ func _build_sfx() -> void:
 	sfx.clear = Synth.to_stream(Synth.mix(chime))
 
 
-# ---------------------------------------------------------------- eventos
+# ---------------------------------------------------------------- events
 
 func _on_match_started() -> void:
 	shards.clear()
@@ -141,7 +141,7 @@ func _on_ball_lost(_player: int) -> void:
 	trail.clear()
 
 
-# ---------------------------------------------------------------- animação
+# ---------------------------------------------------------------- animation
 
 func _tick(dt: float) -> void:
 	time += dt
@@ -166,7 +166,7 @@ func _tick(dt: float) -> void:
 	fx.queue_redraw()
 
 
-# ---------------------------------------------------------------- desenho
+# ---------------------------------------------------------------- drawing
 
 func _draw() -> void:
 	var g := game
@@ -174,7 +174,7 @@ func _draw() -> void:
 	var inner := BreakoutGame.INNER
 	var w := BreakoutGame.WALL
 
-	# parede de pedra
+	# stone wall
 	draw_rect(Rect2(Vector2(-40, -40), s + Vector2(80, 80)), STONE)
 	var rows := 0
 	for y in range(-8, int(s.y) + 48, 48):
@@ -184,7 +184,7 @@ func _draw() -> void:
 			draw_line(Vector2(x, y), Vector2(x, y + 48), STONE_LINE, 2.0)
 		rows += 1
 
-	# a janela: céu noturno com vidro simples em losangos
+	# the window: night sky with plain diamond-shaped glass
 	draw_polygon(
 		PackedVector2Array([inner.position, Vector2(inner.end.x, inner.position.y), inner.end, Vector2(inner.position.x, inner.end.y)]),
 		PackedColorArray([NIGHT_TOP, NIGHT_TOP, NIGHT_BOTTOM, NIGHT_BOTTOM]))
@@ -193,10 +193,10 @@ func _draw() -> void:
 		var x0 := inner.position.x + k
 		draw_line(Vector2(x0, inner.position.y), Vector2(x0 + inner.size.y, inner.end.y), q, 1.5)
 		draw_line(Vector2(x0 + inner.size.y, inner.position.y), Vector2(x0, inner.end.y), q, 1.5)
-	# o chão de pedra por baixo da raquete apanha a luz
+	# the stone floor below the paddle catches the light
 	draw_rect(Rect2(inner.position.x, BreakoutGame.PADDLE_Y + 22, inner.size.x, s.y), Color(0.05, 0.05, 0.07, 0.5))
 
-	# moldura de pedra
+	# stone frame
 	for r in [Rect2(inner.position.x - w, inner.position.y - w, w, s.y), Rect2(inner.end.x, inner.position.y - w, w, s.y),
 			Rect2(inner.position.x - w, inner.position.y - w, inner.size.x + 2 * w, w)]:
 		draw_rect(r, FRAME)
@@ -204,13 +204,13 @@ func _draw() -> void:
 		draw_rect(Rect2(r.position, Vector2(2, r.size.y)), Color(1, 1, 1, 0.12))
 	draw_rect(inner.grow(1.0), Color(0, 0, 0, 0.45), false, 2.0)
 
-	# vitral
+	# stained glass
 	var sweep := fmod(time * 0.16, 1.7) - 0.35
 	for row in BreakoutGame.ROWS:
 		for col in BreakoutGame.COLS:
 			var r := g.brick_rect(row, col)
 			if not g.brick_alive(row, col):
-				draw_rect(r.grow(-1.5), Color(LEAD, 0.55), false, 3.0)   # fica a moldura de chumbo
+				draw_rect(r.grow(-1.5), Color(LEAD, 0.55), false, 3.0)   # the lead frame remains
 				continue
 			var c := pane_colors[row * BreakoutGame.COLS + col]
 			var lit := 0.0
@@ -220,7 +220,7 @@ func _draw() -> void:
 			var glint := clampf(1.0 - absf(u - sweep) * 9.0, 0.0, 1.0) * 0.3
 			var fill := c.lightened(lit + glint)
 			draw_rect(r, fill)
-			# espessura do vidro: reflexo em cima, sombra em baixo, veio diagonal
+			# glass thickness: highlight on top, shadow below, diagonal streak
 			draw_rect(Rect2(r.position.x, r.position.y, r.size.x, 5), Color(1, 1, 1, 0.14 + lit * 0.3))
 			draw_rect(Rect2(r.position.x, r.end.y - 6, r.size.x, 6), Color(0, 0, 0, 0.18))
 			var sx := r.position.x + fmod(col * 17.0 + row * 7.0, 30.0)
@@ -230,7 +230,7 @@ func _draw() -> void:
 			draw_rect(r.grow(-1.5), LEAD, false, 3.0)
 			draw_line(r.position + Vector2(2, 3), Vector2(r.end.x - 2, r.position.y + 3), Color(0.55, 0.55, 0.6, 0.35), 1.0)
 
-	# estilhaços
+	# shards
 	for sh in shards:
 		draw_set_transform(sh.pos, sh.rot, Vector2.ONE)
 		draw_colored_polygon(sh.pts, Color(sh.color.lightened(0.15), 0.9))
@@ -239,7 +239,7 @@ func _draw() -> void:
 		draw_polyline(outline, Color(1, 1, 1, 0.35), 1.0)
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
-	# raquete de bronze
+	# bronze paddle
 	var pr := g.paddle_rect()
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = Color("a87436").lightened(paddle_flash * 0.3)
@@ -259,7 +259,7 @@ func _draw() -> void:
 func _draw_fx() -> void:
 	var g := game
 	var inner := BreakoutGame.INNER
-	# raios de luz que atravessam a janela
+	# light rays through the window
 	for i in 3:
 		var x := inner.position.x + 120.0 + i * 250.0 + sin(time * 0.3 + i) * 20.0
 		var a := 0.035 + 0.015 * sin(time * 0.7 + i * 2.0)
@@ -275,7 +275,7 @@ func _draw_fx() -> void:
 		for layer in [[46.0, 0.05], [28.0, 0.09], [16.0, 0.18], [9.0, 0.35]]:
 			fx.draw_circle(p, layer[0], Color(LIGHT, layer[1]), true, -1.0, true)
 		fx.draw_circle(p, 6.0, Color("fff6e0"), true, -1.0, true)
-		# a luz da bola reflete-se no chão
+		# the ball's light reflects on the floor
 		fx.draw_circle(Vector2(p.x, BreakoutGame.PADDLE_Y + 34), 40.0, Color(LIGHT, 0.04 * clampf(p.y / 700.0, 0.0, 1.0)), true, -1.0, true)
 	for gl in glitter:
 		fx.draw_rect(Rect2(gl.pos - Vector2(1.5, 1.5), Vector2(3, 3)), Color(1, 0.95, 0.8, clampf(gl.life * 2.0, 0.0, 1.0)))
@@ -293,9 +293,9 @@ func _draw_panels() -> void:
 	if g.players.size() > 1:
 		_draw_player(1, rx)
 	else:
-		_carve(I18n.t("RECORDE"), rx, 104, 18, 1.0)
+		_carve(I18n.t("HI-SCORE"), rx, 104, 18, 1.0)
 		_carve(str(maxi(g.best, g.players[0].score)), rx, 160, 46, 1.0)
-		_carve(I18n.t("VITRAL"), rx, 250, 18, 1.0)
+		_carve(I18n.t("STAINED GLASS"), rx, 250, 18, 1.0)
 		_carve(_roman(g.players[0].wall), rx, 304, 40, 1.0)
 
 
@@ -303,9 +303,9 @@ func _draw_player(i: int, cx: float) -> void:
 	var g := game
 	var pl: Dictionary = g.players[i]
 	var a := 1.0 if (i == g.current or g.players.size() == 1) else 0.45
-	_carve(I18n.t("JOGADOR ") + _roman(i + 1), cx, 104, 18, a)
+	_carve(I18n.t("PLAYER ") + _roman(i + 1), cx, 104, 18, a)
 	_carve(str(pl.score), cx, 160, 46, a)
-	_carve(I18n.t("BOLAS"), cx, 250, 18, a)
+	_carve(I18n.t("BALLS"), cx, 250, 18, a)
 	for k in g.start_balls:
 		var pos := Vector2(cx - (g.start_balls - 1) * 14.0 + k * 28.0, 280)
 		if k < pl.balls:
@@ -314,7 +314,7 @@ func _draw_player(i: int, cx: float) -> void:
 		else:
 			draw_arc(pos, 5.0, 0, TAU, 20, Color(0, 0, 0, 0.5 * a), 2.0, true)
 	if g.players.size() > 1:
-		_carve(I18n.t("VITRAL ") + _roman(pl.wall), cx, 336, 16, a)
+		_carve(I18n.t("STAINED GLASS ") + _roman(pl.wall), cx, 336, 16, a)
 
 
 func _tablet(cx: float) -> void:
@@ -325,7 +325,7 @@ func _tablet(cx: float) -> void:
 	draw_rect(r, Color("8a7f70"), false, 2.0)
 
 
-## Letras em folha de ouro gravadas na pedra.
+## Gold-leaf letters carved in stone.
 func _carve(text: String, cx: float, baseline: float, size: int, alpha: float) -> void:
 	var tw := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x
 	var pos := Vector2(cx - tw / 2, baseline)

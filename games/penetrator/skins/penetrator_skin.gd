@@ -1,7 +1,7 @@
 class_name PenetratorSkin
-extends Node2D
-## Base dos estilos do Penetrator: desenhos originais (nave, mísseis, radares, discos e depósito),
-## terreno, explosões e sons. Os estilos escolhem cores, fundo, terreno e HUD.
+extends SkinBase
+## Base of the Penetrator styles: original drawings (ship, missiles, radars, saucers and depot),
+## terrain, explosions and sounds. The styles choose colours, background, terrain and HUD.
 
 
 const SHIP := [
@@ -41,14 +41,11 @@ const SAUCER := [
 ]
 
 var game: PenetratorGame
-var sfx := {}
 var tex := {}
 var time := 0.0
-var booms: Array[Dictionary] = []     # pos (mundo), life, max, color, size
-var popups: Array[Dictionary] = []    # pos (mundo), text, life
+var booms: Array[Dictionary] = []     # pos (world), life, max, color, size
+var popups: Array[Dictionary] = []    # pos (world), text, life
 var flash := 0.0
-var _players: Array[AudioStreamPlayer] = []
-var _next_player := 0
 var _engine: AudioStreamPlayer
 var _qv := PackedVector2Array()
 var _qc := PackedColorArray()
@@ -57,10 +54,7 @@ var _qi := PackedInt32Array()
 
 func attach(g: PenetratorGame) -> void:
 	game = g
-	for i in 10:
-		var p := AudioStreamPlayer.new()
-		add_child(p)
-		_players.append(p)
+	add_voices(10)
 	_engine = AudioStreamPlayer.new()
 	_engine.volume_db = -14.0
 	add_child(_engine)
@@ -79,24 +73,13 @@ func attach(g: PenetratorGame) -> void:
 	g.player_died.connect(_on_player_died)
 	g.mission_complete.connect(_on_mission_complete)
 	g.extra_life.connect(func() -> void: play("extra"))
-	var cached: Variant = Synth.cache_get(get_script().resource_path)
-	if cached != null:
-		sfx = cached
-	else:
-		_build_sfx()
-		Synth.cache_set(get_script().resource_path, sfx)
+	load_sfx()
 	_setup()
 
 
-func play(id: String, pitch := 1.0, volume_db := 0.0) -> void:
-	if game == null or game.mode == PenetratorGame.Mode.DEMO or not sfx.has(id):
-		return
-	var p := _players[_next_player]
-	_next_player = (_next_player + 1) % _players.size()
-	p.stream = sfx[id]
-	p.pitch_scale = pitch
-	p.volume_db = volume_db
-	p.play()
+## The menu demo is silent.
+func _is_silent() -> bool:
+	return game == null or game.mode == PenetratorGame.Mode.DEMO
 
 
 func _process(delta: float) -> void:
@@ -129,7 +112,7 @@ func _process(delta: float) -> void:
 	queue_redraw()
 
 
-## Explosão (posição no ecrã quando criada; guardada no mundo para acompanhar o scroll).
+## Explosion (on-screen position when created; stored in world space to follow the scrolling).
 func boom(screen_pos: Vector2, life: float, size: float, color: Color) -> void:
 	booms.append({"pos": screen_pos + Vector2(game.cam_x, 0), "life": life, "max": life, "color": color, "size": size, "seed": randi()})
 
@@ -138,16 +121,16 @@ func sx(world_x: float) -> float:
 	return world_x - game.cam_x
 
 
-# ---------------------------------------------------------------- terreno
+# ---------------------------------------------------------------- terrain
 
-## Primeira e última coluna visíveis.
+## First and last visible columns.
 func visible_cols() -> Vector2i:
 	var a := maxi(0, floori(game.cam_x / PenetratorGame.CW) - 1)
 	var b := mini(game.cols() - 1, a + int(PenetratorGame.W / PenetratorGame.CW) + 3)
 	return Vector2i(a, b)
 
 
-## Linha do chão (ou do teto) no ecrã.
+## On-screen ground (or ceiling) line.
 func contour(top: bool) -> PackedVector2Array:
 	var v := visible_cols()
 	var pts := PackedVector2Array()
@@ -164,8 +147,8 @@ func has_ceiling() -> bool:
 	return false
 
 
-## Enche o terreno (chão e teto) em faixas verticais, num só lote.
-## `bands`: lista de [espessura, cor] a partir da superfície (a última vai até ao fim).
+## Fills the terrain (ground and ceiling) in vertical strips, in a single batch.
+## `bands`: list of [thickness, colour] from the surface (the last one goes to the end).
 func fill_terrain(bands: Array, top_too := true) -> void:
 	var v := visible_cols()
 	for c in range(v.x, v.y):
@@ -223,7 +206,7 @@ func _flush() -> void:
 	_qi = PackedInt32Array()
 
 
-# ---------------------------------------------------------------- desenho
+# ---------------------------------------------------------------- drawing
 
 func _draw() -> void:
 	if game == null or game.cols() == 0:
@@ -279,7 +262,7 @@ func ground_boom_color() -> Color:
 	return Color.YELLOW
 
 
-## Radar: mastro e prato que roda (largura do prato muda com o ângulo).
+## Radar: mast and rotating dish (the dish width changes with the angle).
 func draw_radar(base: Vector2, phase: float, mast: Color, dish: Color, line_w := 3.0) -> void:
 	draw_set_transform(base, 0.0, Vector2(1.5, 1.5))
 	base = Vector2.ZERO
@@ -293,7 +276,7 @@ func draw_radar(base: Vector2, phase: float, mast: Color, dish: Color, line_w :=
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
 
-## Depósito de bombas: casamata com portas e o símbolo de perigo.
+## Bomb depot: bunker with doors and the danger symbol.
 func draw_store(base: Vector2, body: Color, dark: Color, mark: Color, left: int) -> void:
 	var r := Rect2(base + Vector2(-45, -60), Vector2(90, 60))
 	draw_rect(r, body)
@@ -307,13 +290,9 @@ func draw_store(base: Vector2, body: Color, dark: Color, mark: Color, left: int)
 		draw_rect(Rect2(base + Vector2(-40 + i * 14, -8), Vector2(10, 4)), mark)
 
 
-# ---------------------------------------------------------------- para os estilos reescreverem
+# ---------------------------------------------------------------- for the styles to override
 
 func _setup() -> void:
-	pass
-
-
-func _build_sfx() -> void:
 	pass
 
 
@@ -347,10 +326,6 @@ func _draw_ship(_p: Vector2) -> void:
 
 func _draw_hud() -> void:
 	pass
-
-
-func ui_palette() -> Dictionary:
-	return UI.LAUNCHER_PALETTE
 
 
 func _on_match_started() -> void:

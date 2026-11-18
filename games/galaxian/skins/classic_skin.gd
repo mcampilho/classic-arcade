@@ -1,6 +1,6 @@
 extends GalaxianSkin
-## Clássico 1979: fundo negro com um campo de estrelas coloridas a cair e a piscar, naves em píxeis
-## multicolores, o míssil pousado na ponta da nave, bandeiras de vaga e o zumbido contínuo da formação.
+## Classic 1979: black background with a field of falling, twinkling coloured stars, multicolour
+## pixel ships, the missile resting on the ship's tip, wave flags and the formation's continuous hum.
 
 const WHITE := Color(0.95, 0.95, 0.95)
 const MISSILE_C := Color("ffd43b")
@@ -86,14 +86,14 @@ func _draw_panels() -> void:
 	var lx := panel_left_x()
 	var rx := panel_right_x()
 	var c0 := Color("ff6b6b") if (g.current == 0 or g.players.size() == 1) else Color("ff6b6b", 0.4)
-	PixelFont.draw(self, I18n.t("PONTOS<1>"), lx, 40, 3, c0)
+	PixelFont.draw(self, I18n.t("SCORE<1>"), lx, 40, 3, c0)
 	PixelFont.draw(self, "%05d" % g.players[0].score, lx, 80, 4, WHITE)
-	PixelFont.draw(self, I18n.t("RECORDE"), lx, 150, 3, Color("ff6b6b"))
+	PixelFont.draw(self, I18n.t("HI-SCORE"), lx, 150, 3, Color("ff6b6b"))
 	PixelFont.draw(self, "%05d" % maxi(g.best, g.player().score), lx, 190, 4, WHITE)
 	if g.players.size() > 1:
-		PixelFont.draw(self, I18n.t("PONTOS<2>"), rx, 40, 3, Color("ff6b6b", 1.0 if g.current == 1 else 0.4))
+		PixelFont.draw(self, I18n.t("SCORE<2>"), rx, 40, 3, Color("ff6b6b", 1.0 if g.current == 1 else 0.4))
 		PixelFont.draw(self, "%05d" % g.players[1].score, rx, 80, 4, WHITE)
-	# vidas (naves de reserva) e bandeiras das vagas
+	# lives (spare ships) and wave flags
 	for i in mini(maxi(g.player().lives - 1, 0), 5):
 		draw_texture(tex.player, Vector2(lx - 100 + i * 46, 650))
 	var wave: int = g.player().wave

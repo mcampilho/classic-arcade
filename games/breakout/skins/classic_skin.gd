@@ -1,7 +1,7 @@
 extends BreakoutSkin
-## Clássico 1976: como na máquina da Atari, o monitor era a preto e branco e as cores vinham
-## de tiras de celofane coladas no vidro. Por isso tudo o que passa numa faixa (bola, paredes)
-## ganha a cor dessa faixa, e a raquete fica azul.
+## Classic 1976: as in the Atari machine, the monitor was black and white and the colours came
+## from strips of cellophane stuck on the glass. So everything in a band (ball, walls)
+## takes that band's colour, and the paddle is blue.
 
 const WHITE := Color(0.93, 0.93, 0.93)
 const DIM := Color(0.42, 0.42, 0.42)
@@ -11,7 +11,7 @@ const GREEN := Color("48a048")
 const YELLOW := Color("a2a22a")
 const BLUE := Color("4f63d8")
 
-var bands: Array = []   # [y0, y1, cor]
+var bands: Array = []   # [y0, y1, colour]
 
 
 func _setup() -> void:
@@ -25,7 +25,7 @@ func _setup() -> void:
 
 
 func _build_sfx() -> void:
-	# Bips de onda quadrada: cada cor de tijolo tem o seu tom (mais agudo em cima).
+	# Square-wave beeps: each brick colour has its own pitch (higher at the top).
 	var tones := [880.0, 740.0, 587.0, 494.0]
 	for i in 4:
 		sfx["brick%d" % i] = Synth.tone(tones[i], 0.05, {"wave": "square", "volume": 0.25})
@@ -35,7 +35,7 @@ func _build_sfx() -> void:
 
 
 func _on_wall_cleared(_player: int) -> void:
-	pass  # o original não tinha som para isto
+	pass  # the original had no sound for this
 
 
 func color_at(y: float) -> Color:
@@ -51,7 +51,7 @@ func _draw() -> void:
 	var w := BreakoutGame.WALL
 	draw_rect(Rect2(Vector2.ZERO, BreakoutGame.SCREEN), Color.BLACK)
 
-	# paredes (às fatias, para apanharem a cor das tiras de celofane)
+	# walls (in slices, so they pick up the colour of the cellophane strips)
 	draw_rect(Rect2(inner.position.x - w, inner.position.y - w, inner.size.x + 2 * w, w), WHITE)
 	var y := inner.position.y
 	while y < BreakoutGame.SCREEN.y:
@@ -60,7 +60,7 @@ func _draw() -> void:
 		draw_rect(Rect2(inner.end.x, y, w, 8), c)
 		y += 8.0
 
-	# tijolos
+	# bricks
 	for row in BreakoutGame.ROWS:
 		var c: Color = bands[row / 2][2]
 		for col in BreakoutGame.COLS:
@@ -72,7 +72,7 @@ func _draw() -> void:
 	if g.ball_visible():
 		draw_rect(g.ball_rect(), color_at(g.ball_pos.y))
 
-	# marcadores: pontuação (3 algarismos) e número da bola
+	# displays: score (3 digits) and ball number
 	var left_x := (inner.position.x - w) / 2
 	var right_x := inner.end.x + w + (BreakoutGame.SCREEN.x - inner.end.x - w) / 2
 	_draw_player(0, left_x)

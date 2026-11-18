@@ -1,6 +1,6 @@
 extends RelicsSkin
-## Clássico 1984: como nos jogos "Filmation" dos micros de 8 bits — fundo preto e cada sala
-## desenhada numa só cor (tinta) com contornos e tijolos a traço; sons de altifalante.
+## Classic 1984: as in the "Filmation" games of 8-bit home computers — black background and each room
+## drawn in a single colour (ink) with outlines and line-drawn bricks; speaker beeps.
 
 const INKS := [Color("ffff00"), Color("00ffff"), Color("ff00ff"), Color("00ff00"), Color("ffffff"), Color("ff8040")]
 
@@ -65,7 +65,7 @@ func _draw_floor() -> void:
 
 func _wall_quad(_side: String, q: PackedVector2Array, z0: float, z1: float) -> void:
 	draw_colored_polygon(q, Color.BLACK)
-	# tijolos
+	# bricks
 	var rows := int(round((z1 - z0) / 0.4))
 	for i in range(1, rows):
 		var t := float(i) / rows
@@ -156,16 +156,16 @@ func _draw_player() -> void:
 func _draw_hud() -> void:
 	var g := game
 	_draw_hud_common(ink, ink, Color(ink, 0.18), func(t: String, p: Vector2) -> void: PixelFont.draw(self, t, p.x, p.y - 20, 3, ink))
-	PixelFont.draw(self, I18n.t("PONTOS"), 120, 600, 2, ink)
+	PixelFont.draw(self, I18n.t("SCORE"), 120, 600, 2, ink)
 	PixelFont.draw(self, "%06d" % g.score, 120, 622, 3, Color.WHITE)
-	PixelFont.draw(self, I18n.t("VIDAS %d") % g.lives, 120, 670, 2, ink)
-	# dia e noite
+	PixelFont.draw(self, I18n.t("LIVES %d") % g.lives, 120, 670, 2, ink)
+	# day and night
 	var c := Vector2(120, 520)
 	var night := g.day_phase() > 0.5
 	draw_circle(c, 26, Color.WHITE if not night else ink)
 	if night:
 		draw_circle(c + Vector2(10, -6), 22, Color.BLACK)
-	PixelFont.draw(self, I18n.t("DIA %d/%d") % [g.day(), RelicsGame.DAYS], 120, 556, 2, ink)
+	PixelFont.draw(self, I18n.t("DAY %d/%d") % [g.day(), RelicsGame.DAYS], 120, 556, 2, ink)
 
 
 func ui_palette() -> Dictionary:

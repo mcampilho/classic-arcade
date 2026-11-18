@@ -1,26 +1,20 @@
 class_name GalaxianSkin
-extends Node2D
-## Base dos estilos visuais do Galaxian: desenho, sons (incluindo o zumbido contínuo da formação),
-## explosões e um campo de estrelas reutilizável.
+extends SkinBase
+## Base of the Galaxian visual styles: drawing, sounds (including the formation's continuous hum),
+## explosions and a reusable star field.
 
 const S := GalaxianGame.SCALE
 
 var game: GalaxianGame
-var sfx := {}
-var booms: Array[Dictionary] = []          # {pos (unidades), life, kind}
+var booms: Array[Dictionary] = []          # {pos (units), life, kind}
 var popups: Array[Dictionary] = []         # {pos, text, life}
 var stars: Array[Dictionary] = []          # {pos (px), speed, color, phase}
-var _players: Array[AudioStreamPlayer] = []
-var _next_player := 0
 var _loop: AudioStreamPlayer
 
 
 func attach(g: GalaxianGame) -> void:
 	game = g
-	for i in 8:
-		var p := AudioStreamPlayer.new()
-		add_child(p)
-		_players.append(p)
+	add_voices(8)
 	_loop = AudioStreamPlayer.new()
 	add_child(_loop)
 	g.match_started.connect(_on_match_started)
@@ -33,24 +27,13 @@ func attach(g: GalaxianGame) -> void:
 	g.extra_life.connect(_on_extra_life)
 	g.wave_cleared.connect(_on_wave_cleared)
 	g.game_over.connect(_on_game_over)
-	var cached: Variant = Synth.cache_get(get_script().resource_path)
-	if cached != null:
-		sfx = cached
-	else:
-		_build_sfx()
-		Synth.cache_set(get_script().resource_path, sfx)
+	load_sfx()
 	_setup()
 
 
-func play(id: String, pitch := 1.0, volume_db := 0.0) -> void:
-	if game == null or game.mode == GalaxianGame.Mode.DEMO or not sfx.has(id):
-		return
-	var p := _players[_next_player]
-	_next_player = (_next_player + 1) % _players.size()
-	p.stream = sfx[id]
-	p.pitch_scale = pitch
-	p.volume_db = volume_db
-	p.play()
+## The menu demo is silent.
+func _is_silent() -> bool:
+	return game == null or game.mode == GalaxianGame.Mode.DEMO
 
 
 func _update_loop() -> void:
@@ -86,11 +69,7 @@ func _process(delta: float) -> void:
 	queue_redraw()
 
 
-func ui_palette() -> Dictionary:
-	return UI.LAUNCHER_PALETTE
-
-
-# ---------------------------------------------------------------- ajudas
+# ---------------------------------------------------------------- helpers
 
 func px(u: Vector2) -> Vector2:
 	return game.to_px(u)
@@ -122,13 +101,9 @@ func player_dying() -> bool:
 	return game.state == GalaxianGame.State.DYING
 
 
-# ---------------------------------------------------------------- para os estilos reescreverem
+# ---------------------------------------------------------------- for the styles to override
 
 func _setup() -> void:
-	pass
-
-
-func _build_sfx() -> void:
 	pass
 
 

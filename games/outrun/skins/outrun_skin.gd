@@ -1,17 +1,17 @@
 class_name OutRunSkin
-extends Node2D
-## Base dos estilos visuais do OutRun: projeção pseudo-3D da estrada (segmentos desenhados de trás
-## para a frente, com colinas a tapar o que está atrás), cenário, trânsito, carro do jogador,
-## paisagem de fundo em paralaxe, motor, rádio e efeitos sonoros.
-## Os estilos escolhem cores, desenhos e HUD.
+extends SkinBase
+## Base of the OutRun visual styles: pseudo-3D road projection (segments drawn back
+## to front, with hills hiding what is behind), scenery, traffic, player car,
+## parallax background landscape, engine, radio and sound effects.
+## The styles choose colours, drawings and HUD.
 
 const W := 1280.0
 const H := 720.0
 const LAYER_PERIOD := 2560.0
 const LAYER_STEP := 20.0
 
-# ---------------------------------------------------------------- desenhos (originais)
-# Carro do jogador: descapotável genérico visto de trás, com dois ocupantes.
+# ---------------------------------------------------------------- (original) drawings
+# Player car: a generic convertible seen from behind, with two occupants.
 const PLAYER_CAR := [
 	"........YYYY......yyyy........",
 	".......YYYYYY....yyyyyy.......",
@@ -84,8 +84,8 @@ const TRAFFIC := {
 	],
 }
 
-# Cenário (letras: T tronco, t tronco escuro, L folhas, l folhas escuras, F flor/fruto,
-# W branco/neve, R vermelho, Y amarelo, K escuro, G cinzento, S pedra, s pedra escura, D porta/janela)
+# Scenery (letters: T trunk, t dark trunk, L leaves, l dark leaves, F flower/fruit,
+# W white/snow, R red, Y yellow, K dark, G grey, S stone, s dark stone, D door/window)
 const ART := {
 	"palm": [
 		"...LL......LLL....",
@@ -317,28 +317,25 @@ const ART := {
 		"GG......",
 	],
 }
-## Que desenho usa cada tipo de cenário (palm2 é a palmeira espelhada).
+## Which drawing each scenery kind uses (palm2 is the mirrored palm).
 const ART_FOR := {"palm2": "palm"}
 
 var game: OutRunGame
-var sfx := {}
 var tex := {}
 var time := 0.0
-var radio := 0                    # índice da música; -1 = rádio desligado
-var bg_scroll := 0.0              # deslocação da paisagem (acumula as curvas percorridas)
+var radio := 0                    # song index; -1 = radio off
+var bg_scroll := 0.0              # landscape offset (accumulates the curves driven)
 var theme := "costa"
 var prev_theme := "costa"
 var theme_blend := 1.0
-var rows: Array[Dictionary] = []  # segmentos projetados (do mais próximo para o mais distante)
+var rows: Array[Dictionary] = []  # projected segments (nearest to farthest)
 var popups: Array[Dictionary] = []   # {text, life, color}
 var flash := 0.0
-var _players: Array[AudioStreamPlayer] = []
-var _next_player := 0
 var _engine: AudioStreamPlayer
 var _skid: AudioStreamPlayer
 var _music: AudioStreamPlayer
 var _last_z := 0.0
-var _layers := {}                 # paisagens geradas, por tema
+var _layers := {}                 # generated landscapes, per theme
 var _sprite_cache := {}
 var _fc := {}
 var _qv := PackedVector2Array()
@@ -348,10 +345,7 @@ var _qi := PackedInt32Array()
 
 func attach(g: OutRunGame) -> void:
 	game = g
-	for i in 8:
-		var p := AudioStreamPlayer.new()
-		add_child(p)
-		_players.append(p)
+	add_voices(8)
 	_engine = AudioStreamPlayer.new()
 	add_child(_engine)
 	_skid = AudioStreamPlayer.new()
@@ -370,26 +364,15 @@ func attach(g: OutRunGame) -> void:
 	g.goal.connect(_on_goal)
 	g.time_up.connect(_on_time_up)
 	g.game_over.connect(_on_game_over)
-	var cached: Variant = Synth.cache_get(get_script().resource_path)
-	if cached != null:
-		sfx = cached
-	else:
-		_build_sfx()
-		Synth.cache_set(get_script().resource_path, sfx)
+	load_sfx()
 	theme = g.theme
 	prev_theme = g.theme
 	_setup()
 
 
-func play(id: String, pitch := 1.0, volume_db := 0.0) -> void:
-	if game == null or game.mode == OutRunGame.Mode.DEMO or not sfx.has(id):
-		return
-	var p := _players[_next_player]
-	_next_player = (_next_player + 1) % _players.size()
-	p.stream = sfx[id]
-	p.pitch_scale = pitch
-	p.volume_db = volume_db
-	p.play()
+## The menu demo is silent.
+func _is_silent() -> bool:
+	return game == null or game.mode == OutRunGame.Mode.DEMO
 
 
 static func _looped(s: AudioStreamWAV) -> AudioStreamWAV:
@@ -421,7 +404,7 @@ func _process(delta: float) -> void:
 
 func _update_audio(silent: bool) -> void:
 	var racing := game.state != OutRunGame.State.OVER
-	# motor: o tom sobe com a velocidade (e cai ao meter a mudança alta)
+	# engine: the pitch rises with speed (and drops on shifting to high gear)
 	if sfx.has("engine"):
 		if silent or not racing:
 			if _engine.playing:
@@ -436,7 +419,7 @@ func _update_audio(silent: bool) -> void:
 				rev = pct / 0.6 if not game.high_gear else 0.35 + pct * 0.65
 			_engine.pitch_scale = 0.55 + rev * 1.6
 			_engine.volume_db = -12.0 + pct * 6.0
-	# pneus a chiar nas curvas fortes ou fora de estrada
+	# tyres screeching on sharp curves or off the road
 	if sfx.has("skid"):
 		var seg := game.player_segment()
 		var pct := game.speed / OutRunGame.MAX_SPEED
@@ -448,7 +431,7 @@ func _update_audio(silent: bool) -> void:
 			_skid.play()
 		elif not want and _skid.playing:
 			_skid.stop()
-	# rádio
+	# radio
 	var want_music := not silent and radio >= 0 and racing
 	if want_music:
 		if not _music.playing:
@@ -471,11 +454,7 @@ func set_radio(i: int) -> void:
 		_music.stop()
 
 
-func ui_palette() -> Dictionary:
-	return UI.LAUNCHER_PALETTE
-
-
-# ---------------------------------------------------------------- projeção
+# ---------------------------------------------------------------- projection
 
 func horizon_y() -> float:
 	return H * 0.5 + clampf(game.player_y * 0.004, -40.0, 40.0)
@@ -512,7 +491,7 @@ func _project() -> void:
 				"w1": sc1 * OutRunGame.ROAD_W * half_w, "s1": sc1, "c1": g.fork_c(i)}
 		else:
 			pending.segs.append(s)
-		# ao longe, juntam-se 2 ou 3 segmentos numa só faixa (menos trabalho, a diferença não se vê)
+		# far away, 2 or 3 segments are merged into one strip (less work, no visible difference)
 		var group := 1 if n < 70 else (2 if n < 140 else 3)
 		if pending.segs.size() >= group:
 			var sc2 := depth / (z1 + OutRunGame.SEG_LEN)
@@ -532,12 +511,12 @@ func _project() -> void:
 		dx += curve
 
 
-## 0 = sem nevoeiro, 1 = totalmente coberto (os estilos podem mudar a curva).
+## 0 = no fog, 1 = fully covered (styles can change the curve).
 func fog_at(d: float) -> float:
 	return clampf(pow(d, 2.2) * 1.3 - 0.15, 0.0, 1.0)
 
 
-# ---------------------------------------------------------------- desenho
+# ---------------------------------------------------------------- drawing
 
 func _draw() -> void:
 	if game == null or game.segments.is_empty():
@@ -545,7 +524,7 @@ func _draw() -> void:
 	_fc = frame_colors()
 	_project()
 	_draw_background()
-	# bucket dos carros por segmento
+	# car bucket per segment
 	var by_seg := {}
 	for car in game.cars:
 		var i := floori(float(car.z) / OutRunGame.SEG_LEN)
@@ -572,7 +551,7 @@ func _draw() -> void:
 	_draw_hud()
 
 
-## Desenha uma faixa da estrada (relva, bermas, asfalto e linhas), incluindo a bifurcação.
+## Draws a road strip (grass, kerbs, tarmac and lines), including the fork.
 func _draw_row(r: Dictionary) -> void:
 	var k := 0 if r.seg.light else 1
 	var f: float = r.fog
@@ -596,7 +575,7 @@ func _draw_row(r: Dictionary) -> void:
 	var c1: float = r.c1
 	var c2: float = r.c2
 	if c1 <= 0.0 and c2 <= 0.0:
-		# estrada única (o caso habitual): berma por baixo, asfalto e duas linhas
+		# single road (the usual case): kerb below, tarmac and two lines
 		var e1 := w1 * 1.16
 		var e2 := w2 * 1.16
 		quad(Vector2(x1 - e1, y1), Vector2(x1 + e1, y1), Vector2(x2 + e2, y2), Vector2(x2 - e2, y2), rumble)
@@ -617,7 +596,7 @@ func _draw_row(r: Dictionary) -> void:
 		strip(r, s * c1 - 1.0, s * c1 + 1.0, s * c2 - 1.0, s * c2 + 1.0, road)
 	if lane.a > 0.0:
 		var lw := 0.025
-		var lanes: Array[Vector2] = []    # (posição em baixo, posição em cima)
+		var lanes: Array[Vector2] = []    # (bottom position, top position)
 		if c1 < 1.0:
 			lanes = [Vector2(-c1 - 1.0 / 3.0, -c2 - 1.0 / 3.0), Vector2(0, 0), Vector2(c1 + 1.0 / 3.0, c2 + 1.0 / 3.0)]
 		else:
@@ -629,7 +608,7 @@ func _draw_row(r: Dictionary) -> void:
 	_draw_row_extra(r)
 
 
-## Trapézio entre duas posições laterais (em meias-larguras de estrada), em baixo e em cima.
+## Trapezoid between two lateral positions (in road half-widths), at the bottom and top.
 func strip(r: Dictionary, a1: float, b1: float, a2: float, b2: float, color: Color) -> void:
 	var x1: float = r.x1
 	var x2: float = r.x2
@@ -638,8 +617,8 @@ func strip(r: Dictionary, a1: float, b1: float, a2: float, b2: float, color: Col
 	quad(Vector2(x1 + w1 * a1, r.y1), Vector2(x1 + w1 * b1, r.y1), Vector2(x2 + w2 * b2, r.y2), Vector2(x2 + w2 * a2, r.y2), color)
 
 
-## Quadriláteros da estrada: juntam-se num só lote e são enviados de uma vez (flush_quads),
-## o que é muito mais rápido do que um polígono de cada vez.
+## Road quads: gathered into a single batch and sent at once (flush_quads),
+## which is much faster than one polygon at a time.
 func quad(a: Vector2, b: Vector2, c: Vector2, d: Vector2, color: Color) -> void:
 	var n := _qv.size()
 	_qv.append(a)
@@ -700,7 +679,7 @@ func _place_car(r: Dictionary, car: Dictionary, fade: float) -> void:
 	_draw_car(car, Rect2(cx - dw / 2, y, dw, 0.0), alpha, r)
 
 
-## Retângulo do carro do jogador no ecrã (base ao centro, em baixo).
+## On-screen rectangle of the player car (base centred at the bottom).
 func player_rect(aspect: float) -> Rect2:
 	var w := OutRunGame.PLAYER_W * OutRunGame.ROAD_W / OutRunGame.CAM_HEIGHT * W / 2
 	var h := w * aspect
@@ -713,7 +692,7 @@ func player_rect(aspect: float) -> Rect2:
 	return Rect2(W / 2 - w / 2, H - 12 - h + bounce - hop, w, h)
 
 
-## Desenha uma textura cortando a parte de baixo abaixo de clip_y (se houver).
+## Draws a texture, cutting the part below clip_y (if any).
 func draw_tex(t: Texture2D, rect: Rect2, alpha := 1.0, flip := false, modulate_c := Color.WHITE) -> void:
 	var m := Color(modulate_c, modulate_c.a * alpha)
 	if flip:
@@ -722,7 +701,7 @@ func draw_tex(t: Texture2D, rect: Rect2, alpha := 1.0, flip := false, modulate_c
 		draw_texture_rect(t, rect, false, m)
 
 
-## Textura de cenário (criada a pedido, por estilo e tema).
+## Scenery texture (created on demand, per style and theme).
 func sprite_texture(kind: String) -> Texture2D:
 	var key := "%s/%s" % [theme_of_sprites(), kind]
 	if _sprite_cache.has(key):
@@ -735,11 +714,11 @@ func sprite_texture(kind: String) -> Texture2D:
 	return t
 
 
-const SIGN_TEXTS := ["ARCADE", "SOL", "PRAIA", "GELADOS", "1986", "TURBO", "CAFE", "RADIO"]
+const SIGN_TEXTS := ["ARCADE", "SUN", "BEACH", "ICE CREAM", "1986", "TURBO", "CAFE", "RADIO"]
 
 
-## Cenário: placas, pórticos e prédios são desenhados aqui com as cores do estilo;
-## o resto usa as texturas de pixel art.
+## Scenery: signs, gantries and buildings are drawn here with the style's colours;
+## the rest uses the pixel-art textures.
 func _draw_sprite(sp: Dictionary, rect: Rect2, alpha: float, r: Dictionary) -> void:
 	var kind: String = sp.kind
 	var bottom := rect.position.y
@@ -765,7 +744,7 @@ func _draw_sprite(sp: Dictionary, rect: Rect2, alpha: float, r: Dictionary) -> v
 			billboard(rect, bottom, text, c.sign_frame, panel, ink, c.leg, alpha)
 		"start", "goal":
 			var c := sprite_colors(r)
-			gantry(rect, bottom, I18n.t("PARTIDA") if kind == "start" else I18n.t("META"), c, alpha)
+			gantry(rect, bottom, I18n.t("START") if kind == "start" else I18n.t("GOAL"), c, alpha)
 		"building", "building2":
 			var c := sprite_colors(r)
 			building(rect, bottom, c[kind], c.window, c.lit, alpha, r.i, c.get("outline", Color(0, 0, 0, 0)))
@@ -777,7 +756,7 @@ func _draw_sprite(sp: Dictionary, rect: Rect2, alpha: float, r: Dictionary) -> v
 			draw_tex(t, Rect2(rect.position.x, bottom - h, rect.size.x, h), alpha, kind == "palm2")
 
 
-## Texto ajustado a um retângulo (os estilos podem usar outra letra).
+## Text fitted to a rectangle (styles may use another font).
 func fit_text(text: String, box: Rect2, color: Color) -> void:
 	var cell := minf(box.size.x * 0.88 / maxf(PixelFont.width(text, 1.0), 1.0), box.size.y * 0.6 / 7.0)
 	if cell >= 0.6:
@@ -840,7 +819,7 @@ func sprite_colors(_r: Dictionary) -> Dictionary:
 	return {}
 
 
-## Cor do contorno das texturas de cenário (transparente = sem contorno).
+## Outline colour of the scenery textures (transparent = no outline).
 func sprite_outline(_theme: String) -> Color:
 	return Color(0, 0, 0, 0)
 
@@ -849,9 +828,9 @@ func theme_of_sprites() -> String:
 	return game.theme
 
 
-# ---------------------------------------------------------------- paisagem
+# ---------------------------------------------------------------- landscape
 
-## Alturas (0..1) de uma camada de paisagem, para o tema e plano (0 = longe, 1 = perto).
+## Heights (0..1) of a landscape layer, for the theme and plane (0 = far, 1 = near).
 func layer_heights(t: String, plane: int) -> PackedFloat32Array:
 	var key := "%s%d" % [t, plane]
 	if _layers.has(key):
@@ -866,7 +845,7 @@ func layer_heights(t: String, plane: int) -> PackedFloat32Array:
 	noise.frequency = 0.05 if plane == 0 else 0.08
 	for i in n:
 		var a := float(i) / n * TAU
-		# amostra num círculo para a paisagem dar a volta sem costura
+		# samples on a circle so the landscape wraps seamlessly
 		var v := noise.get_noise_2d(cos(a) * n / TAU, sin(a) * n / TAU) * 0.5 + 0.5
 		var h := 0.0
 		match t:
@@ -892,7 +871,7 @@ func layer_heights(t: String, plane: int) -> PackedFloat32Array:
 	return out
 
 
-## Desenha uma camada de paisagem: linha superior em base_y - altura*amp, preenchida até bottom_y.
+## Draws a landscape layer: top line at base_y - height*amp, filled down to bottom_y.
 func draw_layer(t: String, plane: int, base_y: float, amp: float, speed: float, color: Color, bottom_y := H, outline := Color(0, 0, 0, 0), outline_w := 2.0) -> void:
 	var hts := layer_heights(t, plane)
 	var n := hts.size()
@@ -917,9 +896,9 @@ func draw_layer(t: String, plane: int, base_y: float, amp: float, speed: float, 
 		draw_polyline(pts, outline, outline_w)
 
 
-# ---------------------------------------------------------------- mapa das rotas
+# ---------------------------------------------------------------- route map
 
-## Mapa das 5 etapas (pirâmide de bifurcações), com o caminho já percorrido destacado.
+## Map of the 5 stages (pyramid of forks), with the path driven so far highlighted.
 func draw_route_map(origin: Vector2, cell: Vector2, line_c: Color, node_c: Color, active_c: Color, width := 2.0, node_r := 4.0) -> void:
 	var pos := func(s: int, b: int) -> Vector2: return origin + Vector2(s * cell.x, (b - s / 2.0) * cell.y)
 	for s in OutRunGame.STAGES - 1:
@@ -933,7 +912,7 @@ func draw_route_map(origin: Vector2, cell: Vector2, line_c: Color, node_c: Color
 			var here := on and s == game.stage
 			var r := node_r * (1.6 if here else 1.0)
 			draw_circle(pos.call(s, b), r, active_c if on else node_c)
-	# progresso dentro da etapa
+	# progress within the stage
 	if game.stage < OutRunGame.STAGES - 1:
 		var a: Vector2 = pos.call(game.stage, game.route[game.stage])
 		var p := game.stage_progress()
@@ -941,9 +920,9 @@ func draw_route_map(origin: Vector2, cell: Vector2, line_c: Color, node_c: Color
 		draw_circle(a.lerp(b2, p), node_r * 0.9, Color.WHITE)
 
 
-# ---------------------------------------------------------------- pixel art com contorno
+# ---------------------------------------------------------------- outlined pixel art
 
-## Textura de pixel art; com `outline` desenha um contorno de 1 ponto à volta da figura.
+## Pixel-art texture; with `outline` it draws a 1-dot outline around the figure.
 static func make_sprite(art: Array, palette: Dictionary, outline := Color(0, 0, 0, 0), scale := 1) -> ImageTexture:
 	var w: int = (art[0] as String).length()
 	var h := art.size()
@@ -967,13 +946,9 @@ static func make_sprite(art: Array, palette: Dictionary, outline := Color(0, 0, 
 	return ImageTexture.create_from_image(img)
 
 
-# ---------------------------------------------------------------- para os estilos reescreverem
+# ---------------------------------------------------------------- for the styles to override
 
 func _setup() -> void:
-	pass
-
-
-func _build_sfx() -> void:
 	pass
 
 
@@ -981,7 +956,7 @@ func _tick(_delta: float) -> void:
 	pass
 
 
-## Cores da estrada para este frame: pares [clara, escura] e a cor do nevoeiro.
+## Road colours for this frame: [light, dark] pairs and the fog colour.
 func frame_colors() -> Dictionary:
 	return {"grass": [Color.DARK_GREEN, Color.DARK_GREEN], "rumble": [Color.RED, Color.WHITE], "road": [Color.DIM_GRAY, Color.DIM_GRAY],
 		"lane": [Color.WHITE, Color(0, 0, 0, 0)], "fog": Color.WHITE}

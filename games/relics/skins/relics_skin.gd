@@ -1,8 +1,8 @@
 class_name RelicsSkin
-extends Node2D
-## Base dos estilos da Torre das Relíquias: projeção isométrica, ordem de desenho (de trás para a
-## frente), cubos, paredes com portas, desenhos originais (explorador, guarda, fantasma, relíquia,
-## coração) e sons. Os estilos escolhem cores, faces dos cubos, chão, paredes e HUD.
+extends SkinBase
+## Base of the Tower of Relics styles: isometric projection, drawing order (back to
+## front), cubes, walls with doors, original drawings (explorer, guard, ghost, relic,
+## heart) and sounds. The styles choose colours, cube faces, floor, walls and HUD.
 
 const TW := 80.0
 const TH := 40.0
@@ -117,23 +117,17 @@ const RELIC := ["..YYYY..", ".YyYYYY.", ".YYYYYY.", "..YYYY..", "...YY...", "...
 const HEART := [".RR.RR.", "RRRRRRR", "RRWRRRR", "RRRRRRR", ".RRRRR.", "..RRR..", "...R..."]
 
 var game: RelicsGame
-var sfx := {}
 var tex := {}
 var time := 0.0
 var origin := Vector2(640, 214)
 var popups: Array[Dictionary] = []
 var sparks: Array[Dictionary] = []
-var _players: Array[AudioStreamPlayer] = []
-var _next_player := 0
 var _step_t := 0.0
 
 
 func attach(g: RelicsGame) -> void:
 	game = g
-	for i in 8:
-		var p := AudioStreamPlayer.new()
-		add_child(p)
-		_players.append(p)
+	add_voices(8)
 	g.match_started.connect(func() -> void:
 		popups.clear()
 		sparks.clear())
@@ -155,24 +149,13 @@ func attach(g: RelicsGame) -> void:
 		play("die"))
 	g.day_changed.connect(func(_d: int) -> void: play("day", 1.0, -6.0))
 	g.won.connect(func() -> void: play("win"))
-	var cached: Variant = Synth.cache_get(get_script().resource_path)
-	if cached != null:
-		sfx = cached
-	else:
-		_build_sfx()
-		Synth.cache_set(get_script().resource_path, sfx)
+	load_sfx()
 	_setup()
 
 
-func play(id: String, pitch := 1.0, volume_db := 0.0) -> void:
-	if game == null or game.mode == RelicsGame.Mode.DEMO or not sfx.has(id):
-		return
-	var p := _players[_next_player]
-	_next_player = (_next_player + 1) % _players.size()
-	p.stream = sfx[id]
-	p.pitch_scale = pitch
-	p.volume_db = volume_db
-	p.play()
+## The menu demo is silent.
+func _is_silent() -> bool:
+	return game == null or game.mode == RelicsGame.Mode.DEMO
 
 
 func _process(delta: float) -> void:
@@ -203,9 +186,9 @@ func iso(p: Vector3) -> Vector2:
 	return origin + Vector2((p.x - p.y) * TW / 2, (p.x + p.y) * TH / 2 - p.z * ZH)
 
 
-# ---------------------------------------------------------------- cubos
+# ---------------------------------------------------------------- cubes
 
-## As três faces visíveis de uma caixa: topo, frente-esquerda (+y) e frente-direita (+x).
+## The three visible faces of a box: top, front-left (+y) and front-right (+x).
 func box_faces(p: Vector3, s: Vector3) -> Array:
 	var top := PackedVector2Array([iso(p + Vector3(0, 0, s.z)), iso(p + Vector3(s.x, 0, s.z)), iso(p + Vector3(s.x, s.y, s.z)), iso(p + Vector3(0, s.y, s.z))])
 	var left := PackedVector2Array([iso(p + Vector3(0, s.y, s.z)), iso(p + Vector3(s.x, s.y, s.z)), iso(p + Vector3(s.x, s.y, 0)), iso(p + Vector3(0, s.y, 0))])
@@ -225,7 +208,7 @@ func draw_box(p: Vector3, s: Vector3, top: Color, left: Color, right: Color, lin
 			draw_polyline(q, line, lw)
 
 
-## Desenha uma textura de pé num ponto do mundo (centro da base).
+## Draws a standing texture at a world point (centre of the base).
 func draw_sprite_at(t: Texture2D, feet: Vector3, scale := 3.0, flip := false, modulate_c := Color.WHITE) -> void:
 	var size := t.get_size() * scale
 	var p := iso(feet) - Vector2(size.x / 2, size.y - 6)
@@ -243,7 +226,7 @@ func draw_shadow(p: Vector3, r: float, c: Color) -> void:
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
 
-# ---------------------------------------------------------------- desenho
+# ---------------------------------------------------------------- drawing
 
 func _draw() -> void:
 	if game == null:
@@ -252,7 +235,7 @@ func _draw() -> void:
 	_draw_room_shell()
 	for c: Vector2i in game.spikes:
 		_draw_spikes(c)
-	# lista de tudo o que tem volume, ordenada de trás para a frente
+	# list of everything with volume, sorted back to front
 	var list := []
 	for b in game.blocks:
 		var p: Vector3 = b.pos
@@ -299,23 +282,23 @@ func _player_visible() -> bool:
 func man_frame() -> Array:
 	var f := game.facing
 	var back := f.x + f.y < -0.1 or (absf(f.x + f.y) <= 0.1 and f.y < 0.0)
-	# para a direita no ecrã: +x (frente) ou -y (costas)
+	# screen right: +x (front) or -y (back)
 	var right := f.x - f.y > 0.0
 	var step := int(game.anim * 7.0) % 2 if game.moving and game.grounded else 0
 	return [("back" if back else "front") + str(step), not right]
 
 
-## Paredes do fundo (com portas), chão e os contornos.
+## Back walls (with doors), floor and outlines.
 func _draw_room_shell() -> void:
 	var g := game
 	var n := float(RelicsGame.ROOM)
 	_draw_floor()
-	# parede do lado W (x = 0) e N (y = 0)
+	# W wall (x = 0) and N wall (y = 0)
 	_draw_wall("W", Vector3(0, 0, 0), Vector3(0, n, 0), g.doors.get("W", -1))
 	_draw_wall("N", Vector3(0, 0, 0), Vector3(n, 0, 0), g.doors.get("N", -1))
 
 
-## Parede plana entre a e b (no chão), com a porta (altura dz) ao meio, se houver.
+## Flat wall between a and b (on the floor), with the door (height dz) in the middle, if any.
 func _draw_wall(side: String, a: Vector3, b: Vector3, dz: int) -> void:
 	var segs := []
 	if dz >= 0:
@@ -343,7 +326,7 @@ func _draw_wall(side: String, a: Vector3, b: Vector3, dz: int) -> void:
 		_draw_door(side, PackedVector2Array([iso(d0), iso(d1), iso(d1 + Vector3(0, 0, 2.0)), iso(d0 + Vector3(0, 0, 2.0))]), dz)
 
 
-## Marcas das portas da frente (lados S e E), que não têm parede desenhada.
+## Marks for the front doors (S and E sides), which have no wall drawn.
 func _draw_front_doors() -> void:
 	var n := float(RelicsGame.ROOM)
 	for side: String in ["S", "E"]:
@@ -357,7 +340,7 @@ func _draw_front_doors() -> void:
 
 func _draw_hud_common(ink: Color, accent: Color, dim: Color, font_draw: Callable) -> void:
 	var g := game
-	# relíquias: 8 casas (entregues cheias, levadas a meio)
+	# relics: 8 slots (delivered full, carried half)
 	for i in RelicsGame.RELICS:
 		var r := Rect2(470 + i * 44, 664, 36, 36)
 		var t: Texture2D = tex.relic
@@ -367,7 +350,7 @@ func _draw_hud_common(ink: Color, accent: Color, dim: Color, font_draw: Callable
 		elif i < g.deposited + g.carried_relics:
 			c = Color(accent, 0.55)
 		draw_texture_rect(t, r, false, c)
-	# mapa
+	# map
 	for y in RelicsGame.MAP.y:
 		for x in RelicsGame.MAP.x:
 			var v := Vector2i(x, y)
@@ -383,13 +366,9 @@ func _draw_hud_common(ink: Color, accent: Color, dim: Color, font_draw: Callable
 	font_draw.call(g.room_name().to_upper(), Vector2(640, 40))
 
 
-# ---------------------------------------------------------------- para os estilos reescreverem
+# ---------------------------------------------------------------- for the styles to override
 
 func _setup() -> void:
-	pass
-
-
-func _build_sfx() -> void:
 	pass
 
 
@@ -444,6 +423,3 @@ func _draw_hud() -> void:
 func relic_color() -> Color:
 	return Color.GOLD
 
-
-func ui_palette() -> Dictionary:
-	return UI.LAUNCHER_PALETTE

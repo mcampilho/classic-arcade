@@ -1,7 +1,7 @@
 extends ChuckieSkin
-## Ponto de Cruz: o nível bordado num pano de linho como um "sampler" de quinta — cada píxel é um
-## ponto em X com linhas de várias cores, o pano tem a trama à vista, as letras são bordadas e
-## os sons lembram uma caixa de música.
+## Cross-Stitch: the level embroidered on linen like a farm "sampler" — each pixel is a
+## cross stitch in threads of several colours, the cloth weave is visible, the letters are embroidered and
+## the sounds recall a music box.
 
 const CLOTH := Color("efe6d2")
 const CLOTH_DARK := Color("e2d6bc")
@@ -55,7 +55,7 @@ func _setup() -> void:
 	tex.brick = make_tex(BRICK, {"G": TERRACOTTA, "g": BRICK_DARK, "m": Color("d9a48f")}, Color(0, 0, 0, 0))
 	tex.ladder = make_tex(LADDER, {"L": WOOD}, Color(0, 0, 0, 0))
 	tex.heart = make_tex(HEART, {"R": ROSE}, Color(0, 0, 0, 0))
-	# a trama do linho: 4 x 4 com um furo
+	# the linen weave: 4 x 4 with a hole
 	var img := Image.create(4, 4, false, Image.FORMAT_RGBA8)
 	img.fill(CLOTH)
 	img.set_pixel(0, 0, HOLE)
@@ -64,7 +64,7 @@ func _setup() -> void:
 	cloth_tex = ImageTexture.create_from_image(img)
 
 
-## Cada ponto do desenho vira um X bordado de 4 x 4 píxeis (a linha de cima um pouco mais clara).
+## Each drawing dot becomes an embroidered 4 x 4 pixel X (the top thread slightly lighter).
 func make_tex(rows: Array, pal: Dictionary, _outline: Color) -> Texture2D:
 	var w: int = (rows[0] as String).length()
 	var h := rows.size()
@@ -89,7 +89,7 @@ func make_tex(rows: Array, pal: Dictionary, _outline: Color) -> Texture2D:
 
 
 func _build_sfx() -> void:
-	# caixa de música: notas de seno com decaimento
+	# music box: sine notes with decay
 	sfx.step = Synth.tone(0.0, 0.02, {"wave": "noise", "volume": 0.06, "lowpass": 0.3, "decay": 80.0})
 	sfx.climb = Synth.tone(0.0, 0.03, {"wave": "noise", "volume": 0.05, "lowpass": 0.2, "decay": 60.0})
 	sfx.jump = Synth.to_stream(Synth.mix([
@@ -120,7 +120,7 @@ func _build_sfx() -> void:
 func _draw_static(ci: CanvasItem) -> void:
 	ci.draw_texture_rect(cloth_tex, Rect2(0, 0, 1280, 720), true)
 	var f := field_rect()
-	# moldura em ponto atrás (tracejado)
+	# backstitch frame (dashed)
 	var dash := 12.0
 	for pass_i in 2:
 		var rr := f.grow(10 if pass_i == 0 else 16)
@@ -144,15 +144,15 @@ func _draw_static(ci: CanvasItem) -> void:
 				ci.draw_texture_rect(tex.ladder, rect, false)
 				if not game.is_ladder(c, r - 1) and game.is_floor(c, r):
 					ci.draw_texture_rect(tex.ladder, Rect2(rect.position - Vector2(0, 4 * S), Vector2(rect.size.x, 4 * S)), false)
-	# divisa bordada no painel esquerdo
-	_stitch_text_on(ci, I18n.t("LAR"), panel_left_x(), 590, NAVY)
-	_stitch_text_on(ci, I18n.t("DOCE"), panel_left_x(), 628, NAVY)
-	_stitch_text_on(ci, I18n.t("LAR"), panel_left_x(), 666, NAVY)
+	# embroidered motto on the left panel
+	_stitch_text_on(ci, I18n.t("HOME"), panel_left_x(), 590, NAVY)
+	_stitch_text_on(ci, I18n.t("SWEET"), panel_left_x(), 628, NAVY)
+	_stitch_text_on(ci, I18n.t("HOME"), panel_left_x(), 666, NAVY)
 	ci.draw_texture_rect(tex.heart, Rect2(panel_left_x() - 70, 668, 28, 24), false)
 	ci.draw_texture_rect(tex.heart, Rect2(panel_left_x() + 42, 668, 28, 24), false)
 
 
-## Letra bordada (cada carácter é uma textura em ponto de cruz, guardada por cor).
+## Embroidered lettering (each character is a cross-stitch texture, cached per colour).
 func glyph(ch: String, color: Color) -> Texture2D:
 	var key := ch + color.to_html()
 	if not _glyphs.has(key):
@@ -229,24 +229,24 @@ func _draw_hud() -> void:
 	var lx := panel_left_x()
 	var rx := panel_right_x()
 	var two := g.players.size() > 1
-	stitch_text(I18n.t("PONTOS") if not two else I18n.t("JOG 1"), lx, 40, Color(ROSE, 1.0 if g.current == 0 else 0.45))
+	stitch_text(I18n.t("SCORE") if not two else I18n.t("P1"), lx, 40, Color(ROSE, 1.0 if g.current == 0 else 0.45))
 	stitch_text("%06d" % g.players[0].score, lx, 80, NAVY)
 	if two:
-		stitch_text(I18n.t("JOG 2"), lx, 140, Color(ROSE, 1.0 if g.current == 1 else 0.45))
+		stitch_text(I18n.t("P2"), lx, 140, Color(ROSE, 1.0 if g.current == 1 else 0.45))
 		stitch_text("%06d" % g.players[1].score, lx, 180, NAVY)
-	stitch_text(I18n.t("MELHOR"), lx, 250, SAGE)
+	stitch_text(I18n.t("BEST"), lx, 250, SAGE)
 	stitch_text("%06d" % maxi(g.best, g.player().score), lx, 290, NAVY)
-	stitch_text(I18n.t("VIDAS"), lx, 400, SAGE)
+	stitch_text(I18n.t("LIVES"), lx, 400, SAGE)
 	for i in mini(g.player().lives, 4):
 		draw_texture_rect(tex.farmer_stand, Rect2(lx - 66 + i * 34, 440, 32, 64), false)
-	stitch_text(I18n.t("NIVEL"), rx, 40, SAGE)
+	stitch_text(I18n.t("LEVEL"), rx, 40, SAGE)
 	stitch_text(str(g.level()), rx, 80, NAVY)
-	stitch_text(I18n.t("TEMPO"), rx, 160, SAGE)
+	stitch_text(I18n.t("TIME"), rx, 160, SAGE)
 	var low := g.time_left < 150.0 and fmod(time, 0.4) < 0.2
 	stitch_text("%03d" % int(g.time_left), rx, 200, ROSE if low else NAVY)
 	if g.freeze > 0.0:
-		stitch_text(I18n.t("PARADO"), rx, 244, GOLD)
-	stitch_text(I18n.t("OVOS"), rx, 320, SAGE)
+		stitch_text(I18n.t("FROZEN"), rx, 244, GOLD)
+	stitch_text(I18n.t("EGGS"), rx, 320, SAGE)
 	stitch_text(str(g.eggs.size()), rx, 360, NAVY)
 	for p in popups:
 		stitch_text(p.text, px(p.pos).x, px(p.pos).y - 34, ROSE)

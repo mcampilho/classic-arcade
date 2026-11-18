@@ -1,9 +1,9 @@
 class_name OutRunGame
 extends Node2D
-## Lógica do OutRun (1986): estrada pseudo-3D por segmentos (curvas e colinas), trânsito,
-## cenário com colisões e contrarrelógio com pontos de controlo.
-## O percurso tem 5 etapas; no fim de cada uma a estrada bifurca: quem segue pela esquerda
-## ou pela direita escolhe a etapa seguinte (5 metas possíveis, como no original).
+## OutRun (1986) logic: pseudo-3D road made of segments (curves and hills), traffic,
+## scenery with collisions and a time trial with checkpoints.
+## The course has 5 stages; at the end of each the road forks: going left
+## or right chooses the next stage (5 possible goals, as in the original).
 
 signal race_started
 signal countdown(n: int)
@@ -22,7 +22,7 @@ enum State { READY, PLAY, CRASH, OUT, GOAL, OVER }
 
 const SCREEN := Vector2(1280, 720)
 const SEG_LEN := 200.0
-const ROAD_W := 2000.0               # meia-largura da estrada (unidades do mundo)
+const ROAD_W := 2000.0               # road half-width (world units)
 const LANES := 3
 const FOV := 100.0
 const CAM_HEIGHT := 1000.0
@@ -34,14 +34,14 @@ const DECEL := -MAX_SPEED / 5.0
 const OFFROAD_DECEL := -MAX_SPEED / 2.0
 const OFFROAD_LIMIT := MAX_SPEED / 4.0
 const CENTRIFUGAL := 0.3
-const PLAYER_W := 0.30                # largura do carro em meias-larguras de estrada
+const PLAYER_W := 0.30                # car width in road half-widths
 const START_TIME := 80.0
 const CHECKPOINT_TIME := [0.0, 66.0, 64.0, 62.0, 60.0]
 const STAGES := 5
 const FORK_LEN := 170
-const FORK_MAX := 3.4               # distância entre os centros das duas estradas (em meias-larguras) / 2
+const FORK_MAX := 3.4               # distance between the centres of the two roads (in half-widths) / 2
 const THEMES := ["costa", "deserto", "floresta", "alpes", "cidade", "vinhas"]
-## Pirâmide das etapas: em cada bifurcação, a esquerda mantém o índice e a direita soma 1.
+## Stage pyramid: at each fork, left keeps the index and right adds 1.
 const ROUTE_THEMES := [
 	["costa"],
 	["deserto", "floresta"],
@@ -49,9 +49,9 @@ const ROUTE_THEMES := [
 	["deserto", "floresta", "costa", "cidade"],
 	["vinhas", "alpes", "deserto", "floresta", "costa"],
 ]
-const THEME_NAMES := {"costa": "Costa", "deserto": "Deserto", "floresta": "Floresta", "alpes": "Alpes", "cidade": "Cidade", "vinhas": "Vinhas"}
+const THEME_NAMES := {"costa": "Coast", "deserto": "Desert", "floresta": "Forest", "alpes": "Alps", "cidade": "City", "vinhas": "Vineyards"}
 
-## Cenário por tema: [tipo, largura, altura] (unidades do mundo)
+## Scenery per theme: [kind, width, height] (world units)
 const SCENERY := {
 	"costa": [["palm", 700, 2200], ["palm2", 650, 1900], ["umbrella", 500, 600], ["sign", 900, 700]],
 	"deserto": [["cactus", 400, 1000], ["rock", 900, 600], ["deadtree", 600, 1200], ["sign", 900, 700]],
@@ -60,7 +60,7 @@ const SCENERY := {
 	"cidade": [["building", 1600, 3000], ["lamp", 200, 1300], ["building2", 1400, 2400], ["sign", 900, 700]],
 	"vinhas": [["cypress", 400, 1800], ["vine", 1000, 400], ["house", 1300, 1000], ["sign", 900, 700]],
 }
-const CAR_KINDS := [["car", 0.32, 0.55], ["van", 0.38, 0.45], ["truck", 0.42, 0.35], ["beetle", 0.28, 0.5]]   # tipo, largura, velocidade relativa
+const CAR_KINDS := [["car", 0.32, 0.55], ["van", 0.38, 0.45], ["truck", 0.42, 0.35], ["beetle", 0.28, 0.5]]   # kind, width, relative speed
 
 var mode := Mode.DEMO
 var state := State.READY
@@ -72,16 +72,16 @@ var manual_gears := false
 var segments: Array[Dictionary] = []     # p1y, p2y, curve, sprites, light, fork, index
 var track_len := 0.0
 var fork_start := 0
-var stage_time := 0.0                     # tempo desde o início da etapa (para os estilos)
+var stage_time := 0.0                     # time since the start of the stage (for the styles)
 var cars: Array[Dictionary] = []          # z, offset, speed, kind, w, color
-var position_z := 0.0                     # posição da câmara
-var player_x := 0.0                       # -1..1 = estrada
+var position_z := 0.0                     # camera position
+var player_x := 0.0                       # -1..1 = road
 var player_y := 0.0
 var speed := 0.0
 var high_gear := true
-var steer := 0.0                          # -1..1 (para o desenho do carro)
+var steer := 0.0                          # -1..1 (for drawing the car)
 var stage := 0
-var branch := 0                           # posição no mapa de rotas (0..stage)
+var branch := 0                           # position on the route map (0..stage)
 var route: Array[int] = [0]
 var theme := "costa"
 var time_left := START_TIME
@@ -139,7 +139,7 @@ static func _joy_axis(axis: JoyAxis, value: float) -> InputEventJoypadMotion:
 	return e
 
 
-# ---------------------------------------------------------------- rotas e etapas
+# ---------------------------------------------------------------- routes and stages
 
 static func theme_for(s: int, b: int) -> String:
 	return ROUTE_THEMES[s][b]
@@ -153,14 +153,14 @@ func segment_at(z: float) -> Dictionary:
 	return seg(floori(z / SEG_LEN))
 
 
-## Segmento i; depois do fim da etapa a estrada continua reta e plana (segmentos virtuais).
+## Segment i; after the end of the stage the road carries on straight and flat (virtual segments).
 func seg(i: int) -> Dictionary:
 	if i < segments.size():
 		return segments[maxi(i, 0)]
 	return {"index": i, "p1y": 0.0, "p2y": 0.0, "curve": 0.0, "sprites": [], "light": (i / 3) % 2 == 0, "fork": true}
 
 
-## Afastamento de cada ramo da bifurcação no segmento i (0 = estrada única).
+## Offset of each fork branch at segment i (0 = single road).
 func fork_c(i: float) -> float:
 	if stage >= STAGES - 1 or i < fork_start:
 		return 0.0
@@ -173,7 +173,7 @@ func on_road(x: float, i: float) -> bool:
 	return absf(x) <= 1.0 + c and (c < 1.0 or absf(x) >= c - 1.0)
 
 
-## Posição lateral de um carro (os carros seguem o seu ramo na bifurcação).
+## Lateral position of a car (cars follow their branch at the fork).
 func car_x(car: Dictionary) -> float:
 	var c := fork_c(car.z / SEG_LEN)
 	return float(car.offset) + (c if car.offset >= 0.0 else -c)
@@ -199,7 +199,7 @@ func set_skin(new_skin: OutRunSkin) -> void:
 	skin.attach(self)
 
 
-# ---------------------------------------------------------------- construção da estrada
+# ---------------------------------------------------------------- building the road
 
 static func _ease_in(a: float, b: float, p: float) -> float:
 	return a + (b - a) * p * p
@@ -257,13 +257,13 @@ func _build_stage() -> void:
 				_add_road(len_, len_ / 2, len_, 0.0, -rng.randf_range(10, 40))
 			_:
 				_add_road(10, len_, 10, 0.0, 0.0)
-	# volta à altura 0 e acaba numa reta (a etapa seguinte começa igual: a passagem não se nota)
+	# goes back to height 0 and ends on a straight (the next stage starts the same: the join is invisible)
 	_add_road(40, 40, 40, 0.0, -_last_y() / SEG_LEN)
 	fork_start = segments.size()
 	_add_road(10, FORK_LEN - 20, 10, 0.0, 0.0)
 	track_len = segments.size() * SEG_LEN
 	_ai_side = -1.0 if randf() < 0.5 else 1.0
-	# cenário
+	# scenery
 	var pool: Array = SCENERY[theme]
 	for i in range(40, fork_start, 1):
 		if rng.randf() < 0.22:
@@ -272,7 +272,7 @@ func _build_stage() -> void:
 			_add_sprite(i, item, side * rng.randf_range(1.35, 2.6))
 		if i % 120 == 0:
 			_add_sprite(i, pool[pool.size() - 1], -1.4 if (i / 120) % 2 == 0 else 1.4)
-	# bifurcação: placas de direção dos dois lados (e marca de partida/chegada no início)
+	# fork: direction signs on both sides (and a start/finish mark at the beginning)
 	if stage < STAGES - 1:
 		var left_name: String = I18n.t(THEME_NAMES[theme_for(stage + 1, branch)])
 		var right_name: String = I18n.t(THEME_NAMES[theme_for(stage + 1, branch + 1)])
@@ -288,7 +288,7 @@ func _build_stage() -> void:
 		_add_sprite(segments.size() - 4, ["goal", ROAD_W * 2.7, 1700], 0.0)
 	if stage == 0:
 		_add_sprite(8, ["start", ROAD_W * 2.7, 1700], 0.0)
-	# trânsito
+	# traffic
 	var n_cars := 40 + stage * 10
 	for k in n_cars:
 		var ck: Array = CAR_KINDS[rng.randi() % CAR_KINDS.size()]
@@ -301,7 +301,7 @@ func _add_sprite(i: int, item: Array, offset: float, text := "") -> void:
 	segments[i].sprites.append({"kind": item[0], "w": float(item[1]), "h": float(item[2]), "offset": offset, "text": text})
 
 
-# ---------------------------------------------------------------- partida
+# ---------------------------------------------------------------- match
 
 func start(p_mode: Mode) -> void:
 	mode = p_mode
@@ -325,7 +325,7 @@ func start(p_mode: Mode) -> void:
 	stage_started.emit(stage, theme)
 
 
-# ---------------------------------------------------------------- ciclo
+# ---------------------------------------------------------------- loop
 
 func _process(delta: float) -> void:
 	if paused:
@@ -361,7 +361,7 @@ func _step(dt: float) -> void:
 			if timer <= 0.0 and state == State.CRASH:
 				state = State.PLAY
 				crash_spin = 0.0
-				# volta para a estrada (na bifurcação, para o ramo mais próximo)
+				# back onto the road (at the fork, to the nearest branch)
 				var c := fork_c(player_segment().index)
 				if c >= 1.0:
 					var side := 1.0 if player_x >= 0.0 else -1.0
@@ -390,7 +390,7 @@ func _step(dt: float) -> void:
 
 func _tick_time(dt: float) -> void:
 	if mode == Mode.DEMO:
-		time_left = maxf(time_left, 30.0)   # a demonstração não acaba por falta de tempo
+		time_left = maxf(time_left, 30.0)   # the demo does not end by running out of time
 	time_left -= dt
 	if time_left <= 10.0 and not _warned:
 		_warned = true
@@ -408,7 +408,7 @@ func _finish() -> void:
 	game_over.emit()
 
 
-# ---------------------------------------------------------------- condução
+# ---------------------------------------------------------------- driving
 
 func _controls() -> Dictionary:
 	if is_ai():
@@ -439,7 +439,7 @@ func _drive(dt: float, controlled: bool) -> void:
 		var accel := ACCEL
 		var top := MAX_SPEED
 		if manual_gears:
-			# mudança baixa: arranca bem mas não passa dos 60%; alta: lenta a arrancar
+			# low gear: good start but no more than 60%; high: slow to start
 			if high_gear:
 				accel = ACCEL * (0.35 if pct < 0.45 else 1.0)
 			else:
@@ -480,7 +480,7 @@ func _end_of_stage() -> void:
 		timer = 5.0
 		goal.emit(bonus)
 		return
-	# a escolha da bifurcação: lado da estrada em que o carro vai
+	# the fork choice: the side of the road the car is on
 	var side := 1.0 if player_x >= 0.0 else -1.0
 	var c_end := fork_c(segments.size())
 	if side > 0.0:
@@ -500,7 +500,7 @@ func _end_of_stage() -> void:
 
 
 func _collisions(seg: Dictionary) -> void:
-	# cenário (fora da estrada)
+	# scenery (off the road)
 	if not on_road(player_x, seg.index) or absf(player_x) < 0.5:
 		for i in range(seg.index - 1, mini(seg.index + 2, segments.size())):
 			if i < 0:
@@ -513,7 +513,7 @@ func _collisions(seg: Dictionary) -> void:
 				if absf(player_x - sx) < (PLAYER_W + sw) / 2.0 * 0.8:
 					_crash()
 					return
-	# trânsito
+	# traffic
 	var pz := position_z + player_z
 	for car in cars:
 		if car.speed < speed and absf(car.z - pz) < SEG_LEN * 1.2 and car.z > pz - SEG_LEN * 0.5:
@@ -537,7 +537,7 @@ func _crash() -> void:
 func _move_cars(dt: float) -> void:
 	for car in cars:
 		car.z = fposmod(car.z + car.speed * dt, track_len)
-		# os carros desviam-se suavemente do jogador quando vão à frente dele
+		# cars gently move out of the player's way when ahead of them
 		var pz := position_z + player_z
 		var ahead: float = car.z - pz
 		var cx := car_x(car)
@@ -547,7 +547,7 @@ func _move_cars(dt: float) -> void:
 			car.offset = move_toward(car.offset, clampf(car.offset + (0.4 if cx > player_x else -0.4), lo, hi), dt * 0.3)
 
 
-# ---------------------------------------------------------------- entrada
+# ---------------------------------------------------------------- input
 
 func _unhandled_input(event: InputEvent) -> void:
 	if paused or is_ai():
@@ -557,7 +557,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		gear_changed.emit(high_gear)
 	if event.device == InputEvent.DEVICE_ID_EMULATION:
 		return
-	# Toque: arrastar para os lados vira (volante virtual); 1 dedo acelera, 2 dedos travam.
+	# Touch: dragging sideways steers (virtual wheel); 1 finger accelerates, 2 fingers brake.
 	if event is InputEventScreenTouch:
 		_touch_count = maxi(0, _touch_count + (1 if event.pressed else -1))
 		if event.pressed and _touch_count == 1:
@@ -587,12 +587,12 @@ func clear_input() -> void:
 	_mouse_brake = false
 
 
-# ---------------------------------------------------------------- CPU da demonstração
+# ---------------------------------------------------------------- demo CPU
 
 func _ai() -> Dictionary:
 	var seg := player_segment()
 	var target := 0.0
-	# escolhe a faixa com menos trânsito à frente
+	# picks the lane with the least traffic ahead
 	var pz := position_z + player_z
 	var best_lane := 0.0
 	var best_gap := -INF
@@ -607,17 +607,17 @@ func _ai() -> Dictionary:
 			best_gap = gap
 			best_lane = lane
 	target = best_lane
-	# nas bifurcações, alterna entre esquerda e direita
+	# at forks, alternates between left and right
 	if seg.index >= fork_start - 40 and stage < STAGES - 1:
 		var side := _ai_side
 		target = side * fork_c(seg.index + 25) + side * 0.2
-	# compensa a curva
+	# compensates for the curve
 	var look := segment_at(pz + SEG_LEN * 12)
 	var curve := maxf(absf(float(look.curve)), absf(float(seg.curve)))
 	target += float(look.curve) * 0.04
 	var pct := speed / MAX_SPEED
 	var steer_cmd := clampf((target - player_x) * 3.0 + float(seg.curve) * CENTRIFUGAL * pct, -1.0, 1.0)
-	# trânsito à frente na faixa atual
+	# traffic ahead in the current lane
 	var gap_here := INF
 	for car in cars:
 		var d: float = car.z - pz

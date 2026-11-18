@@ -1,17 +1,17 @@
 class_name GalaxianGame
 extends Node2D
-## Lógica do Galaxian (Namco, 1979), independente do visual.
-## Unidades do ecrã original (224x240), desenhadas a SCALE píxeis por unidade.
+## Galaxian (Namco, 1979) logic, independent of the visuals.
+## Units of the original screen (224x240), drawn at SCALE pixels per unit.
 ##
-## Regras do original:
-##  - formação de 46 naves que balança de um lado para o outro: 2 almirantes, 6 escoltas,
-##    8 emissários e 30 zangões
-##  - as naves descolam da formação em arco e mergulham sobre o jogador a disparar;
-##    se não forem abatidas, saem por baixo e regressam ao lugar
-##  - o almirante pode mergulhar com até 2 escoltas: vale 150 sozinho, 200/300 com escolta,
-##    e 800 se as escoltas forem abatidas antes dele
-##  - em formação valem metade; 1 míssil de cada vez; vida extra aos 7000 pontos
-##  - quando restam poucas naves, atacam sem parar
+## Rules of the original:
+##  - formation of 46 ships swaying from side to side: 2 flagships, 6 escorts,
+##    8 emissaries and 30 drones
+##  - ships peel off the formation in an arc and dive at the player while firing;
+##    if not shot down, they exit at the bottom and return to their place
+##  - the flagship can dive with up to 2 escorts: worth 150 alone, 200/300 with escort,
+##    and 800 if the escorts are shot down before it
+##  - in formation they are worth half; 1 missile at a time; extra life at 7000 points
+##  - when few ships are left, they attack non-stop
 
 signal match_started
 signal turn_started(player: int)
@@ -58,7 +58,7 @@ var paused := false
 var skin: GalaxianSkin
 var best := 0
 
-var players: Array[Dictionary] = []      # score, lives, wave, extra, alive (Array[bool] por lugar)
+var players: Array[Dictionary] = []      # score, lives, wave, extra, alive (Array[bool] per slot)
 var current := 0
 
 var aliens: Array[Dictionary] = []       # slot, kind, alive, fly, pos, vel, t, side, center, leader, escorts...
@@ -66,7 +66,7 @@ var form_x := SWAY_MIN
 var form_dir := 1.0
 var anim_frame := 0
 var player_x := FIELD.x / 2
-var missile: Variant = null              # Vector2 ou null
+var missile: Variant = null              # Vector2 or null
 var bombs: Array[Dictionary] = []        # pos, vel
 var timer := 0.0
 
@@ -117,9 +117,9 @@ static func _joy_axis(axis: JoyAxis, value: float) -> InputEventJoypadMotion:
 	return e
 
 
-# ---------------------------------------------------------------- formação
+# ---------------------------------------------------------------- formation
 
-## Lugares da formação: [coluna, linha, tipo].
+## Formation slots: [column, row, kind].
 static func layout() -> Array:
 	var out := []
 	for c in [3, 6]:
@@ -180,7 +180,7 @@ func is_ai() -> bool:
 	return mode == Mode.DEMO
 
 
-# ---------------------------------------------------------------- partida
+# ---------------------------------------------------------------- match
 
 func start(p_mode: Mode, lives := 3) -> void:
 	mode = p_mode
@@ -238,7 +238,7 @@ func _reset_turn() -> void:
 	timer = 1.6
 
 
-# ---------------------------------------------------------------- ciclo
+# ---------------------------------------------------------------- loop
 
 func _process(delta: float) -> void:
 	if paused:
@@ -306,7 +306,7 @@ func _sway(dt: float) -> void:
 		form_dir = 1.0
 
 
-# ---------------------------------------------------------------- voo das naves
+# ---------------------------------------------------------------- ship flight
 
 func _fly(dt: float) -> void:
 	var wave: int = player().wave
@@ -319,7 +319,7 @@ func _fly(dt: float) -> void:
 			Fly.DIVE:
 				a.t += dt
 				if a.leader >= 0 and aliens[a.leader].alive and aliens[a.leader].fly == Fly.DIVE:
-					# escolta: acompanha o almirante
+					# escort: follows the flagship
 					var lead: Dictionary = aliens[a.leader]
 					a.pos = lead.pos + a.offset
 					a.vel = lead.vel
@@ -382,7 +382,7 @@ func _attacks(dt: float) -> void:
 	if not flags.is_empty() and randf() < 0.3:
 		_launch_flagship(flags.pick_random())
 		return
-	# uma nave de uma das colunas das pontas
+	# a ship from one of the end columns
 	var side := 1 if randf() < 0.5 else -1
 	var edge_col := -1
 	for a in in_form:
@@ -430,7 +430,7 @@ func _launch_flagship(f: Dictionary) -> void:
 	f.escorts = k
 
 
-# ---------------------------------------------------------------- jogador
+# ---------------------------------------------------------------- player
 
 func _move_player(dt: float) -> void:
 	if is_ai():
@@ -491,7 +491,7 @@ func _kill(a: Dictionary) -> void:
 	var pts: int = POINTS_DIVE[a.kind] if diving else POINTS_FORM[a.kind]
 	var idx := aliens.find(a)
 	if a.kind == 0 and diving:
-		# bónus do almirante, conforme a escolta
+		# flagship bonus, depending on the escort
 		var alive_escorts := 0
 		for e in aliens:
 			if e.alive and e.leader == idx and e.fly == Fly.DIVE:
@@ -574,7 +574,7 @@ func _after_death() -> void:
 	turn_started.emit(current)
 
 
-# ---------------------------------------------------------------- CPU da demonstração
+# ---------------------------------------------------------------- demo CPU
 
 func _ai(dt: float) -> void:
 	_ai_think -= dt

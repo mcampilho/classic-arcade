@@ -1,15 +1,12 @@
 class_name AsteroidsSkin
-extends Node2D
-## Base dos estilos visuais do Asteroids: desenha o estado do AsteroidsGame, gere os sons
-## (incluindo os contínuos do motor e do disco voador) e ajuda a desenhar à volta do ecrã.
+extends SkinBase
+## Base of the Asteroids visual styles: draws the AsteroidsGame state, manages the sounds
+## (including the continuous engine and saucer sounds) and helps drawing across the screen wrap.
 
 const W := AsteroidsGame.SCREEN.x
 const H := AsteroidsGame.SCREEN.y
 
 var game: AsteroidsGame
-var sfx := {}
-var _players: Array[AudioStreamPlayer] = []
-var _next_player := 0
 var _thrust_loop: AudioStreamPlayer
 var _saucer_loop: AudioStreamPlayer
 var _saucer_id := ""
@@ -17,10 +14,7 @@ var _saucer_id := ""
 
 func attach(g: AsteroidsGame) -> void:
 	game = g
-	for i in 10:
-		var p := AudioStreamPlayer.new()
-		add_child(p)
-		_players.append(p)
+	add_voices(10)
 	_thrust_loop = AudioStreamPlayer.new()
 	add_child(_thrust_loop)
 	_saucer_loop = AudioStreamPlayer.new()
@@ -39,24 +33,13 @@ func attach(g: AsteroidsGame) -> void:
 	g.extra_life.connect(_on_extra_life)
 	g.wave_cleared.connect(_on_wave_cleared)
 	g.game_over.connect(_on_game_over)
-	var cached: Variant = Synth.cache_get(get_script().resource_path)
-	if cached != null:
-		sfx = cached
-	else:
-		_build_sfx()
-		Synth.cache_set(get_script().resource_path, sfx)
+	load_sfx()
 	_setup()
 
 
-func play(id: String, pitch := 1.0, volume_db := 0.0) -> void:
-	if game == null or game.mode == AsteroidsGame.Mode.DEMO or not sfx.has(id):
-		return
-	var p := _players[_next_player]
-	_next_player = (_next_player + 1) % _players.size()
-	p.stream = sfx[id]
-	p.pitch_scale = pitch
-	p.volume_db = volume_db
-	p.play()
+## The menu demo is silent.
+func _is_silent() -> bool:
+	return game == null or game.mode == AsteroidsGame.Mode.DEMO
 
 
 func _looped(id: String) -> AudioStreamWAV:
@@ -96,11 +79,7 @@ func _process(delta: float) -> void:
 	queue_redraw()
 
 
-func ui_palette() -> Dictionary:
-	return UI.LAUNCHER_PALETTE
-
-
-## Deslocamentos para desenhar cópias de um objeto que está a atravessar uma margem do ecrã.
+## Offsets to draw copies of an object that is crossing a screen edge.
 func wrap_offsets(pos: Vector2, r: float) -> Array[Vector2]:
 	var xs: Array[float] = [0.0]
 	var ys: Array[float] = [0.0]
@@ -132,7 +111,7 @@ static func closed(points: PackedVector2Array) -> PackedVector2Array:
 	return out
 
 
-## Contorno genérico de disco voador (unidades de -20 a 20).
+## Generic saucer outline (units from -20 to 20).
 static func saucer_lines(pos: Vector2, small: bool) -> Array[PackedVector2Array]:
 	var s := 0.55 if small else 1.0
 	var shapes := [
@@ -149,13 +128,9 @@ static func saucer_lines(pos: Vector2, small: bool) -> Array[PackedVector2Array]
 	return out
 
 
-# ---------------------------------------------------------------- para os estilos reescreverem
+# ---------------------------------------------------------------- for the styles to override
 
 func _setup() -> void:
-	pass
-
-
-func _build_sfx() -> void:
 	pass
 
 

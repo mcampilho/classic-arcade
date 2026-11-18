@@ -1,20 +1,20 @@
 extends SchoolSkin
-## Desenho Animado: uma escola de desenho animado moderno — paredes lisas em tons pastel com
-## lambrim, soalho de madeira, janelas com céu, cartazes, contornos escuros e grossos, e
-## personagens de cabeça grande, roupa colorida e olhos expressivos. Recreio com relva e nuvens.
+## Cartoon: a modern cartoon school — plain pastel walls with
+## wainscoting, wooden floorboards, windows with sky, posters, thick dark outlines, and
+## big-headed characters with colourful clothes and expressive eyes. Playground with grass and clouds.
 
 const INK := Color("2a2238")
 const SKIN_TONES := [Color("f2c7a0"), Color("d9a07a"), Color("a8704a"), Color("f6d2b4")]
 const WALLS := {
-	"Sala do Mapa": Color("f6e3a8"), "Sala de Leitura": Color("bfe3dc"), "Gabinete do Diretor": Color("e8c4d4"),
-	"Sala Branca": Color("eeeae4"), "Sala de Exames": Color("cde4b4"), "Laboratório": Color("c4d4f0"),
-	"Refeitório": Color("f6d0a8"), "Átrio": Color("dcd4ec"),
+	"Map Room": Color("f6e3a8"), "Reading Room": Color("bfe3dc"), "Head's Study": Color("e8c4d4"),
+	"White Room": Color("eeeae4"), "Exam Room": Color("cde4b4"), "Science Lab": Color("c4d4f0"),
+	"Dining Hall": Color("f6d0a8"), "Hall": Color("dcd4ec"),
 }
-## Roupa e cabelo por personagem (índice de chars).
+## Clothes and hair per character (index into chars).
 const LOOK := [
 	{"shirt": Color("e8483a"), "legs": Color("2a4a8a"), "hair": Color("4a2a18"), "skin": 0},   # Zé
 	{"shirt": Color("6a5a4a"), "legs": Color("3a3a3a"), "hair": Color("1a1a1a"), "skin": 1},   # Brutamontes
-	{"shirt": Color("f0f0f0"), "legs": Color("6a6a7a"), "hair": Color("c89a4a"), "skin": 3},   # Marrão
+	{"shirt": Color("f0f0f0"), "legs": Color("6a6a7a"), "hair": Color("c89a4a"), "skin": 3},   # the swot
 	{"shirt": Color("4ab86a"), "legs": Color("2a4a8a"), "hair": Color("c84a2a"), "skin": 0},   # Traquinas
 	{"shirt": Color("e86aa8"), "legs": Color("4a3a6a"), "hair": Color("6a3a1a"), "skin": 2},
 	{"shirt": Color("f0b43a"), "legs": Color("2a4a8a"), "hair": Color("1a1a1a"), "skin": 1},
@@ -76,7 +76,7 @@ func _rrect(ci: CanvasItem, r: Rect2, col: Color, radius: int, border := 0.0, bc
 func _paint_world(ci: CanvasItem) -> void:
 	var W := SchoolGame.WORLD_W
 	var BW := SchoolGame.BUILDING_W
-	# nuvens e recreio
+	# clouds and playground
 	for k in 6:
 		var p := Vector2(BW + 120.0 + k * 170.0, 60.0 + (k % 3) * 40.0)
 		for d: Vector3 in [Vector3(-30, 6, 26), Vector3(0, -6, 34), Vector3(32, 4, 26)]:
@@ -92,10 +92,10 @@ func _paint_world(ci: CanvasItem) -> void:
 	ci.draw_rect(Rect2(2930, gy - 250, 60, 40), Color("f0f0f0"))
 	ci.draw_rect(Rect2(2930, gy - 250, 60, 40), INK, false, 3.0)
 	ci.draw_arc(Vector2(2990, gy - 206), 18, 0, PI, 10, Color("e8483a"), 4.0)
-	# telhado
+	# roof
 	ci.draw_colored_polygon(PackedVector2Array([Vector2(-30, 14), Vector2(BW + 40, 14), Vector2(BW + 10, -30), Vector2(0, -30)]), Color("c8584a"))
 	for r: Dictionary in SchoolGame.ROOMS:
-		if r.name == "Recreio":
+		if r.name == "Playground":
 			continue
 		var f := int(r.floor)
 		var top := floor_top(f)
@@ -106,7 +106,7 @@ func _paint_world(ci: CanvasItem) -> void:
 		ci.draw_rect(Rect2(x0, top, x1 - x0, SchoolGame.ROOM_H), wall)
 		ci.draw_rect(Rect2(x0, y - 46, x1 - x0, 46), wall.darkened(0.12))
 		ci.draw_rect(Rect2(x0, y - 50, x1 - x0, 5), wall.darkened(0.25))
-		# janelas
+		# windows
 		var nw := int((x1 - x0) / 300.0)
 		for k in nw:
 			var wx := x0 + 420.0 + k * 300.0
@@ -115,7 +115,7 @@ func _paint_world(ci: CanvasItem) -> void:
 			_rrect(ci, Rect2(wx, top + 34, 90, 70), Color("a8dcf8"), 6, 4.0, Color("ffffff"))
 			ci.draw_line(Vector2(wx + 45, top + 34), Vector2(wx + 45, top + 104), Color("ffffff"), 4.0)
 		_txt(ci, I18n.t(String(r.name)), Vector2((x0 + x1) * 0.5, top + 18), 18, wall.darkened(0.55))
-	# soalho
+	# floorboards
 	for f in 3:
 		var y: float = SchoolGame.FLOOR_Y[f]
 		ci.draw_rect(Rect2(0, y, BW, 12), Color("b07a4a"))
@@ -124,7 +124,7 @@ func _paint_world(ci: CanvasItem) -> void:
 		ci.draw_rect(Rect2(0, floor_top(f) - 8, BW, 8), Color("e8e0d4"))
 	ci.draw_rect(Rect2(BW, gy, W - BW, 30), Color("6aa84a"))
 	ci.draw_rect(Rect2(0, gy + 12, BW, 18), Color("8a8a9a"))
-	# paredes
+	# walls
 	for r: Dictionary in SchoolGame.ROOMS:
 		var f := int(r.floor)
 		var x := float(r.x0)
@@ -135,7 +135,7 @@ func _paint_world(ci: CanvasItem) -> void:
 		ci.draw_rect(Rect2(x - 9, top, 18, float(SchoolGame.FLOOR_Y[f]) - 112.0 - top), INK, false, 3.0)
 	ci.draw_rect(Rect2(-6, -30, 14, 630), Color("c8584a"))
 	ci.draw_rect(Rect2(BW - 8, -30, 16, SchoolGame.FLOOR_Y[1] + 42.0), Color("c8584a"))
-	# escadas
+	# ladders
 	for s: Dictionary in SchoolGame.STAIRS:
 		var f := int(s.f)
 		var a := Vector2(s.top, SchoolGame.FLOOR_Y[f])
@@ -147,7 +147,7 @@ func _paint_world(ci: CanvasItem) -> void:
 			ci.draw_rect(r, Color("b07a4a"))
 			ci.draw_rect(r, INK, false, 2.0)
 		ci.draw_line(a + Vector2(0, -44), b + Vector2(0, -44), Color("8a5a34"), 5.0)
-	# mobília
+	# furniture
 	for i in SchoolGame.ROOMS.size():
 		var r: Dictionary = SchoolGame.ROOMS[i]
 		var y: float = SchoolGame.FLOOR_Y[int(r.floor)]
@@ -162,7 +162,7 @@ func _paint_world(ci: CanvasItem) -> void:
 				ci.draw_rect(Rect2(sx - 15, y - 24, 5, 24), INK)
 				_rrect(ci, Rect2(sx - 4, y - 19, 16, 6), Color("e8483a"), 3, 2.0)
 				ci.draw_rect(Rect2(sx + 8, y - 36, 5, 36), INK)
-		elif r.name == "Refeitório":
+		elif r.name == "Dining Hall":
 			for k in 3:
 				var x0 := float(r.x0) + 260 + k * 250
 				_rrect(ci, Rect2(x0, y - 38, 190, 10), Color("d8a060"), 4, 2.0)
@@ -171,14 +171,14 @@ func _paint_world(ci: CanvasItem) -> void:
 				for t in 3:
 					ci.draw_circle(Vector2(x0 + 40 + t * 55, y - 42), 9, Color("ffffff"))
 					ci.draw_arc(Vector2(x0 + 40 + t * 55, y - 42), 9, 0, TAU, 12, INK, 2.0)
-		elif r.name == "Gabinete do Diretor":
+		elif r.name == "Head's Study":
 			_rrect(ci, Rect2(1900, y - 44, 160, 12), Color("8a5a34"), 3, 2.0)
 			ci.draw_rect(Rect2(1912, y - 32, 8, 32), INK)
 			ci.draw_rect(Rect2(2040, y - 32, 8, 32), INK)
 			_rrect(ci, Rect2(2150, y - 150, 100, 70), Color("f6e3a8"), 4, 3.0)
 			ci.draw_circle(Vector2(2200, y - 115), 18, Color("e8b83a"))
 			_rrect(ci, Rect2(1780, y - 150, 60, 80), Color("ffffff"), 3, 3.0)
-		elif r.name == "Átrio":
+		elif r.name == "Hall":
 			for k in 8:
 				var lx := 1500.0 + k * 46.0
 				_rrect(ci, Rect2(lx, y - 104, 42, 104), Color("6a9ad8") if k % 2 == 0 else Color("e8a84a"), 4, 2.0)
@@ -214,7 +214,7 @@ func _draw_safe(p: Vector2, open: bool) -> void:
 		draw_circle(r.get_center(), 15, Color("c8ccd4"))
 		draw_arc(r.get_center(), 15, 0, TAU, 20, INK, 3.0)
 		draw_line(r.get_center(), r.get_center() + Vector2.from_angle(time * 0.7) * 11.0, INK, 3.0)
-	_txt(self, I18n.t("COFRE"), Vector2(p.x, r.position.y - 14), 16, INK)
+	_txt(self, I18n.t("SAFE"), Vector2(p.x, r.position.y - 14), 16, INK)
 
 
 func _limb(a: Vector2, b: Vector2, col: Color, w: float) -> void:
@@ -239,7 +239,7 @@ func _draw_person(c: Dictionary, j: Dictionary) -> void:
 	_limb(j.elbow_b, j.hand_b, skin.darkened(0.1), w * 0.75)
 	_limb(j.hip, j.knee_f, look.legs, w)
 	_limb(j.knee_f, j.foot_f, look.legs, w)
-	# tronco
+	# torso
 	var hip: Vector2 = j.hip
 	var neck: Vector2 = j.neck
 	var side := (neck - hip).orthogonal().normalized() * (9.0 if big else 7.5) * s
@@ -254,7 +254,7 @@ func _draw_person(c: Dictionary, j: Dictionary) -> void:
 	draw_colored_polygon(torso, look.shirt)
 	_limb(j.neck, j.elbow_f, look.shirt, w * 0.85)
 	_limb(j.elbow_f, j.hand_f, skin, w * 0.75)
-	# cabeça grande
+	# big head
 	var head: Vector2 = j.head
 	var hr := 13.0 * s
 	draw_circle(head, hr + 2.5, INK)
@@ -318,17 +318,17 @@ func _draw_hud() -> void:
 	_txt(self, period_text(), Vector2(380, 630), 20, Color("f6e3a8"))
 	_rrect(self, Rect2(110, 648, 540, 12), Color("2a2238"), 6)
 	_rrect(self, Rect2(110, 648, 540 * period_left(), 12), Color("8ad06a"), 6)
-	_txt(self, I18n.t("Dia %d") % g.day, Vector2(60, 654), 15, Color("dcd4ec"))
-	_txt(self, I18n.t("Escudos %d/%d") % [g.shields_done(), SchoolGame.SHIELDS.size()], Vector2(200, 688), 20, Color("8ac8f8"))
-	_txt(self, I18n.t("Cofre:  ") + code_text(), Vector2(520, 688), 20, Color("ffffff"))
-	_txt(self, I18n.t("Linhas  %d / %d") % [g.lines, SchoolGame.MAX_LINES], Vector2(996, 630), 20, Color("f89a8a"))
+	_txt(self, I18n.t("Day %d") % g.day, Vector2(60, 654), 15, Color("dcd4ec"))
+	_txt(self, I18n.t("Shields %d/%d") % [g.shields_done(), SchoolGame.SHIELDS.size()], Vector2(200, 688), 20, Color("8ac8f8"))
+	_txt(self, I18n.t("Safe:  ") + code_text(), Vector2(520, 688), 20, Color("ffffff"))
+	_txt(self, I18n.t("Lines  %d / %d") % [g.lines, SchoolGame.MAX_LINES], Vector2(996, 630), 20, Color("f89a8a"))
 	_rrect(self, Rect2(760, 648, 472, 12), Color("2a2238"), 6)
 	if g.lines > 0:
 		_rrect(self, Rect2(760, 648, maxf(472.0 * g.lines / SchoolGame.MAX_LINES, 12.0), 12), Color("e8483a"), 6)
-	_txt(self, I18n.t("Pontos %d     Recorde %d") % [g.score, maxi(g.best, g.score)], Vector2(996, 688), 18, Color("ffffff"))
+	_txt(self, I18n.t("Score %d     Best %d") % [g.score, maxi(g.best, g.score)], Vector2(996, 688), 18, Color("ffffff"))
 	if g.state == SchoolGame.State.OVER:
 		_rrect(self, Rect2(380, 220, 520, 140), Color("ffffff"), 20, 5.0)
-		_txt(self, I18n.t("EXPULSO!"), Vector2(640, 280), 72, Color("e8483a"))
+		_txt(self, I18n.t("EXPELLED!"), Vector2(640, 280), 72, Color("e8483a"))
 
 
 func ui_palette() -> Dictionary:

@@ -1,8 +1,8 @@
 class_name FireflySprites
 extends RefCounted
-## Desenhos originais do Pirilampo (pirilampo, morcegos e bónus do jardim).
+## Original Firefly drawings (firefly, bats and garden bonuses).
 
-## Pirilampo virado para a direita; 2 fotogramas (asas em cima / em baixo).
+## Firefly facing right; 2 frames (wings up / down).
 const FIREFLY := [
 	[
 		"...ww..ww..",
@@ -66,7 +66,7 @@ const FLOWER := [
 ]
 const FLOWER_PALETTE := {"P": Color("ff8cc6"), "Y": Color("ffe066"), "G": Color("51cf66")}
 
-const BONUS_NAMES := ["Gota de orvalho", "Bolota", "Cogumelo", "Trevo", "Girassol", "Pinha", "Lua", "Estrela"]
+const BONUS_NAMES := ["Dewdrop", "Acorn", "Mushroom", "Clover", "Sunflower", "Pine cone", "Moon", "Star"]
 const BONUS := [
 	["....W....", "...WBW...", "...BBB...", "..BBBBB..", ".BBBWBBB.", ".BBBBWBB.", ".BBBBBBB.", "..BBBBB..", "...BBB..."],
 	["....s....", "..CCCCC..", ".CCCCCCC.", ".CCCCCCC.", "..NNNNN..", "..NNNNN..", "..NNNNN..", "...NNN...", "....N...."],
@@ -89,7 +89,7 @@ const BONUS_PALETTES := [
 ]
 
 
-## Uma paleta inteira numa só cor (silhuetas, brilhos).
+## A whole palette in a single colour (silhouettes, glows).
 static func mono(palette: Dictionary, c: Color) -> Dictionary:
 	var out := {}
 	for k in palette:

@@ -1,6 +1,6 @@
 extends RelicsSkin
-## Neon: a torre como uma maqueta de luz — chão em grelha, paredes de vidro, cubos em arame
-## brilhante, caixotes cor de laranja e um altar dourado; tudo com halo.
+## Neon: the tower as a light model — grid floor, glass walls, glowing wireframe cubes,
+## orange crates and a golden altar; everything with a halo.
 
 const BG := Color("05030f")
 const CYAN := Color("19f5ff")
@@ -182,15 +182,15 @@ func neon_text(text: String, x: float, y: float, cell: float, c: Color) -> void:
 func _draw_hud() -> void:
 	var g := game
 	_draw_hud_common(CYAN, GOLD, Color(CYAN, 0.15), func(t: String, p: Vector2) -> void: neon_text(t, p.x, p.y - 20, 3, CYAN))
-	neon_text(I18n.t("PONTOS"), 120, 600, 2, MAGENTA)
+	neon_text(I18n.t("SCORE"), 120, 600, 2, MAGENTA)
 	neon_text("%06d" % g.score, 120, 622, 3, WHITE)
-	neon_text(I18n.t("VIDAS %d") % g.lives, 120, 670, 2, MAGENTA)
+	neon_text(I18n.t("LIVES %d") % g.lives, 120, 670, 2, MAGENTA)
 	var c := Vector2(120, 500)
 	var a := g.day_phase() * TAU
 	draw_arc(c, 34, 0, TAU, 40, Color(CYAN, 0.3), 2.0)
 	var sun := c + Vector2.from_angle(a - PI / 2) * 34
 	draw_circle(sun, 10, GOLD if g.day_phase() < 0.5 else Color("c8b8ff"))
-	neon_text(I18n.t("DIA %d/%d") % [g.day(), RelicsGame.DAYS], 120, 552, 2, CYAN)
+	neon_text(I18n.t("DAY %d/%d") % [g.day(), RelicsGame.DAYS], 120, 552, 2, CYAN)
 
 
 func ui_palette() -> Dictionary:

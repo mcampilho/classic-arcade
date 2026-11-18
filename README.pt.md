@@ -575,6 +575,8 @@ Jogo original inspirado nos puzzles como o Lemmings: as ovelhas saem do curral e
 ```
 core/                  partilhado por todos os jogos
   main.gd / main.tscn  ecrã inicial (lista de jogos e rodapé "inspirado em")
+  game_shell.gd        moldura comum de todos os jogos: menu, opções, estilos, pausa, fim de jogo, recorde, mensagens
+  skin_base.gd         base comum dos estilos: vozes de áudio, sons em cache e play()
   inspirations.gd      os clássicos que inspiraram cada jogo: breve história e ligação para a Wikipédia
   synth.gd             sintetizador: os sons são gerados em código, sem ficheiros de áudio
   ui.gd                tema dos menus gerado a partir da palete de cada estilo
@@ -584,6 +586,8 @@ core/                  partilhado por todos os jogos
   pixel_art.gd         texturas de píxeis multicolores (e brilhos desfocados)
   settings.gd          preferências guardadas (user://settings.cfg)
   i18n.gd              traduções (I18n.t); os textos estão em i18n/strings.json
+tests/run_tests.gd     testes automáticos (sem extras): definições, traduções, sintetizador, regras do Pong
+                       e cada jogo a abrir, jogar, pausar, acabar e voltar ao menu
 games/pong/
   pong_game.gd         lógica pura do jogo (física, regras, CPU, toque) — emite sinais
   pong_main.gd         menus, pausa, fim de jogo, troca de estilo
@@ -681,13 +685,15 @@ games/outrun/
   skins/classic_skin.gd, synthwave_skin.gd, poster_skin.gd
 ```
 
-**Criar um novo estilo**: estende a classe base do jogo (`PongSkin`, `BreakoutSkin`, `InvadersSkin`, `AsteroidsSkin`, `GalaxianSkin`, `FireflySkin`, `FroggerSkin`, `CentipedeSkin`, `PenetratorSkin`, `ChuckieSkin`, `JetpacSkin`, `RelicsSkin`, `ValeSkin`, `PalaceSkin`, `OutRunSkin`), desenha em `_draw()` a partir de `game`, cria os sons em `_build_sfx()` e acrescenta-o a `SKINS` no `*_main.gd` do jogo.
+**Criar um novo estilo**: estende a classe base do jogo (`PongSkin`, `BreakoutSkin`, … `OutRunSkin`, que por sua vez estendem `SkinBase`), desenha em `_draw()` a partir de `game`, cria os sons em `_build_sfx()` e acrescenta-o a `SKINS` no `*_main.gd` do jogo.
 
-**Acrescentar um novo jogo**: cria `games/<jogo>/<jogo>_main.gd` (um `Node` com o sinal `exit_requested` e o método `go_back()`), regista-o em `GAMES` no `core/main.gd` e acrescenta a sua inspiração em `core/inspirations.gd`.
+**Acrescentar um novo jogo**: cria a lógica (`<jogo>_game.gd`, um `Node2D` com `paused`, `skin` e `set_skin()`), a classe base dos estilos e `games/<jogo>/<jogo>_main.gd`, que estende `GameShell`: em `_init()` define `id`, `skins`, `title`, `tagline` e `hint`, e reescreve `_create_game()`, `_build_options()` (com `add_option()`), `_start_demo()`, `_start_play()` e, se for preciso, `_status_text()`; no fim de jogo chama `show_result()` ou `show_players_result()`. Depois regista-o em `GAMES` no `core/main.gd` e acrescenta a sua inspiração em `core/inspirations.gd`; os testes passam a abri-lo automaticamente.
 
 As pastas e as classes mantêm os nomes curtos internos usados durante o desenvolvimento (`pong`, `breakout`...).
 
-**Traduções**: o texto original (em português) é a chave; o código envolve cada texto visível com `I18n.t("...")`. O inglês e o espanhol estão em `i18n/strings.json` (`{"texto em português": ["inglês", "espanhol"]}`); depois de o editar, corre `python3 i18n/build.py` para gerar de novo `i18n/strings.gd`. Um texto sem tradução aparece simplesmente em português. Para acrescentar um idioma, junta uma coluna ao JSON e a `I18n.LANGS`/`LANG_NAMES` em `core/i18n.gd`.
+**Traduções**: o texto original (em inglês) é a chave; o código envolve cada texto visível com `I18n.t("...")`. O português e o espanhol estão em `i18n/strings.json` (`{"English text": ["português", "español"]}`); depois de o editar, corre `python3 i18n/build.py` para gerar de novo `i18n/strings.gd` (o CI confirma que estão em sincronia). Um texto sem tradução aparece simplesmente em inglês. Para acrescentar um idioma, junta uma coluna ao JSON, a `LANGS` em `i18n/build.py` e a `I18n.LANGS`/`LANG_NAMES` em `core/i18n.gd`.
+
+**Testes**: `godot --headless --path . -s res://tests/run_tests.gd` (ou `./build.sh test`); o código de saída é o número de falhas. Usam um ficheiro de definições próprio, por isso não mexem nas preferências do jogador.
 
 Renderizador: *Compatibility* (OpenGL), para correr em PCs antigos e na maioria dos telemóveis Android.
 
@@ -714,6 +720,7 @@ A versão Web é exportada sem threads (*Thread Support* desligado), por isso fu
 
 ### Automático (GitHub Actions)
 `.github/workflows/builds.yml` corre a cada push para `main`:
+- corre os testes e confirma que `i18n/strings.gd` está em sincronia com `i18n/strings.json`;
 - gera as builds de Windows, Linux, Android e Web e deixa-as em **Actions → Artifacts**;
 - publica a versão Web no **GitHub Pages** (é preciso ativar uma vez em **Settings → Pages → Source: GitHub Actions**); fica em [https://mcampilho.github.io/classic-arcade/](https://mcampilho.github.io/classic-arcade/);
 - ao criar uma tag `v*` (`git tag v1.0.0 && git push --tags`), cria também uma **Release** com os ficheiros para descarregar.

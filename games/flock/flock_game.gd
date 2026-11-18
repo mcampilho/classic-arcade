@@ -1,10 +1,10 @@
 class_name FlockGame
 extends Node2D
-## Rebanho — puzzle original ao estilo de 1991 (Lemmings): as ovelhas saem do curral e caminham
-## sozinhas; dá-lhes funções para que cheguem ao celeiro. O terreno é um mapa de píxeis que se
-## pode escavar e construir. Ovelhas: trepadora, guarda-chuva, bloqueadora, construtora,
-## escavadora (em frente), mineira (na diagonal) e cavadora (para baixo).
-## Campo lógico de 320 x 150 píxeis (x4 no ecrã).
+## Flock — original puzzle in the 1991 style (Lemmings): the sheep leave the pen and walk
+## on their own; give them skills so they reach the barn. The terrain is a pixel map that can be
+## can be dug and built on. Sheep skills: climber, umbrella, blocker, builder,
+## basher (straight ahead), miner (diagonal) and digger (down).
+## Logical field of 320 x 150 pixels (x4 on screen).
 
 signal level_started(level: int)
 signal released
@@ -31,33 +31,33 @@ const EARTH := 1
 const STEEL := 2
 const BRICK := 3
 const SPLAT_FALL := 56
-## Botões do painel (no ecrã): taxa -, taxa +, 7 funções, pausa, rapidez, recomeçar.
+## Panel buttons (on screen): rate -, rate +, 7 skills, pause, fast, restart.
 const PANEL_Y := 604.0
 const BTN_W := 98.0
 
-## Níveis: formas do terreno (rect/oval/steel/hole), curral, celeiro, ovelhas, quantas salvar,
-## funções disponíveis, tempo (minutos) e a solução usada na demonstração e nos testes.
+## Levels: terrain shapes (rect/oval/steel/hole), pen, barn, sheep, how many to save,
+## available skills, time (minutes) and the solution used by the demo and the tests.
 const LEVELS := [
-	{"name": "Basta andar", "shapes": [["rect", 0, 110, 320, 40], ["oval", 160, 112, 60, 14], ["rect", 0, 0, 6, 150], ["rect", 314, 0, 6, 150]],
+	{"name": "Just Walk", "shapes": [["rect", 0, 110, 320, 40], ["oval", 160, 112, 60, 14], ["rect", 0, 0, 6, 150], ["rect", 314, 0, 6, 150]],
 		"entrance": Vector2(40, 60), "exit": Vector2(280, 109), "count": 10, "need": 8, "rate": 50, "time": 3,
 		"skills": {"climber": 0, "floater": 0, "blocker": 0, "builder": 0, "basher": 0, "miner": 0, "digger": 0}, "solution": []},
-	{"name": "Uma ponte", "shapes": [["rect", 0, 110, 152, 40], ["rect", 170, 110, 150, 40], ["rect", 0, 0, 6, 150], ["rect", 314, 0, 6, 150]],
+	{"name": "A Bridge", "shapes": [["rect", 0, 110, 152, 40], ["rect", 170, 110, 150, 40], ["rect", 0, 0, 6, 150], ["rect", 314, 0, 6, 150]],
 		"entrance": Vector2(40, 60), "exit": Vector2(280, 109), "count": 10, "need": 7, "rate": 20, "time": 4,
 		"skills": {"climber": 0, "floater": 0, "blocker": 1, "builder": 3, "basher": 0, "miner": 0, "digger": 0},
 		"solution": [["builder", 147, 151, 0]]},
-	{"name": "A colina", "shapes": [["rect", 0, 110, 320, 40], ["oval", 170, 110, 40, 58], ["rect", 0, 0, 6, 150], ["rect", 314, 0, 6, 150]],
+	{"name": "The Hill", "shapes": [["rect", 0, 110, 320, 40], ["oval", 170, 110, 40, 58], ["rect", 0, 0, 6, 150], ["rect", 314, 0, 6, 150]],
 		"entrance": Vector2(40, 60), "exit": Vector2(285, 109), "count": 12, "need": 9, "rate": 40, "time": 4,
 		"skills": {"climber": 2, "floater": 0, "blocker": 0, "builder": 0, "basher": 3, "miner": 2, "digger": 0},
 		"solution": [["basher", 124, 129, 0]]},
-	{"name": "Por baixo do chão", "shapes": [["rect", 0, 70, 320, 12], ["rect", 0, 120, 320, 30], ["rect", 0, 0, 6, 150], ["rect", 314, 0, 6, 150], ["steel", 300, 40, 14, 42]],
+	{"name": "Under the Floor", "shapes": [["rect", 0, 70, 320, 12], ["rect", 0, 120, 320, 30], ["rect", 0, 0, 6, 150], ["rect", 314, 0, 6, 150], ["steel", 300, 40, 14, 42]],
 		"entrance": Vector2(30, 30), "exit": Vector2(160, 119), "count": 12, "need": 9, "rate": 50, "time": 4,
 		"skills": {"climber": 0, "floater": 0, "blocker": 0, "builder": 0, "basher": 0, "miner": 0, "digger": 2},
 		"solution": [["digger", 150, 170, 0]]},
-	{"name": "Precipício", "shapes": [["rect", 0, 40, 120, 110], ["rect", 120, 132, 200, 18], ["rect", 0, 0, 6, 150], ["rect", 314, 0, 6, 150]],
+	{"name": "Cliff", "shapes": [["rect", 0, 40, 120, 110], ["rect", 120, 132, 200, 18], ["rect", 0, 0, 6, 150], ["rect", 314, 0, 6, 150]],
 		"entrance": Vector2(30, 28), "exit": Vector2(270, 131), "count": 12, "need": 10, "rate": 50, "time": 4,
 		"skills": {"climber": 0, "floater": 14, "blocker": 1, "builder": 0, "basher": 0, "miner": 2, "digger": 0},
 		"solution": [["floater_all", 0, 120, 0]]},
-	{"name": "Tudo junto", "shapes": [["rect", 0, 60, 120, 10], ["rect", 0, 128, 320, 22], ["rect", 200, 70, 14, 58], ["rect", 0, 0, 6, 150], ["rect", 314, 0, 6, 150], ["steel", 120, 60, 6, 10]],
+	{"name": "All together", "shapes": [["rect", 0, 60, 120, 10], ["rect", 0, 128, 320, 22], ["rect", 200, 70, 14, 58], ["rect", 0, 0, 6, 150], ["rect", 314, 0, 6, 150], ["steel", 120, 60, 6, 10]],
 		"entrance": Vector2(30, 30), "exit": Vector2(290, 127), "count": 14, "need": 10, "rate": 40, "time": 5,
 		"skills": {"climber": 2, "floater": 14, "blocker": 2, "builder": 2, "basher": 2, "miner": 2, "digger": 2},
 		"solution": [["digger", 40, 100, 0], ["floater_all", 0, 120, 0], ["basher", 191, 199, 0]]},
@@ -72,7 +72,7 @@ var best := 0
 
 var level := 0
 var terrain := PackedByteArray()
-var changed := PackedInt32Array()      # índices de píxeis alterados (para o desenho)
+var changed := PackedInt32Array()      # indices of changed pixels (for drawing)
 var sheep: Array[Dictionary] = []      # pos (Vector2i), dir, job, fall, t, bricks, climber, floater, anim
 var skills := {}
 var selected := 3
@@ -85,7 +85,7 @@ var lost_n := 0
 var time_left := 0.0
 var score := 0
 var timer := 0.0
-var cursor := Vector2(640, 300)        # ecrã
+var cursor := Vector2(640, 300)        # screen
 var hover := -1
 var _acc := 0.0
 var _release_t := 0
@@ -158,7 +158,7 @@ func to_px(p: Vector2) -> Vector2:
 	return p * SCALE
 
 
-# ---------------------------------------------------------------- terreno
+# ---------------------------------------------------------------- terrain
 
 func t_at(x: int, y: int) -> int:
 	if x < 0 or x >= W or y < 0:
@@ -182,7 +182,7 @@ func _put(x: int, y: int, v: int) -> void:
 	changed.append(i)
 
 
-## Remove terreno (não o aço). Devolve true se tocou em aço.
+## Removes terrain (not steel). Returns true if it touched steel.
 func carve(x0: int, y0: int, x1: int, y1: int) -> bool:
 	var steel := false
 	for y in range(mini(y0, y1), maxi(y0, y1) + 1):
@@ -215,7 +215,7 @@ func _build_terrain() -> void:
 	changed.clear()
 
 
-# ---------------------------------------------------------------- partida e níveis
+# ---------------------------------------------------------------- match and levels
 
 func start(p_mode: Mode, first := 0) -> void:
 	mode = p_mode
@@ -261,7 +261,7 @@ func alive_count() -> int:
 	return n
 
 
-# ---------------------------------------------------------------- ciclo
+# ---------------------------------------------------------------- loop
 
 func _process(delta: float) -> void:
 	if paused:
@@ -290,7 +290,7 @@ func _tick() -> void:
 	time_left -= TICK
 	if is_ai():
 		_ai()
-	# soltar ovelhas
+	# release sheep
 	if to_release > 0:
 		_release_t -= 1
 		if _release_t <= 0:
@@ -324,14 +324,14 @@ func _end_level() -> void:
 		won.emit()
 
 
-## Avança para o nível seguinte (se o atual foi superado) ou repete-o.
+## Moves on to the next level (if the current one was passed) or repeats it.
 func continue_after_end() -> void:
 	if saved_n >= int(data().need):
 		level = (level + 1) % LEVELS.size()
 	_load_level()
 
 
-# ---------------------------------------------------------------- ovelhas
+# ---------------------------------------------------------------- sheep
 
 func _update(s: Dictionary) -> void:
 	s.anim += 1
@@ -362,7 +362,7 @@ func _update(s: Dictionary) -> void:
 				_lose(s, "fall")
 		Job.CLIMB:
 			if solid(p.x, p.y - 9):
-				# bateu no teto: cai para trás
+				# hit the ceiling: falls back
 				s.dir = -s.dir
 				s.pos = Vector2i(p.x + s.dir, p.y)
 				s.job = Job.FALL
@@ -380,7 +380,7 @@ func _update(s: Dictionary) -> void:
 				s.job = Job.FALL
 		Job.BUILD:
 			if s.t % 5 == 0:
-				# um tijolo de 6 píxeis à frente, ao nível dos pés
+				# a 6-pixel brick ahead, at foot level
 				for k in range(1, 7):
 					var bx: int = p.x + s.dir * k
 					if t_at(bx, p.y) == EMPTY:
@@ -448,7 +448,7 @@ func _update(s: Dictionary) -> void:
 		Job.EXIT:
 			if s.t > 8:
 				s.job = Job.DEAD
-	# chegou ao celeiro?
+	# reached the barn?
 	if s.job in [Job.WALK, Job.FALL, Job.FLOAT, Job.BUILD, Job.BASH]:
 		var e: Vector2 = data().exit
 		if absf(s.pos.x - e.x) <= 3 and absf(s.pos.y - e.y) <= 6:
@@ -465,7 +465,7 @@ func _walk(s: Dictionary) -> void:
 		s.fall = 0
 		return
 	var nx: int = p.x + s.dir
-	# bloqueadoras viram quem lhes toca
+	# blockers turn round whoever touches them
 	for o in sheep:
 		if o.job == Job.BLOCK and o != s:
 			var op: Vector2i = o.pos
@@ -510,7 +510,7 @@ func _lose(s: Dictionary, how: String) -> void:
 	lost_n += 1
 
 
-## Dá a função escolhida a uma ovelha. Devolve true se resultou.
+## Gives the chosen skill to a sheep. Returns true if it worked.
 func assign(i: int, skill: String) -> bool:
 	if i < 0 or i >= sheep.size() or int(skills.get(skill, 0)) <= 0:
 		return false
@@ -541,7 +541,7 @@ func assign(i: int, skill: String) -> bool:
 	return ok
 
 
-# ---------------------------------------------------------------- cursor e entrada
+# ---------------------------------------------------------------- cursor and input
 
 func _update_hover() -> void:
 	var c := cursor / SCALE
@@ -570,7 +570,7 @@ func button_rect(i: int) -> Rect2:
 	return Rect2(6 + i * (BTN_W + 6), PANEL_Y + 8, BTN_W, 104)
 
 
-## Botões: 0 taxa-, 1 taxa+, 2..8 funções, 9 pausa, 10 rapidez, 11 recomeçar.
+## Buttons: 0 rate-, 1 rate+, 2..8 skills, 9 pause, 10 fast, 11 restart.
 func press_button(i: int) -> void:
 	match i:
 		0:
@@ -613,7 +613,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		cursor = event.position
 		_update_hover()
 	elif event is InputEventScreenTouch and event.pressed:
-		# (o projeto emula toques a partir do rato: um clique chega aqui como toque)
+		# (the project emulates touch from the mouse: a click arrives here as a touch)
 		pos = event.position
 		click = true
 	if click:
@@ -628,9 +628,9 @@ func _unhandled_input(event: InputEvent) -> void:
 			assign(hover, SKILLS[selected])
 
 
-# ---------------------------------------------------------------- CPU da demonstração (a solução)
+# ---------------------------------------------------------------- demo CPU (the solution)
 
-## A demonstração segue a solução do nível: ["função", x mínimo, x máximo, n.º de vezes].
+## The demo follows the level's solution: ["skill", min x, max x, number of times].
 func _ai() -> void:
 	var sol: Array = data().solution
 	for k in sol.size():

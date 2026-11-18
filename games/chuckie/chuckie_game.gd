@@ -1,10 +1,10 @@
 class_name ChuckieGame
 extends Node2D
-## Lógica do Chuckie Egg (1983): o agricultor apanha os 12 ovos de cada nível, subindo escadas,
-## saltando entre plataformas e apanhando elevadores, sem tocar nas galinhas.
-## O grão dá pontos e para o relógio; as galinhas também o comem. A partir do nível 9 o pato
-## gigante sai da gaiola e persegue o jogador. Os 8 níveis são originais.
-## Unidades: 1 casa = 8 unidades; o campo tem 28 x 21 casas.
+## Chuckie Egg (1983) logic: the farmer collects the 12 eggs of each level, climbing ladders,
+## jumping between platforms and riding lifts, without touching the hens.
+## Grain gives points and stops the clock; the hens eat it too. From level 9 the giant duck
+## leaves its cage and chases the player. The 8 levels are original.
+## Units: 1 cell = 8 units; the field is 28 x 21 cells.
 
 signal match_started
 signal turn_started(player: int)
@@ -42,16 +42,16 @@ const GRAIN_FREEZE := 3.0
 const EGG_POINTS := 100
 const GRAIN_POINTS := 50
 const EXTRA_LIFE_EVERY := 10000
-const LEVEL_NAMES := ["Galinheiro", "Celeiro", "Elevador", "Escadaria", "Escadas", "Dois Elevadores", "Ilhas", "Tudo Junto"]
-## Níveis sem elevador (a demonstração só joga nestes).
+const LEVEL_NAMES := ["Hen House", "Barn", "Lift", "Staircase", "Ladders", "Two Lifts", "Islands", "All Together"]
+## Levels without a lift (the demo only plays these).
 const DEMO_LEVELS := [1, 2, 4, 5, 7, 8]
 const T_EMPTY := 46    # "."
 const T_FLOOR := 35    # "#"
 const T_LADDER := 72   # "H"
 const T_BOTH := 43     # "+"
 
-## Níveis originais (28 x 21): # plataforma, H escada, + escada que chega a uma plataforma,
-## o ovo, * grão, h galinha, P jogador, L poço de elevador (2 casas de largura).
+## Original levels (28 x 21): # platform, H ladder, + ladder reaching a platform,
+## o egg, * grain, h hen, P player, L lift shaft (2 cells wide).
 const LEVELS := [
 	[
 		"............................",
@@ -246,13 +246,13 @@ var skin: ChuckieSkin
 var best := 0
 var start_lives := 5
 
-var players: Array[Dictionary] = []   # score, lives, level, next_extra, eggs, grain (guardados)
+var players: Array[Dictionary] = []   # score, lives, level, next_extra, eggs, grain (saved)
 var current := 0
 var tiles := PackedByteArray()
 var eggs := {}            # Vector2i -> true
 var grain := {}
 var hens: Array[Dictionary] = []      # x, y, move, dir, vdir, target_y, peck, anim
-var lifts: Array[Dictionary] = []     # x (centro), y (topo)
+var lifts: Array[Dictionary] = []     # x (centre), y (top)
 var duck := {"pos": Vector2(16, 18), "vel": Vector2.ZERO, "free": false, "anim": 0.0}
 var start_pos := Vector2.ZERO
 
@@ -271,7 +271,7 @@ var level_time := 0.0
 var bonus_left := 0
 
 var _jump_buffer := 0.0
-var _touch_stick: Variant = null      # origem do joystick tátil
+var _touch_stick: Variant = null      # touch joystick origin
 var _touch_dir := Vector2.ZERO
 var _touch_index := -1
 var _touch_jump := false
@@ -322,7 +322,7 @@ static func _joy_axis(axis: JoyAxis, value: float) -> InputEventJoypadMotion:
 	return e
 
 
-# ---------------------------------------------------------------- consultas
+# ---------------------------------------------------------------- queries
 
 func player() -> Dictionary:
 	return players[current]
@@ -360,7 +360,7 @@ func is_ladder(c: int, r: int) -> bool:
 	return t == T_LADDER or t == T_BOTH
 
 
-## Há chão debaixo dos pés (y tem de estar no topo de uma linha)?
+## Is there floor underfoot (y must be at the top of a row)?
 func floor_under(x: float, y: float) -> bool:
 	var r := roundi(y / TILE)
 	if absf(y - r * TILE) > 0.01:
@@ -396,7 +396,7 @@ func set_skin(new_skin: ChuckieSkin) -> void:
 	skin.attach(self)
 
 
-# ---------------------------------------------------------------- partida e níveis
+# ---------------------------------------------------------------- match and levels
 
 func start(p_mode: Mode, lives := 5, first_level := 1) -> void:
 	mode = p_mode
@@ -449,7 +449,7 @@ func _load_level() -> void:
 					for k in 2:
 						lifts.append({"x": (c + 1) * TILE, "y": FIELD.y * (0.35 + 0.5 * k)})
 			tiles[r * COLS + c] = t
-	# mais galinhas nos ciclos mais avançados (aparecem nas casas livres do topo)
+	# more hens in later cycles (they appear in the free cells at the top)
 	if cycle() >= 2:
 		for c in range(COLS - 2, 0, -1):
 			if floor_under(c * TILE + 4.0, 4 * TILE):
@@ -482,7 +482,7 @@ func _reset_life() -> void:
 	timer = 1.6 if mode != Mode.DEMO else 0.6
 
 
-# ---------------------------------------------------------------- ciclo
+# ---------------------------------------------------------------- loop
 
 func _process(delta: float) -> void:
 	if paused:
@@ -532,7 +532,7 @@ func _step(dt: float) -> void:
 				_after_death()
 		State.CLEAR:
 			timer -= dt
-			# o tempo restante passa para os pontos
+			# the time left is added to the score
 			if bonus_left > 0:
 				var k := mini(bonus_left, maxi(1, int(2000.0 * dt)))
 				bonus_left -= k
@@ -566,7 +566,7 @@ func _add_points(n: int) -> void:
 		extra_life.emit()
 
 
-# ---------------------------------------------------------------- jogador
+# ---------------------------------------------------------------- player
 
 func _input_vec() -> Dictionary:
 	if is_ai():
@@ -703,7 +703,7 @@ func _try_climb(iy: int) -> bool:
 	return true
 
 
-## Agarrar uma escada no ar (a meio de um salto ou de uma queda).
+## Grabbing a ladder in the air (mid-jump or mid-fall).
 func _try_grab(_iy: int) -> bool:
 	var col := floori(px / TILE)
 	var cx := col * TILE + 4.0
@@ -779,7 +779,7 @@ func _after_death() -> void:
 	_reset_life()
 
 
-# ---------------------------------------------------------------- elevadores, galinhas e pato
+# ---------------------------------------------------------------- lifts, hens and duck
 
 func _move_lifts(dt: float) -> void:
 	for l in lifts:
@@ -874,7 +874,7 @@ func _move_duck(dt: float) -> void:
 	duck.pos = pos + vel * dt
 
 
-# ---------------------------------------------------------------- entrada
+# ---------------------------------------------------------------- input
 
 func _unhandled_input(event: InputEvent) -> void:
 	if paused or is_ai():
@@ -883,7 +883,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		_jump_buffer = 0.12
 	if event.device == InputEvent.DEVICE_ID_EMULATION:
 		return
-	# Tátil: metade esquerda = joystick (arrastar), metade direita = saltar.
+	# Touch: left half = joystick (drag), right half = jump.
 	if event is InputEventScreenTouch:
 		if event.pressed:
 			if event.position.x < 640.0:
@@ -916,9 +916,9 @@ func touch_stick() -> Variant:
 	return _touch_stick
 
 
-# ---------------------------------------------------------------- CPU da demonstração
+# ---------------------------------------------------------------- demo CPU
 
-## Nós = casas onde se pode estar de pé; arestas = andar, escada, cair de uma borda ou saltar.
+## Nodes = cells you can stand on; edges = walk, ladder, drop off an edge or jump.
 func _ai_node_ok(c: int, r: int) -> bool:
 	return c >= 0 and c < COLS and floor_under(c * TILE + 4.0, r * TILE) and not is_floor(c, r - 1) and not is_floor(c, r - 2)
 
@@ -931,7 +931,7 @@ func _ai_edges(c: int, r: int) -> Array:
 		if _ai_node_ok(c + s, r):
 			out.append({"kind": "walk", "to": Vector2i(c + s, r), "cost": 1.0})
 		elif c + s >= 0 and c + s < COLS and not is_floor(c + s, r):
-			# cair da borda: a queda é a direito, na coluna ao lado
+			# dropping off an edge: the fall is straight down, in the next column
 			var fx := cx + s * 6.6
 			var rr := r + 1
 			while rr < ROWS and not floor_under(fx, rr * TILE):
@@ -956,7 +956,7 @@ func _ai_edges(c: int, r: int) -> Array:
 	return out
 
 
-## Onde aterra um salto a partir de (x, y) na direção s (null se cair para fora).
+## Where a jump from (x, y) in direction s lands (null if it falls out).
 func _simulate_jump(x: float, y: float, s: int) -> Variant:
 	var sx := x
 	var sy := y
@@ -978,7 +978,7 @@ func _simulate_jump(x: float, y: float, s: int) -> Variant:
 
 
 func ai_plan_from(start: Vector2i) -> Dictionary:
-	# Dijkstra simples (poucos nós)
+	# simple Dijkstra (few nodes)
 	var dist := {start: 0.0}
 	var prev := {}
 	var open: Array[Vector2i] = [start]
@@ -1014,7 +1014,7 @@ func _ai_think(delta: float) -> void:
 		_ai_follow()
 		return
 	if move == Move.CLIMB:
-		# acabou uma escada: sai para o lado
+		# end of a ladder: step off to the side
 		ai_cmd.x = 1 if floor_under(px + 5.0, roundf(py / TILE) * TILE) else -1
 		return
 	if not centered:
@@ -1037,7 +1037,7 @@ func _ai_think(delta: float) -> void:
 				target = node
 	if target.x < 0 or target == here:
 		return
-	# primeiro passo do caminho
+	# first step of the path
 	var step := target
 	var prev: Dictionary = plan.prev
 	while prev.has(step) and prev[step][0] != here:
@@ -1045,7 +1045,7 @@ func _ai_think(delta: float) -> void:
 	if not prev.has(step):
 		return
 	var edge: Dictionary = prev[step][1]
-	# evita galinhas: espera se a próxima casa estiver ameaçada
+	# avoids hens: waits if the next cell is threatened
 	if _ai_danger(edge):
 		_ai_timer += delta
 		if _ai_timer < 1.5:

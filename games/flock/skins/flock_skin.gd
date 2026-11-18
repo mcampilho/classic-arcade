@@ -1,15 +1,15 @@
 class_name FlockSkin
-extends Node2D
-## Base dos estilos do Rebanho: o terreno é uma imagem de 320 x 150 píxeis (um por píxel lógico)
-## atualizada só onde as ovelhas escavam ou constroem; ovelhas, curral, celeiro, partículas,
-## a linha de estado e o painel de 12 botões. Os estilos escolhem cores e formas.
+extends SkinBase
+## Base of the Flock styles: the terrain is a 320 x 150 pixel image (one per logical pixel)
+## updated only where the sheep dig or build; sheep, pen, barn, particles,
+## the status line and the 12-button panel. The styles choose colours and shapes.
 
 const SC := FlockGame.SCALE
 const FIELD := Vector2(1280, 600)
 const BUTTON_LABELS := ["-", "+", "1", "2", "3", "4", "5", "6", "7", "", "", ""]
 
-## Ovelha de 8 x 9 pontos virada para a direita (pés na última linha).
-## W lã, w lã à sombra, F cara, E olho, L patas.
+## 8 x 9 dot sheep facing right (feet on the last row).
+## W wool, w shaded wool, F face, E eye, L legs.
 const SHEEP := {
 	"walk0": [
 		"...WW...",
@@ -91,24 +91,18 @@ const SHEEP := {
 }
 
 var game: FlockGame
-var sfx := {}
 var time := 0.0
 var parts: Array[Dictionary] = []
 var smooth_terrain := false
 var img: Image
 var tex: ImageTexture
 var frames := {}
-var _players: Array[AudioStreamPlayer] = []
-var _next_player := 0
 var _open_t := 0.0
 
 
 func attach(g: FlockGame) -> void:
 	game = g
-	for i in 8:
-		var p := AudioStreamPlayer.new()
-		add_child(p)
-		_players.append(p)
+	add_voices(8)
 	g.level_started.connect(func(_l: int) -> void:
 		_open_t = 0.0
 		parts.clear()
@@ -126,12 +120,7 @@ func attach(g: FlockGame) -> void:
 	g.brick.connect(func() -> void: play("brick", randf_range(0.95, 1.05), -10.0))
 	g.level_ended.connect(func(ok: bool) -> void: play("success" if ok else "fail"))
 	g.won.connect(func() -> void: play("win"))
-	var cached: Variant = Synth.cache_get(get_script().resource_path)
-	if cached != null:
-		sfx = cached
-	else:
-		_build_sfx()
-		Synth.cache_set(get_script().resource_path, sfx)
+	load_sfx()
 	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	_setup()
 	img = Image.create(FlockGame.W, FlockGame.H, false, Image.FORMAT_RGBA8)
@@ -139,27 +128,21 @@ func attach(g: FlockGame) -> void:
 	rebuild_terrain()
 
 
-func play(id: String, pitch := 1.0, volume_db := 0.0) -> void:
-	if game == null or game.mode == FlockGame.Mode.DEMO or not sfx.has(id):
-		return
-	var p := _players[_next_player]
-	_next_player = (_next_player + 1) % _players.size()
-	p.stream = sfx[id]
-	p.pitch_scale = pitch
-	p.volume_db = volume_db
-	p.play()
+## The menu demo is silent.
+func _is_silent() -> bool:
+	return game == null or game.mode == FlockGame.Mode.DEMO
 
 
-## Cria as texturas das ovelhas a partir dos desenhos em pontos (para estilos de píxeis).
+## Creates the sheep textures from the dot drawings (for pixel styles).
 func make_frames(palette: Dictionary, outline: Color, scale := 4) -> void:
 	frames.clear()
 	for k: String in SHEEP:
 		frames[k] = PixelArt.outlined(SHEEP[k], palette, outline, scale)
 
 
-# ---------------------------------------------------------------- terreno
+# ---------------------------------------------------------------- terrain
 
-## Ruído estável por píxel (0..1).
+## Stable per-pixel noise (0..1).
 static func hash01(x: int, y: int, seed := 0) -> float:
 	var h := (x * 374761393 + y * 668265263 + seed * 2246822519) & 0x7fffffff
 	h = ((h ^ (h >> 13)) * 1274126177) & 0x7fffffff
@@ -209,7 +192,7 @@ func _update_terrain() -> void:
 	tex.update(img)
 
 
-# ---------------------------------------------------------------- ciclo e desenho
+# ---------------------------------------------------------------- loop and drawing
 
 func _process(delta: float) -> void:
 	if game == null:
@@ -260,28 +243,28 @@ func _draw_part(p: Dictionary) -> void:
 	draw_rect(Rect2(p.pos - Vector2.ONE * p.size * 0.5, Vector2.ONE * p.size), Color(p.color, clampf(p.life * 2.0, 0.0, 1.0)))
 
 
-## Texto da linha de estado (função da ovelha sob o cursor, fora, salvas, tempo).
+## Status line text (skill of the sheep under the cursor, out, saved, time).
 func status_parts() -> Array[String]:
 	var g := game
 	var what := ""
 	if g.hover >= 0 and not g.is_ai():
 		what = job_name(g.sheep[g.hover])
 	var t := maxi(int(ceil(g.time_left)), 0)
-	return [what, I18n.t("FORA %d") % g.alive_count(), I18n.t("SALVAS %d/%d") % [g.saved_n, int(g.data().need)], I18n.t("TEMPO %d:%02d") % [t / 60, t % 60]]
+	return [what, I18n.t("OUT %d") % g.alive_count(), I18n.t("SAVED %d/%d") % [g.saved_n, int(g.data().need)], I18n.t("TIME %d:%02d") % [t / 60, t % 60]]
 
 
 func job_name(s: Dictionary) -> String:
 	var n := ""
 	match s.job:
-		FlockGame.Job.CLIMB: n = I18n.t("TREPADORA")
-		FlockGame.Job.FLOAT: n = I18n.t("GUARDA-CHUVA")
-		FlockGame.Job.BLOCK: n = I18n.t("BLOQUEADORA")
-		FlockGame.Job.BUILD: n = I18n.t("CONSTRUTORA")
-		FlockGame.Job.BASH: n = I18n.t("ESCAVADORA")
-		FlockGame.Job.MINE: n = I18n.t("MINEIRA")
-		FlockGame.Job.DIG: n = I18n.t("CAVADORA")
-		FlockGame.Job.FALL: n = I18n.t("A CAIR")
-		_: n = I18n.t("OVELHA")
+		FlockGame.Job.CLIMB: n = I18n.t("CLIMBER")
+		FlockGame.Job.FLOAT: n = I18n.t("UMBRELLA")
+		FlockGame.Job.BLOCK: n = I18n.t("BLOCKER")
+		FlockGame.Job.BUILD: n = I18n.t("BUILDER")
+		FlockGame.Job.BASH: n = I18n.t("BASHER")
+		FlockGame.Job.MINE: n = I18n.t("MINER")
+		FlockGame.Job.DIG: n = I18n.t("DIGGER")
+		FlockGame.Job.FALL: n = I18n.t("FALLING")
+		_: n = I18n.t("SHEEP")
 	if s.climber and s.job != FlockGame.Job.CLIMB:
 		n += " +T"
 	if s.floater and s.job != FlockGame.Job.FLOAT:
@@ -321,7 +304,7 @@ func _draw_panel() -> void:
 		_draw_button(i, r, count, active)
 
 
-## Botão por omissão: caixa, número em cima, ícone em baixo.
+## Default button: box, number on top, icon below.
 func _draw_button(i: int, r: Rect2, count: String, active: bool) -> void:
 	var pal := panel_palette()
 	draw_rect(r, pal.button_on if active else pal.button)
@@ -333,7 +316,7 @@ func _draw_button(i: int, r: Rect2, count: String, active: bool) -> void:
 	draw_icon(i, r.get_center() + Vector2(0, 20), 30.0, col, 4.0)
 
 
-## Ícones simples dos botões (centro c, meia-largura h).
+## Simple button icons (centre c, half-width h).
 func draw_icon(i: int, c: Vector2, h: float, col: Color, w: float) -> void:
 	match i:
 		0:
@@ -341,47 +324,47 @@ func draw_icon(i: int, c: Vector2, h: float, col: Color, w: float) -> void:
 		1:
 			draw_line(c + Vector2(-h * 0.6, 0), c + Vector2(h * 0.6, 0), col, w * 1.5)
 			draw_line(c + Vector2(0, -h * 0.6), c + Vector2(0, h * 0.6), col, w * 1.5)
-		2:   # trepar: escada com seta
+		2:   # climb: ladder with an arrow
 			draw_line(c + Vector2(-h * 0.4, h * 0.7), c + Vector2(-h * 0.4, -h * 0.7), col, w)
 			draw_line(c + Vector2(h * 0.4, h * 0.7), c + Vector2(h * 0.4, -h * 0.7), col, w)
 			for k in 3:
 				var y := -h * 0.4 + k * h * 0.4
 				draw_line(c + Vector2(-h * 0.4, y), c + Vector2(h * 0.4, y), col, w * 0.7)
-		3:   # guarda-chuva
+		3:   # umbrella
 			var pts := PackedVector2Array()
 			for k in 9:
 				pts.append(c + Vector2(0, -h * 0.1) + Vector2.from_angle(PI + PI * k / 8.0) * h * 0.8)
 			draw_colored_polygon(pts, col)
 			draw_line(c + Vector2(0, -h * 0.1), c + Vector2(0, h * 0.7), col, w * 0.8)
 			draw_arc(c + Vector2(-h * 0.15, h * 0.7), h * 0.15, 0, PI, 6, col, w * 0.8)
-		4:   # bloquear: braços abertos
+		4:   # block: open arms
 			draw_circle(c + Vector2(0, -h * 0.5), h * 0.22, col)
 			draw_line(c + Vector2(0, -h * 0.3), c + Vector2(0, h * 0.3), col, w)
 			draw_line(c + Vector2(-h * 0.8, -h * 0.1), c + Vector2(h * 0.8, -h * 0.1), col, w)
 			draw_line(c + Vector2(0, h * 0.3), c + Vector2(-h * 0.4, h * 0.8), col, w)
 			draw_line(c + Vector2(0, h * 0.3), c + Vector2(h * 0.4, h * 0.8), col, w)
-		5:   # construir: degraus
+		5:   # build: steps
 			for k in 3:
 				draw_rect(Rect2(c + Vector2(-h * 0.8 + k * h * 0.5, h * 0.5 - k * h * 0.45), Vector2(h * 0.5, h * 0.3)), col)
-		6:   # escavar em frente
+		6:   # bash straight ahead
 			draw_rect(Rect2(c + Vector2(h * 0.2, -h * 0.8), Vector2(h * 0.5, h * 1.6)), Color(col, 0.45))
 			draw_line(c + Vector2(-h * 0.8, 0), c + Vector2(h * 0.6, 0), col, w)
 			draw_colored_polygon(PackedVector2Array([c + Vector2(h * 0.8, 0), c + Vector2(h * 0.4, -h * 0.35), c + Vector2(h * 0.4, h * 0.35)]), col)
-		7:   # minar na diagonal
+		7:   # mine diagonally
 			draw_line(c + Vector2(-h * 0.7, -h * 0.7), c + Vector2(h * 0.4, h * 0.4), col, w)
 			draw_colored_polygon(PackedVector2Array([c + Vector2(h * 0.75, h * 0.75), c + Vector2(h * 0.1, h * 0.6), c + Vector2(h * 0.6, h * 0.1)]), col)
-		8:   # cavar para baixo
+		8:   # dig down
 			draw_rect(Rect2(c + Vector2(-h * 0.8, h * 0.2), Vector2(h * 1.6, h * 0.5)), Color(col, 0.45))
 			draw_line(c + Vector2(0, -h * 0.8), c + Vector2(0, h * 0.5), col, w)
 			draw_colored_polygon(PackedVector2Array([c + Vector2(0, h * 0.85), c + Vector2(-h * 0.35, h * 0.4), c + Vector2(h * 0.35, h * 0.4)]), col)
-		9:   # pausa
+		9:   # pause
 			draw_rect(Rect2(c + Vector2(-h * 0.5, -h * 0.6), Vector2(h * 0.35, h * 1.2)), col)
 			draw_rect(Rect2(c + Vector2(h * 0.15, -h * 0.6), Vector2(h * 0.35, h * 1.2)), col)
-		10:  # rapidez
+		10:  # fast
 			for k in 2:
 				var o := c + Vector2(-h * 0.6 + k * h * 0.6, 0)
 				draw_colored_polygon(PackedVector2Array([o + Vector2(0, -h * 0.55), o + Vector2(h * 0.6, 0), o + Vector2(0, h * 0.55)]), col)
-		11:  # recomeçar
+		11:  # restart
 			draw_arc(c, h * 0.55, -PI * 0.3, PI * 1.4, 16, col, w)
 			var e := c + Vector2.from_angle(-PI * 0.3) * h * 0.55
 			draw_colored_polygon(PackedVector2Array([e + Vector2(-h * 0.35, -h * 0.15), e + Vector2(h * 0.2, -h * 0.3), e + Vector2(h * 0.05, h * 0.25)]), col)
@@ -398,7 +381,7 @@ func _draw_cursor(p: Vector2, on: bool) -> void:
 		draw_rect(Rect2(p - Vector2(r, r), Vector2(r, r) * 2), c, false, 2.0)
 
 
-## Desenho por omissão de uma ovelha com as texturas em pontos (pés em p).
+## Default sheep drawing with the dot textures (feet at p).
 func _draw_sheep(s: Dictionary, p: Vector2, hov: bool) -> void:
 	var key := sheep_frame(s)
 	var t: Texture2D = frames.get(key, frames.get("walk0"))
@@ -434,7 +417,7 @@ func sheep_frame(s: Dictionary) -> String:
 	return "walk0" if (int(s.anim) / 2) % 2 == 0 else "walk1"
 
 
-## Ferramenta da função (picareta, pá, tijolo) — por omissão, traços simples.
+## The skill's tool (pickaxe, shovel, brick) — simple strokes by default.
 func _draw_tool(s: Dictionary, p: Vector2) -> void:
 	var col := tool_color()
 	var d := float(s.dir)
@@ -468,13 +451,9 @@ func _draw_umbrella(c: Vector2, anim: int) -> void:
 	draw_line(c, c + Vector2(0, 18), tool_color(), 2.0)
 
 
-# ---------------------------------------------------------------- para os estilos
+# ---------------------------------------------------------------- for the styles
 
 func _setup() -> void:
-	pass
-
-
-func _build_sfx() -> void:
 	pass
 
 
@@ -490,18 +469,18 @@ func _draw_front() -> void:
 	pass
 
 
-## Cor de um píxel de terreno. kind: EARTH/STEEL/BRICK; top: píxeis de terreno acima (0 = superfície,
-## até 6); edge: tem vazio à esquerda, à direita ou por baixo.
+## Colour of a terrain pixel. kind: EARTH/STEEL/BRICK; top: terrain pixels above (0 = surface,
+## up to 6); edge: has empty space to the left, right or below.
 func terrain_color(_x: int, _y: int, _kind: int, _top: int, _edge: bool) -> Color:
 	return Color.WHITE
 
 
-## Curral de onde saem as ovelhas (p = ponto de saída), open = abertura (0..1).
+## Pen the sheep come out of (p = exit point), open = opening (0..1).
 func _draw_entrance(_p: Vector2, _open: float) -> void:
 	pass
 
 
-## Celeiro (p = pés da ovelha ao entrar): parte de trás (antes do terreno) e da frente.
+## Barn (p = sheep's feet on entering): back part (before the terrain) and front.
 func _draw_exit_back(_p: Vector2) -> void:
 	pass
 
@@ -535,6 +514,3 @@ func panel_palette() -> Dictionary:
 		"icon": Color.WHITE, "icon_dim": Color(1, 1, 1, 0.3), "count": Color.WHITE, "accent": Color.YELLOW,
 		"status_bg": Color(0, 0, 0, 0.5), "status_text": Color.WHITE, "cursor": Color.WHITE}
 
-
-func ui_palette() -> Dictionary:
-	return UI.LAUNCHER_PALETTE

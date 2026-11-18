@@ -1,6 +1,6 @@
 extends BreakoutSkin
-## Neon: tijolos de luz num arco-íris elétrico, faíscas, ondas de choque, pontos a flutuar
-## e combos — cada tijolo seguido sem tocar na raquete soa meio tom acima.
+## Neon: light bricks in an electric rainbow, sparks, shock waves, floating points
+## and combos — each brick in a row without touching the paddle sounds a semitone higher.
 
 const BG_TOP := Color("0a0320")
 const BG_BOTTOM := Color("1b0639")
@@ -58,7 +58,7 @@ func _build_sfx() -> void:
 	sfx.serve = Synth.tone(220.0, 0.14, {"wave": "sine", "freq_end": 520.0, "volume": 0.3})
 
 
-# ---------------------------------------------------------------- eventos
+# ---------------------------------------------------------------- events
 
 func _on_match_started() -> void:
 	sparks.clear()
@@ -148,7 +148,7 @@ func _burst(pos: Vector2, dir: Vector2, c: Color, count: int) -> void:
 		})
 
 
-# ---------------------------------------------------------------- animação
+# ---------------------------------------------------------------- animation
 
 func _tick(dt: float) -> void:
 	time += dt
@@ -184,7 +184,7 @@ func _tick(dt: float) -> void:
 	fx.queue_redraw()
 
 
-# ---------------------------------------------------------------- desenho
+# ---------------------------------------------------------------- drawing
 
 func _draw() -> void:
 	var s := BreakoutGame.SCREEN
@@ -198,7 +198,7 @@ func _draw() -> void:
 		draw_line(Vector2(x, -80), Vector2(x, s.y + 80), GRID, 1.0)
 	for y in range(-64, int(s.y) + 64, 64):
 		draw_line(Vector2(-80, y + off), Vector2(s.x + 80, y + off), GRID, 1.0)
-	# o campo é ligeiramente mais escuro que as laterais
+	# the field is slightly darker than the sides
 	draw_rect(BreakoutGame.INNER, Color(0, 0, 0, 0.35))
 
 
@@ -208,7 +208,7 @@ func _draw_fx() -> void:
 	if flash > 0.0:
 		fx.draw_rect(Rect2(Vector2(-80, -80), BreakoutGame.SCREEN + Vector2(160, 160)), Color(flash_color, flash * 0.14))
 
-	# paredes
+	# walls
 	var walls := [
 		Rect2(inner.position.x - 6, inner.position.y, 4, inner.size.y),
 		Rect2(inner.position.x - 6, inner.position.y - 6, inner.size.x + 12, 4),
@@ -218,7 +218,7 @@ func _draw_fx() -> void:
 		var k := snappedf(wall_glow[i], 0.1)
 		_glow(walls[i], WALL_C.lerp(Color.WHITE, k * 0.6), 8 + int(14 * k), 2, 0.6 + 0.4 * k)
 
-	# tijolos
+	# bricks
 	for row in BreakoutGame.ROWS:
 		var c: Color = ROW_COLORS[row]
 		for col in BreakoutGame.COLS:
@@ -226,7 +226,7 @@ func _draw_fx() -> void:
 				var k := snappedf(0.8 + 0.2 * sin(time * 2.2 - col * 0.45 + row * 0.5), 0.05)
 				_glow(g.brick_rect(row, col).grow(-4.0), c, 7, 4, k)
 
-	# rasto, anéis, faíscas
+	# trail, rings, sparks
 	for i in trail.size():
 		var t := float(i + 1) / trail.size()
 		fx.draw_circle(trail[i], BreakoutGame.BALL * 0.5 * t, Color(ball_color, 0.3 * t), true, -1.0, true)
@@ -256,9 +256,9 @@ func _draw_panels() -> void:
 	if g.players.size() > 1:
 		_draw_player_panel(1, rx)
 	else:
-		_text(I18n.t("RECORDE"), rx, 92, WALL_C.lerp(Color.WHITE, 0.3), 20, 0.9)
+		_text(I18n.t("HI-SCORE"), rx, 92, WALL_C.lerp(Color.WHITE, 0.3), 20, 0.9)
 		_text(str(maxi(g.best, g.players[0].score)), rx, 150, ROW_COLORS[3], 48, 0.9)
-		_text(I18n.t("PAREDE"), rx, 250, WALL_C.lerp(Color.WHITE, 0.3), 20, 0.9)
+		_text(I18n.t("WALL"), rx, 250, WALL_C.lerp(Color.WHITE, 0.3), 20, 0.9)
 		_text(str(g.players[0].wall), rx, 308, ROW_COLORS[5], 48, 0.9)
 
 
@@ -268,10 +268,10 @@ func _draw_player_panel(i: int, cx: float) -> void:
 	var active := i == g.current
 	var a := 1.0 if active else 0.4
 	var c: Color = PADDLE_C if i == 0 else ROW_COLORS[0]
-	_text(I18n.t("JOGADOR %d") % (i + 1), cx, 92, WALL_C.lerp(Color.WHITE, 0.3), 20, a)
+	_text(I18n.t("PLAYER %d") % (i + 1), cx, 92, WALL_C.lerp(Color.WHITE, 0.3), 20, a)
 	var size := int(56 + (14 * score_pop if active else 0.0))
 	_text(str(pl.score), cx, 158, c, size, a)
-	_text(I18n.t("BOLAS"), cx, 250, WALL_C.lerp(Color.WHITE, 0.3), 20, a)
+	_text(I18n.t("BALLS"), cx, 250, WALL_C.lerp(Color.WHITE, 0.3), 20, a)
 	var n: int = pl.balls
 	for k in g.start_balls:
 		var pos := Vector2(cx - (g.start_balls - 1) * 14.0 + k * 28.0, 284)
@@ -280,7 +280,7 @@ func _draw_player_panel(i: int, cx: float) -> void:
 		else:
 			fx.draw_arc(pos, 6, 0, TAU, 20, Color(BALL_C, 0.15 * a), 1.5, true)
 	if g.players.size() > 1:
-		_text(I18n.t("PAREDE %d") % pl.wall, cx, 340, WALL_C.lerp(Color.WHITE, 0.3), 18, a)
+		_text(I18n.t("WALL %d") % pl.wall, cx, 340, WALL_C.lerp(Color.WHITE, 0.3), 18, a)
 
 
 func _glow(r: Rect2, c: Color, size: int, radius: int, k: float) -> void:

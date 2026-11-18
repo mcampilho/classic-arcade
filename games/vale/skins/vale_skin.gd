@@ -1,8 +1,8 @@
 class_name ValeSkin
-extends Node2D
-## Base dos estilos da Espada do Vale: cada ecrã é pintado uma vez numa textura (e outra vez quando
-## se corta um arbusto ou se abre uma porta), o deslizar entre ecrãs, desenhos originais do herói,
-## inimigos e objetos, corações do HUD e sons.
+extends SkinBase
+## Base of the Sword of the Valley styles: each screen is painted once into a texture (and again when
+## a bush is cut or a door opens), the slide between screens, original drawings of the hero,
+## enemies and items, HUD hearts and sounds.
 
 const T := 64.0
 const ORIGIN := Vector2(128, 80)
@@ -29,12 +29,9 @@ const KEY := ["..YYY..", ".Y...Y.", ".Y...Y.", "..YYY..", "...Y...", "...Y...", 
 const CRYSTAL := ["....C....", "...CCC...", "..CcCCC..", ".CcCCCCC.", "CCCCCCCCC", ".CCCCCCC.", "..CCCCC..", "...CCC...", "....C...."]
 
 var game: ValeGame
-var sfx := {}
 var tex := {}
 var time := 0.0
 var sparks: Array[Dictionary] = []
-var _players: Array[AudioStreamPlayer] = []
-var _next_player := 0
 var _step_t := 0.0
 var vp_cur: SubViewport
 var vp_prev: SubViewport
@@ -46,10 +43,7 @@ var _prev_tiles: Array[String] = []
 
 func attach(g: ValeGame) -> void:
 	game = g
-	for i in 8:
-		var p := AudioStreamPlayer.new()
-		add_child(p)
-		_players.append(p)
+	add_voices(8)
 	vp_cur = _make_vp()
 	vp_prev = _make_vp()
 	_paint_cur = vp_cur.get_child(0)
@@ -82,12 +76,7 @@ func attach(g: ValeGame) -> void:
 		play("secret"))
 	g.player_died.connect(func() -> void: play("die"))
 	g.won.connect(func() -> void: play("win"))
-	var cached: Variant = Synth.cache_get(get_script().resource_path)
-	if cached != null:
-		sfx = cached
-	else:
-		_build_sfx()
-		Synth.cache_set(get_script().resource_path, sfx)
+	load_sfx()
 	_setup()
 	_bake(true)
 
@@ -104,7 +93,7 @@ func _make_vp() -> SubViewport:
 	return vp
 
 
-## Volta a pintar o ecrã atual (e o anterior, ao mudar de ecrã).
+## Repaints the current screen (and the previous one, when changing screens).
 func _bake(both: bool) -> void:
 	if vp_cur == null:
 		return
@@ -117,15 +106,9 @@ func _bake(both: bool) -> void:
 		_paint_prev.queue_redraw()
 
 
-func play(id: String, pitch := 1.0, volume_db := 0.0) -> void:
-	if game == null or game.mode == ValeGame.Mode.DEMO or not sfx.has(id):
-		return
-	var p := _players[_next_player]
-	_next_player = (_next_player + 1) % _players.size()
-	p.stream = sfx[id]
-	p.pitch_scale = pitch
-	p.volume_db = volume_db
-	p.play()
+## The menu demo is silent.
+func _is_silent() -> bool:
+	return game == null or game.mode == ValeGame.Mode.DEMO
 
 
 func _process(delta: float) -> void:
@@ -162,7 +145,7 @@ func scroll_offset() -> Vector2:
 	return Vector2(game.scroll_dir) * FIELD * k
 
 
-## Desenha uma textura de pixel art centrada num ponto (unidades), com escala de 4.
+## Draws a pixel-art texture centred on a point (units), at scale 4.
 func draw_sprite_c(t: Texture2D, c: Vector2, flip := false, modulate_c := Color.WHITE, scale := 4.0) -> void:
 	var size := t.get_size() * scale
 	var p := px(c) + scroll_offset() - size / 2
@@ -196,7 +179,7 @@ func build_sprites(hero_pal: Dictionary, pals: Dictionary, outline := Color(0, 0
 	tex.crystal = PixelArt.outlined(CRYSTAL, pals.crystal, outline, 1)
 
 
-# ---------------------------------------------------------------- desenho
+# ---------------------------------------------------------------- drawing
 
 func _draw() -> void:
 	if game == null:
@@ -261,7 +244,7 @@ func _draw_sword() -> void:
 	draw_line(base, tip, Color(0, 0, 0, 0.5), 12.0)
 	draw_line(base, tip, c, 7.0)
 	draw_line(base - perp * 12.0, base + perp * 12.0, hilt_color(), 6.0)
-	# arco do golpe
+	# strike arc
 	draw_arc(px(g.pos) + scroll_offset(), 60.0, f.angle() - 0.8, f.angle() + 0.8, 12, Color(c, 0.35 * (1.0 - k)), 10.0)
 
 
@@ -297,7 +280,7 @@ func _draw_boss(p: Vector2, e: Dictionary, mod: Color) -> void:
 	draw_rect(Rect2(r.position + Vector2(78, 34), Vector2(14, 8)), glow)
 	draw_line(r.position + Vector2(20, 80), r.position + Vector2(96, 80), body.darkened(0.5), 6.0)
 	draw_line(r.position + Vector2(56, 8), r.position + Vector2(48, 30), body.darkened(0.5), 3.0)
-	# barra de vida
+	# health bar
 	var hp: float = float(e.hp) / ValeGame.ENEMY_HP.boss
 	draw_rect(Rect2(r.position + Vector2(0, -16), Vector2(r.size.x, 8)), Color(0, 0, 0, 0.5))
 	draw_rect(Rect2(r.position + Vector2(0, -16), Vector2(r.size.x * hp, 8)), Color(0.9, 0.2, 0.2))
@@ -334,7 +317,7 @@ func _draw_shot(s: Dictionary) -> void:
 		draw_circle(c, 9, Color(1, 0.8, 0.3))
 
 
-## Corações em meios: `hearts` cheios de `max_hearts`.
+## Hearts in halves: `hearts` full out of `max_hearts`.
 func draw_hearts(p: Vector2, full: Color, empty: Color, size := 24.0) -> void:
 	var g := game
 	for i in g.max_hearts / 2:
@@ -361,13 +344,9 @@ func draw_minimap(p: Vector2, cell: Vector2, on: Color, off: Color, here: Color)
 			draw_rect(r, here if Vector2i(x, y) == g.room else (on if g.taken.has("clear " + g.room_key(g.in_dungeon, Vector2i(x, y))) else off))
 
 
-# ---------------------------------------------------------------- para os estilos reescreverem
+# ---------------------------------------------------------------- for the styles to override
 
 func _setup() -> void:
-	pass
-
-
-func _build_sfx() -> void:
 	pass
 
 
@@ -412,6 +391,3 @@ func boss_color() -> Color:
 func bush_color() -> Color:
 	return Color("3fa34d")
 
-
-func ui_palette() -> Dictionary:
-	return UI.LAUNCHER_PALETTE

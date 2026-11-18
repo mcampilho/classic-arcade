@@ -1,11 +1,11 @@
 class_name PalaceGame
 extends Node2D
-## Fuga do Palácio — plataformas "cinemático" original ao estilo de 1989: o herói corre, trava,
-## salta a correr, agarra-se a beirais, sobe e desce, evita espinhos e chãos soltos, abre portões
-## com placas de pressão e luta à espada com os guardas — tudo contra o relógio (20 minutos).
-## As personagens são esqueletos animados por poses (animação suave, sem folhas de sprites).
-## Coordenadas em píxeis do nível: casas de 128 de largura e linhas de 210 de altura;
-## cada ecrã mostra 10 casas x 3 linhas.
+## Palace Escape — original "cinematic" platformer in the 1989 style: the hero runs, stops,
+## makes running jumps, grabs ledges, climbs up and down, avoids spikes and loose floors, opens gates
+## with pressure plates and sword-fights the guards — all against the clock (20 minutes).
+## The characters are skeletons animated by poses (smooth animation, no sprite sheets).
+## Level coordinates in pixels: cells 128 wide and rows 210 high;
+## each screen shows 10 cells x 3 rows.
 
 signal match_started
 signal level_started(level: int)
@@ -44,9 +44,9 @@ const GATE_TIME := 12.0
 const FLOOR := "_|^~oeDhHSgP"
 const HALF := 18.0
 
-## Níveis originais: _ chão, # parede, espaço = buraco, | portão, ^ espinhos, ~ chão solto,
-## o placa (abre os portões por 12 s), e placa da saída, D porta de saída, h poção, H poção de vida,
-## S espada, g guarda, P início.
+## Original levels: _ floor, # wall, space = hole, | gate, ^ spikes, ~ loose floor,
+## o plate (opens the gates for 12 s), e exit plate, D exit door, h potion, H life potion,
+## S sword, g guard, P start.
 const LEVELS := [
 	[
 		"########################################",
@@ -78,30 +78,30 @@ var score := 0
 var clock := 0.0
 var timer := 0.0
 
-# herói
-var pos := Vector2.ZERO           # pés
+# hero
+var pos := Vector2.ZERO           # feet
 var vel := Vector2.ZERO
 var facing := 1
 var act := Act.STAND
-var act_t := 0.0                  # tempo no estado atual
+var act_t := 0.0                  # time in the current state
 var hp := 3
 var max_hp := 3
 var has_sword := false
 var fall_from := 0.0
-var hang_edge := Vector2.ZERO     # ponto do beiral (x da aresta, y do chão de cima)
+var hang_edge := Vector2.ZERO     # ledge point (x of the edge, y of the floor above)
 var parry_t := 0.0
 var hit_done := false
 var anim := 0.0
 var start_pos := Vector2.ZERO
 
-# mundo
+# world
 var guards: Array[Dictionary] = []    # pos, facing, hp, max_hp, act, act_t, cool, hit_done, parry_t, alive, anim
-var gate_t := 0.0                     # portões abertos enquanto > 0
-var gate_h := 0.0                     # 0 = fechado, 1 = aberto (animação)
+var gate_t := 0.0                     # gates open while > 0
+var gate_h := 0.0                     # 0 = closed, 1 = open (animation)
 var exit_open := false
 var exit_h := 0.0
-var loose := {}                       # Vector2i -> tempo a tremer
-var spikes := {}                      # Vector2i -> 0..1 (saída dos espinhos)
+var loose := {}                       # Vector2i -> shaking time
+var spikes := {}                      # Vector2i -> 0..1 (spikes out)
 var debris: Array[Dictionary] = []    # pos, vy
 var _in := {"x": 0, "up": false, "down": false, "jump": false, "attack": false, "careful": false}
 var _jump_buffer := 0.0
@@ -169,7 +169,7 @@ func is_ai() -> bool:
 	return mode == Mode.DEMO
 
 
-# ---------------------------------------------------------------- casas
+# ---------------------------------------------------------------- cells
 
 func cols() -> int:
 	return tiles[0].length()
@@ -223,7 +223,7 @@ func minutes_left() -> int:
 	return ceili((TIME_LIMIT - clock) / 60.0)
 
 
-# ---------------------------------------------------------------- partida e níveis
+# ---------------------------------------------------------------- match and levels
 
 func start(p_mode: Mode, p_lives := 3) -> void:
 	mode = p_mode
@@ -287,7 +287,7 @@ func _set_act(a: Act) -> void:
 	hit_done = false
 
 
-# ---------------------------------------------------------------- ciclo
+# ---------------------------------------------------------------- loop
 
 func _process(delta: float) -> void:
 	if paused:
@@ -388,7 +388,7 @@ func _world(dt: float) -> void:
 	gate_t = maxf(gate_t - dt, 0.0)
 	gate_h = move_toward(gate_h, 1.0 if gate_t > 0.0 else 0.0, dt * (1.5 if gate_t > 0.0 else 0.5))
 	exit_h = move_toward(exit_h, 1.0 if exit_open else 0.0, dt * 0.8)
-	# espinhos saem quando o herói se aproxima
+	# spikes come out when the hero gets close
 	var hc := col_of(pos.x)
 	var hr := row_of(pos.y)
 	for k: Vector2i in spikes:
@@ -396,7 +396,7 @@ func _world(dt: float) -> void:
 		spikes[k] = move_toward(spikes[k], 1.0 if near else 0.0, dt * (8.0 if near else 1.0))
 		if near and spikes[k] > 0.0 and spikes[k] < 0.15:
 			spikes_out.emit(k)
-	# chão solto
+	# loose floor
 	for k: Vector2i in loose.keys():
 		loose[k] += dt
 		if loose[k] > 0.55:
@@ -412,13 +412,13 @@ func _world(dt: float) -> void:
 		var r := row_of(d.pos.y)
 		if d.pos.y >= floor_y(r) and y0 < floor_y(r) and is_floor(c, r):
 			d.vy = -1.0
-			# cai em cima do herói?
+			# does it fall on the hero?
 			if state == State.PLAY and absf(pos.x - d.pos.x) < 60.0 and row_of(pos.y) == r:
 				_hurt(1, "debris")
 	debris = debris.filter(func(d: Dictionary) -> bool: return d.vy >= 0.0 and d.pos.y < rows() * RH + 100.0)
 
 
-# ---------------------------------------------------------------- herói
+# ---------------------------------------------------------------- hero
 
 func _hero(dt: float) -> void:
 	act_t += dt
@@ -429,7 +429,7 @@ func _hero(dt: float) -> void:
 		fall_from = pos.y
 		vel = Vector2(vel.x * 0.5, 0.0)
 		_set_act(Act.FALL)
-	# luta: entra em guarda quando há um guarda perto
+	# fighting: takes guard when a guard is near
 	var foe: Variant = _nearest_guard()
 	match act:
 		Act.STAND:
@@ -458,7 +458,7 @@ func _hero(dt: float) -> void:
 			if act_t > 0.18:
 				_set_act((Act.STEP if _in.careful else Act.RUN) if x == facing else Act.STAND)
 		Act.STEP:
-			# passo cuidadoso: meia casa, devagar, não cai nem é apanhado pelos espinhos
+			# careful step: half a cell, slowly, never falls nor gets caught by spikes
 			var spd := 70.0
 			var nx := pos.x + facing * spd * dt
 			if not _supported(nx + facing * 8.0) or _wall_ahead(nx):
@@ -499,7 +499,7 @@ func _hero(dt: float) -> void:
 		Act.JUMP, Act.RJUMP, Act.FALL:
 			_air(dt)
 		Act.JUMPUP:
-			# subida até ao beiral (ou um pulinho, se não houver onde agarrar)
+			# jump up to the ledge (or a little hop, if there is nothing to grab)
 			if hang_edge != Vector2.ZERO:
 				var k := clampf(act_t / 0.32, 0.0, 1.0)
 				pos.y = lerpf(fall_from, hang_edge.y + 200.0, k)
@@ -549,7 +549,7 @@ func _move_x(dt: float) -> void:
 	var r := row_of(pos.y)
 	var edge_c := col_of(nx + signf(vel.x) * HALF)
 	if vel.x != 0.0 and blocks(edge_c, r):
-		# bater na parede
+		# hitting the wall
 		pos.x = (edge_c * TW - HALF - 0.1) if vel.x > 0.0 else ((edge_c + 1) * TW + HALF + 0.1)
 		if absf(vel.x) > RUN_V * 0.7:
 			bumped.emit()
@@ -579,7 +579,7 @@ func _air(dt: float) -> void:
 	if vel.y < 0.0:
 		fall_from = minf(fall_from, pos.y)
 	var c := col_of(pos.x)
-	# agarrar um beiral a cair (com ↑ ou cuidado premido)
+	# grabbing a ledge while falling (with ↑ or careful held)
 	if vel.y > 0.0 and (_in.up or _in.careful):
 		var hands0 := y0 - 200.0
 		var hands1 := pos.y - 200.0
@@ -594,7 +594,7 @@ func _air(dt: float) -> void:
 				_set_act(Act.HANG)
 				grabbed.emit()
 				return
-	# aterrar
+	# landing
 	if vel.y > 0.0:
 		var r := row_of(pos.y)
 		var fy := floor_y(r)
@@ -626,7 +626,7 @@ func _try_door_or_jumpup() -> void:
 		timer = 2.0
 		_set_act(Act.EXIT)
 		return
-	# beiral por cima, à frente ou atrás
+	# ledge above, ahead or behind
 	hang_edge = Vector2.ZERO
 	fall_from = pos.y
 	if not is_floor(c, r - 1):
@@ -645,7 +645,7 @@ func _try_climb_down() -> bool:
 	for d: int in [facing, -facing]:
 		var edge_x := (c + (1 if d > 0 else 0)) * TW
 		if not is_floor(c + d, r) and not blocks(c + d, r) and absf(pos.x - edge_x) < 60.0 and r + 1 < rows():
-			# vira-se para o chão e pendura-se no beiral
+			# turns towards the floor and hangs from the ledge
 			facing = -d
 			hang_edge = Vector2(edge_x, floor_y(r))
 			_set_act(Act.HANG)
@@ -710,7 +710,7 @@ func _die(how: String) -> void:
 	player_died.emit(how)
 
 
-# ---------------------------------------------------------------- espadas
+# ---------------------------------------------------------------- swords
 
 func _nearest_guard() -> Variant:
 	var best_g: Variant = null
@@ -794,7 +794,7 @@ func _guard(g: Dictionary, dt: float) -> void:
 	match g.act:
 		Act.STAND, Act.SWORD:
 			g.act = Act.SWORD
-			# aproximar ou afastar
+			# close in or back off
 			var want := 110.0
 			var mv := 0.0
 			if dist > want + 30.0:
@@ -805,7 +805,7 @@ func _guard(g: Dictionary, dt: float) -> void:
 			var r := row_of(p.y)
 			if is_floor(col_of(nx + g.facing * HALF), r) and not blocks(col_of(nx + g.facing * HALF), r):
 				p.x = nx
-			# defender quando o herói ataca
+			# parry when the hero attacks
 			if act == Act.STRIKE and act_t < 0.15 and dist < 170.0 and randf() < (0.012 + level * 0.004) and g.parry_t <= 0.0:
 				g.act = Act.PARRY
 				g.act_t = 0.0
@@ -833,7 +833,7 @@ func _guard(g: Dictionary, dt: float) -> void:
 	g.pos = p
 
 
-# ---------------------------------------------------------------- entrada
+# ---------------------------------------------------------------- input
 
 func _unhandled_input(event: InputEvent) -> void:
 	if paused or is_ai():
@@ -844,8 +844,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		_attack_buffer = 0.15
 	if event.device == InputEvent.DEVICE_ID_EMULATION:
 		return
-	# Tátil: metade esquerda = joystick (cima/baixo = agarrar/subir, descer); metade direita:
-	# em cima saltar, em baixo espada; a faixa do meio à direita é o passo cuidadoso.
+	# Touch: left half = joystick (up/down = grab/climb, drop); right half:
+	# top jumps, bottom sword; the middle strip on the right is the careful step.
 	if event is InputEventScreenTouch:
 		if event.pressed:
 			if event.position.x < 640.0:
@@ -880,9 +880,9 @@ func touch_stick() -> Variant:
 	return _touch_origin if _touch_index >= 0 else null
 
 
-# ---------------------------------------------------------------- CPU da demonstração
+# ---------------------------------------------------------------- demo CPU
 
-## A demonstração corre pelo palácio: salta buracos, sobe beirais, apanha a espada e luta.
+## The demo runs through the palace: jumps holes, climbs ledges, picks up the sword and fights.
 func _ai_think(delta: float) -> void:
 	_ai_t -= delta
 	ai = {"x": 0, "up": false, "down": false, "jump": false, "attack": false, "careful": false}
@@ -903,7 +903,7 @@ func _ai_think(delta: float) -> void:
 		if randf() < 0.25:
 			facing = -facing
 			dir = facing
-	# parede ou fim: tentar subir, senão voltar para trás
+	# wall or end: try to climb, otherwise turn back
 	var ahead := c + dir
 	if blocks(ahead, r):
 		if not is_floor(c, r - 1) and is_floor(ahead, r - 1):
@@ -912,7 +912,7 @@ func _ai_think(delta: float) -> void:
 			ai.x = -dir
 		return
 	if not is_floor(ahead, r):
-		# buraco: saltar se houver chão do outro lado, senão descer
+		# hole: jump if there is floor on the other side, otherwise go down
 		if is_floor(c + dir * 2, r) or is_floor(c + dir * 3, r):
 			if act == Act.RUN and absf(vel.x) > RUN_V * 0.8 and absf(pos.x - (c + (1 if dir > 0 else 0)) * TW) < 70.0:
 				ai.jump = true
@@ -926,7 +926,7 @@ func _ai_think(delta: float) -> void:
 			return
 		ai.x = -dir
 		return
-	# subir quando há um beiral por cima
+	# climb when there is a ledge above
 	if not is_floor(c, r - 1) and (is_floor(c + 1, r - 1) or is_floor(c - 1, r - 1)) and randf() < 0.02:
 		ai.up = true
 		return

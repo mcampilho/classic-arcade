@@ -1,6 +1,6 @@
 class_name BlockDigits
 extends RefCounted
-## Algarismos em blocos (3x5), como nos marcadores das primeiras máquinas arcade.
+## Block digits (3x5), like the score displays of the first arcade machines.
 
 const GLYPHS := {
 	"0": ["111", "101", "101", "101", "111"],
@@ -20,7 +20,7 @@ static func width(text: String, cell: float) -> float:
 	return text.length() * 4 * cell - cell
 
 
-## Desenha `text` (só algarismos) centrado em center_x, a partir de `top`.
+## Draws `text` (digits only) centred on center_x, starting at `top`.
 static func draw(ci: CanvasItem, text: String, center_x: float, top: float, cell: float, color: Color) -> void:
 	var x := center_x - width(text, cell) / 2
 	for ch in text:

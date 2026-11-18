@@ -1,8 +1,8 @@
 extends CentipedeSkin
-## Gravura Naturalista (estilo próprio): o jogo como uma prancha de um caderno de campo do
-## século XIX. Cogumelos em aguarela com tracejado a tinta sépia, uma centopeia gravada com
-## patas a mexer, aranha, pulga e escorpião desenhados à pena, e um aparo que dispara gotas
-## de tinta. Fichas de espécime nas laterais. Sons de pena, papel e cravo.
+## Naturalist Engraving (original style): the game as a plate from a 19th-century field
+## notebook. Watercolour mushrooms with sepia ink hatching, an engraved centipede with
+## moving legs, spider, flea and scorpion drawn in pen, and a nib that shoots drops
+## of ink. Specimen cards on the sides. Sounds of quill, paper and harpsichord.
 
 const PAPER := Color("efe4c8")
 const PAPER_DARK := Color("d9c79c")
@@ -30,7 +30,7 @@ func _setup() -> void:
 	bg.draw.connect(_draw_background)
 
 
-# ---------------------------------------------------------------- sons
+# ---------------------------------------------------------------- sounds
 
 static func _harpsichord(f: float, dur: float, vol: float) -> PackedFloat32Array:
 	return Synth.mix([
@@ -42,11 +42,11 @@ static func _harpsichord(f: float, dur: float, vol: float) -> PackedFloat32Array
 func _build_sfx() -> void:
 	for i in 4:
 		sfx["step%d" % i] = Synth.tone([1400.0, 1250.0, 1400.0, 1100.0][i], 0.025, {"wave": "sine", "volume": 0.12, "decay": 90.0})
-	sfx.fire = Synth.tone(0.0, 0.05, {"wave": "noise", "volume": 0.12, "lowpass": 0.9, "decay": 50.0})       # pena a riscar
+	sfx.fire = Synth.tone(0.0, 0.05, {"wave": "noise", "volume": 0.12, "lowpass": 0.9, "decay": 50.0})       # quill scratching
 	sfx.kill = Synth.tone(900.0, 0.05, {"wave": "sine", "volume": 0.25, "decay": 70.0})
 	sfx.kill_head = Synth.concat([Synth.render(1000.0, 0.04, {"wave": "sine", "volume": 0.25, "decay": 70.0}), Synth.silence(0.03),
 		Synth.render(1300.0, 0.05, {"wave": "sine", "volume": 0.25, "decay": 70.0})])
-	sfx.mushroom = Synth.tone(0.0, 0.1, {"wave": "noise", "volume": 0.15, "lowpass": 0.15, "decay": 25.0})   # papel
+	sfx.mushroom = Synth.tone(0.0, 0.1, {"wave": "noise", "volume": 0.15, "lowpass": 0.15, "decay": 25.0})   # paper
 	var arp := []
 	for f in [523.25, 659.25, 783.99, 1046.5]:
 		arp.append(_harpsichord(f, 0.12, 0.12))
@@ -55,7 +55,7 @@ func _build_sfx() -> void:
 	for k in 14:
 		tear.append_array(Synth.render(0.0, 0.05, {"wave": "noise", "volume": 0.12 + k * 0.015, "lowpass": 0.1 + k * 0.05, "attack": 0.0, "release": 0.0}))
 	tear.append_array(Synth.render(0.0, 0.4, {"wave": "noise", "volume": 0.3, "lowpass": 0.8, "decay": 8.0}))
-	sfx.death = Synth.to_stream(tear)                                                                     # página a rasgar
+	sfx.death = Synth.to_stream(tear)                                                                     # page tearing
 	sfx.repair = Synth.tone(0.0, 0.03, {"wave": "noise", "volume": 0.1, "lowpass": 0.6, "decay": 80.0})
 	sfx.extra = Synth.to_stream(Synth.mix([
 		Synth.render(1568.0, 0.8, {"wave": "sine", "volume": 0.2, "decay": 4.0}),
@@ -71,7 +71,7 @@ func _build_sfx() -> void:
 	sfx.spider = Synth.concat(pizz)
 
 
-# ---------------------------------------------------------------- eventos
+# ---------------------------------------------------------------- events
 
 func _on_segment_killed(pos: Vector2, head: bool, points: int) -> void:
 	super(pos, head, points)
@@ -101,7 +101,7 @@ func _tick(dt: float) -> void:
 	splats = splats.filter(func(s: Dictionary) -> bool: return s.life > 0.0)
 
 
-# ---------------------------------------------------------------- fundo
+# ---------------------------------------------------------------- background
 
 func _draw_background() -> void:
 	bg.draw_rect(Rect2(0, 0, 1280, 720), PAPER_DARK)
@@ -111,7 +111,7 @@ func _draw_background() -> void:
 		bg.draw_circle(c, lerpf(820.0, 120.0, k), PAPER_DARK.lerp(PAPER, pow(k, 0.6)), true, -1.0, true)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 1859
-	# manchas do tempo
+	# age stains
 	for i in 14:
 		var p := Vector2(rng.randf() * 1280, rng.randf() * 720)
 		bg.draw_circle(p, rng.randf_range(20, 70), Color(0.55, 0.4, 0.2, rng.randf_range(0.03, 0.07)), true, -1.0, true)
@@ -119,7 +119,7 @@ func _draw_background() -> void:
 		var p := Vector2(rng.randf() * 1280, rng.randf() * 720)
 		bg.draw_line(p, p + Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(1, 4), Color(0.4, 0.3, 0.15, rng.randf_range(0.03, 0.08)), 1.0)
 	var f := field_rect()
-	# quadrícula ténue do caderno
+	# faint notebook grid
 	for x in range(0, int(f.size.x) + 1, 24):
 		bg.draw_line(Vector2(f.position.x + x, f.position.y), Vector2(f.position.x + x, f.end.y), Color(0.3, 0.45, 0.6, 0.07), 1.0)
 	for y in range(0, int(f.size.y) + 1, 24):
@@ -128,16 +128,16 @@ func _draw_background() -> void:
 	bg.draw_dashed_line(Vector2(f.position.x, zy), Vector2(f.end.x, zy), Color(INK, 0.25), 1.0, 6.0)
 	bg.draw_rect(f.grow(6), Color(INK, 0.8), false, 1.5)
 	bg.draw_rect(f.grow(10), Color(INK, 0.5), false, 1.0)
-	# fichas de espécime
+	# specimen cards
 	for cx in [panel_left_x(), panel_right_x()]:
 		for card in [Rect2(cx - 120, 40, 240, 280), Rect2(cx - 120, 470, 240, 200)]:
 			bg.draw_rect(Rect2(card.position + Vector2(3, 4), card.size), Color(0.3, 0.2, 0.1, 0.18))
 			bg.draw_rect(card, Color("f8f1de"))
 			bg.draw_rect(card.grow(-6), Color(INK, 0.5), false, 1.0)
-			bg.draw_circle(card.position + Vector2(card.size.x / 2, 0), 5.0, Color("8b0000"), true, -1.0, true)   # alfinete
+			bg.draw_circle(card.position + Vector2(card.size.x / 2, 0), 5.0, Color("8b0000"), true, -1.0, true)   # pin
 
 
-# ---------------------------------------------------------------- desenho
+# ---------------------------------------------------------------- drawing
 
 func _draw() -> void:
 	var g := game
@@ -174,7 +174,7 @@ func _draw() -> void:
 func _mushroom(c: Vector2, hp: int, poison: bool, h: int) -> void:
 	var k := 0.45 + 0.55 * hp / 4.0
 	var wash: Color = POISON if poison else WASH[absi(h) % WASH.size()]
-	# pé
+	# stem
 	var stem := Rect2(c + Vector2(-3.5, -1) * k, Vector2(7, 11) * k)
 	draw_rect(stem, Color("f3ead2"))
 	draw_line(stem.position, Vector2(stem.position.x, stem.end.y), INK, 1.0, true)
@@ -182,7 +182,7 @@ func _mushroom(c: Vector2, hp: int, poison: bool, h: int) -> void:
 	for t in 3:
 		var y := stem.position.y + (t + 1) * stem.size.y / 4
 		draw_line(Vector2(stem.end.x - 3, y), Vector2(stem.end.x, y - 1), Color(INK, 0.5), 1.0)
-	# chapéu em aguarela + contorno a tinta
+	# watercolour cap + ink outline
 	var pts := PackedVector2Array()
 	for i in 13:
 		var a := PI + PI * i / 12.0
@@ -276,26 +276,26 @@ func _draw_hud() -> void:
 	var lx := panel_left_x()
 	var rx := panel_right_x()
 	var a0 := 1.0 if (g.current == 0 or g.players.size() == 1) else 0.45
-	_text(I18n.t("Espécime n.º 1"), Vector2(lx, 90), 18, Color(INK, a0))
+	_text(I18n.t("Specimen No. 1"), Vector2(lx, 90), 18, Color(INK, a0))
 	_text(str(g.players[0].score), Vector2(lx, 150), 46, Color("8b0000", a0))
-	_text(I18n.t("recorde"), Vector2(lx, 220), 16, INK)
+	_text(I18n.t("high score"), Vector2(lx, 220), 16, INK)
 	_text(str(maxi(g.best, g.player().score)), Vector2(lx, 268), 32, INK_BLUE)
 	if g.players.size() > 1:
-		_text(I18n.t("Espécime n.º 2"), Vector2(rx, 90), 18, Color(INK, 1.0 if g.current == 1 else 0.45))
+		_text(I18n.t("Specimen No. 2"), Vector2(rx, 90), 18, Color(INK, 1.0 if g.current == 1 else 0.45))
 		_text(str(g.players[1].score), Vector2(rx, 150), 46, Color("8b0000", 1.0 if g.current == 1 else 0.45))
-		_text(I18n.t("Prancha %s") % _roman(g.wave()), Vector2(rx, 250), 22, INK)
+		_text(I18n.t("Plate %s") % _roman(g.wave()), Vector2(rx, 250), 22, INK)
 	else:
 		_text("Scolopendra arcadia", Vector2(rx, 100), 18, Color(INK, 0.8))
-		_text(I18n.t("Prancha"), Vector2(rx, 170), 18, INK)
+		_text(I18n.t("Plate"), Vector2(rx, 170), 18, INK)
 		_text(_roman(g.wave()), Vector2(rx, 240), 50, Color("8b0000"))
-	_text(I18n.t("vidas"), Vector2(lx, 510), 16, INK)
+	_text(I18n.t("lives"), Vector2(lx, 510), 16, INK)
 	var n := mini(maxi(g.player().lives, 0), 6)
 	for i in n:
 		_nib(Vector2(lx - (n - 1) * 17.0 + i * 34.0, 560))
-	_text(I18n.t("cogumelos:  4 tiros"), Vector2(rx, 520), 15, Color(INK, 0.8))
-	_text(I18n.t("aranha  300 · 600 · 900"), Vector2(rx, 552), 15, Color(INK, 0.8))
-	_text(I18n.t("pulga  200   escorpião  1000"), Vector2(rx, 584), 15, Color(INK, 0.8))
-	_text(I18n.t("cabeça  100   corpo  10"), Vector2(rx, 616), 15, Color(INK, 0.8))
+	_text(I18n.t("mushrooms:  4 shots"), Vector2(rx, 520), 15, Color(INK, 0.8))
+	_text(I18n.t("spider  300 · 600 · 900"), Vector2(rx, 552), 15, Color(INK, 0.8))
+	_text(I18n.t("flea  200   scorpion  1000"), Vector2(rx, 584), 15, Color(INK, 0.8))
+	_text(I18n.t("head  100   body  10"), Vector2(rx, 616), 15, Color(INK, 0.8))
 
 
 static func _roman(n: int) -> String:

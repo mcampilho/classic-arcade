@@ -1,7 +1,7 @@
 class_name CycleButton
 extends Button
-## Botão de opções cíclicas ("Estilo   <  Neon  >").
-## Toque/clique avança; setas esquerda/direita (teclado ou comando) mudam quando focado.
+## Cyclic option button ("Style   <  Neon  >").
+## Tap/click moves on; left/right arrows (keyboard or gamepad) change it when focused.
 
 signal value_changed(index: int)
 

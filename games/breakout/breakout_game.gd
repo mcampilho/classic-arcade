@@ -1,13 +1,13 @@
 class_name BreakoutGame
 extends Node2D
-## Lógica do Breakout (Atari, 1976), independente do visual.
-## O desenho e os sons ficam a cargo de um BreakoutSkin, que reage aos sinais abaixo.
+## Breakout (Atari, 1976) logic, independent of the visuals.
+## Drawing and sounds are done by a BreakoutSkin, which reacts to the signals below.
 ##
-## Regras do original:
-##  - 8 filas de tijolos: 2 vermelhas (7 pts), 2 laranja (5), 2 verdes (3), 2 amarelas (1)
-##  - a bola acelera aos 4 e aos 12 toques na raquete e ao tocar pela 1.ª vez nas filas laranja e vermelhas
-##  - a raquete encolhe para metade quando a bola atravessa a parede e bate no topo
-##  - 3 bolas por jogo (5 como opção), 1 ou 2 jogadores à vez
+## Rules of the original:
+##  - 8 rows of bricks: 2 red (7 pts), 2 orange (5), 2 green (3), 2 yellow (1)
+##  - the ball speeds up after 4 and 12 paddle hits and on first touching the orange and red rows
+##  - the paddle shrinks to half when the ball breaks through the wall and hits the top
+##  - 3 balls per game (5 as an option), 1 or 2 players taking turns
 
 signal match_started
 signal turn_started(player: int)
@@ -28,8 +28,8 @@ const SCREEN := Vector2(1280, 720)
 const COLS := 14
 const ROWS := 8
 const BRICK := Vector2(56, 24)
-const INNER := Rect2(248, 40, 784, 680)   # área de jogo, por dentro das paredes
-const WALL := 16.0                        # espessura das paredes (desenhadas por fora)
+const INNER := Rect2(248, 40, 784, 680)   # playing area, inside the walls
+const WALL := 16.0                        # wall thickness (drawn outside)
 const BRICK_TOP := 136.0
 const PADDLE_Y := 672.0
 const PADDLE_H := 14.0
@@ -37,7 +37,7 @@ const PADDLE_W := 80.0
 const BALL := 12.0
 const ROW_POINTS := [7, 7, 5, 5, 3, 3, 1, 1]
 const SPEEDS := [340.0, 400.0, 460.0, 530.0, 600.0]
-# A raquete divide-se em 8 segmentos; cada um devolve a bola com um ângulo fixo (graus a partir da vertical).
+# The paddle is split into 8 segments; each returns the ball at a fixed angle (degrees from vertical).
 const ANGLES := [-60.0, -45.0, -30.0, -15.0, 15.0, 30.0, 45.0, 60.0]
 const KEY_SPEED := 900.0
 const TOUCH_GAIN := 1.4
@@ -48,9 +48,9 @@ var start_balls := 3
 var state := State.READY
 var paused := false
 var skin: BreakoutSkin
-var best := 0                      # recorde (o menu lê/grava)
+var best := 0                      # high score (read/saved by the menu)
 
-## Um dicionário por jogador: score, balls (restantes, incluindo a que está em jogo), bricks, wall, small
+## One dictionary per player: score, balls (left, including the one in play), bricks, wall, small
 var players: Array[Dictionary] = []
 var current := 0
 var paddle_x := INNER.get_center().x
@@ -66,7 +66,7 @@ var _target_x: Variant = null
 var _ai_offset := 0.0
 
 
-## Ações de input do Breakout (criadas em código para não mexer no project.godot).
+## Breakout input actions (created in code so project.godot stays untouched).
 static func _ensure_inputs() -> void:
 	var defs := {
 		"bk_left": [_key(KEY_A), _key(KEY_LEFT), _joy_button(JOY_BUTTON_DPAD_LEFT), _joy_axis(JOY_AXIS_LEFT_X, -1.0)],
@@ -141,7 +141,7 @@ func set_skin(new_skin: BreakoutSkin) -> void:
 	skin.attach(self)
 
 
-# ---------------------------------------------------------------- consultas (usadas pelos skins)
+# ---------------------------------------------------------------- queries (used by the skins)
 
 func player() -> Dictionary:
 	return players[current]
@@ -180,7 +180,7 @@ func waiting_serve() -> bool:
 	return state == State.READY and mode != Mode.DEMO
 
 
-# ---------------------------------------------------------------- ciclo
+# ---------------------------------------------------------------- loop
 
 func _process(delta: float) -> void:
 	if paused:
@@ -227,7 +227,7 @@ func _serve() -> void:
 	hit_orange = false
 	hit_red = false
 	speed_level = 0
-	# Como no original, a bola surge por baixo da parede e desce em diagonal.
+	# As in the original, the ball appears below the wall and moves down diagonally.
 	ball_pos = Vector2(randf_range(INNER.position.x + 90.0, INNER.end.x - 90.0), BRICK_TOP + ROWS * BRICK.y + 50.0)
 	var a := deg_to_rad(randf_range(25.0, 45.0)) * (1.0 if randf() < 0.5 else -1.0)
 	ball_vel = Vector2(sin(a), cos(a)) * float(SPEEDS[0])
@@ -252,7 +252,7 @@ func _move_ball(dt: float) -> void:
 		ball_pos.y = INNER.position.y + h
 		ball_vel.y = absf(ball_vel.y)
 		wall_hit.emit(Vector2(ball_pos.x, INNER.position.y))
-		# Só se chega ao topo depois de atravessar a parede: a raquete encolhe.
+		# The top can only be reached after breaking through the wall: the paddle shrinks.
 		if not player().small:
 			player().small = true
 			paddle_shrunk.emit()
@@ -294,14 +294,14 @@ func _check_bricks(prev: Vector2) -> void:
 	var overlap_y := pr.end.y > br.position.y and pr.position.y < br.end.y
 	var overlap_x := pr.end.x > br.position.x and pr.position.x < br.end.x
 	if overlap_y and not overlap_x:
-		ball_vel.x = -ball_vel.x          # bateu de lado
+		ball_vel.x = -ball_vel.x          # hit from the side
 		ball_pos.x = prev.x
 	else:
-		ball_vel.y = -ball_vel.y          # bateu por baixo / por cima (ou no canto)
+		ball_vel.y = -ball_vel.y          # hit from below / above (or on the corner)
 		ball_pos.y = prev.y
 
 	bricks[best_i] = 0
-	player().bricks = bricks  # PackedByteArray é copiado por valor: guardar de volta
+	player().bricks = bricks  # PackedByteArray is copied by value: store it back
 	var pts: int = ROW_POINTS[row]
 	player().score += pts
 	if row <= 1:
@@ -325,7 +325,7 @@ func _check_paddle(prev: Vector2) -> void:
 	if not ball_rect().intersects(pr):
 		return
 	if prev.y + h > pr.position.y + 3.0:
-		return  # já estava abaixo do topo da raquete: passou ao lado
+		return  # already below the top of the paddle: it went past
 	var rel := clampf((ball_pos.x - paddle_x) / (pr.size.x / 2 + h), -1.0, 1.0)
 	var zone := clampi(int((rel + 1.0) * 0.5 * 8.0), 0, 7)
 	var a := deg_to_rad(ANGLES[zone])
@@ -377,7 +377,7 @@ func _new_wall() -> void:
 	turn_started.emit(current)
 
 
-# ---------------------------------------------------------------- raquete
+# ---------------------------------------------------------------- paddle
 
 func _update_paddle(dt: float) -> void:
 	if mode == Mode.DEMO:
@@ -400,18 +400,18 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("bk_serve"):
 		request_serve()
 	elif event is InputEventMouseMotion and not emulated:
-		_target_x = event.position.x                       # rato: posição absoluta
+		_target_x = event.position.x                       # mouse: absolute position
 	elif event is InputEventMouseButton and not emulated and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		_target_x = event.position.x
 		request_serve()
 	elif event is InputEventScreenTouch and not emulated and event.pressed:
 		request_serve()
 	elif event is InputEventScreenDrag and not emulated:
-		_target_x = null                                   # toque: arrastar em qualquer sítio (relativo)
+		_target_x = null                                   # touch: drag anywhere (relative)
 		paddle_x += event.relative.x * TOUCH_GAIN
 
 
-## A CPU da demonstração prevê onde a bola vai chegar (com ressaltos nas paredes laterais).
+## The demo CPU predicts where the ball will arrive (with bounces off the side walls).
 func _ai_target() -> float:
 	if state != State.PLAY:
 		return INNER.get_center().x

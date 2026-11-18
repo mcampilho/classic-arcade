@@ -1,9 +1,9 @@
 extends FireflySkin
-## Teatro de Sombras (estilo próprio): o labirinto é um jardim recortado em silhueta contra
-## um ecrã de papel iluminado por trás, emoldurado por cortinas de veludo. Tudo é sombra —
-## menos a luz do pirilampo. Os morcegos só se distinguem pelos olhos; quando ficam
-## encandeados passam a recortes de papel claro, a tremer.
-## Sons de caixa de música, madeira e gongo.
+## Shadow Theatre (original style): the maze is a garden cut out in silhouette against
+## a backlit paper screen, framed by velvet curtains. Everything is shadow —
+## except the firefly's light. The bats can only be told apart by their eyes; when
+## dazzled they turn into trembling light paper cut-outs.
+## Music-box, wood and gong sounds.
 
 const DARK := Color("1a0d07")
 const PAPER_HI := Color("ffd58a")
@@ -48,7 +48,7 @@ func _setup() -> void:
 		tex["bonus%d" % k] = PixelArt.texture(FireflySprites.BONUS[k], FireflySprites.mono(FireflySprites.BONUS_PALETTES[k], DARK), 3)
 
 
-# ---------------------------------------------------------------- sons
+# ---------------------------------------------------------------- sounds
 
 static func _pluck(f: float, dur: float, vol: float) -> PackedFloat32Array:
 	return Synth.mix([
@@ -93,7 +93,7 @@ func _build_sfx() -> void:
 	sfx.clear = Synth.concat(fan)
 
 
-# ---------------------------------------------------------------- eventos
+# ---------------------------------------------------------------- events
 
 func _on_bat_eaten(pos: Vector2, points: int) -> void:
 	super(pos, points)
@@ -110,12 +110,12 @@ func _tick(dt: float) -> void:
 	fx.queue_redraw()
 
 
-# ---------------------------------------------------------------- desenho
+# ---------------------------------------------------------------- drawing
 
 func _draw_background() -> void:
 	var maze := maze_rect()
 	bg.draw_rect(Rect2(0, 0, 1280, 720), PAPER_LO)
-	# ecrã de papel iluminado por trás: mais claro no centro
+	# backlit paper screen: lighter in the centre
 	var c := maze.get_center()
 	for i in 40:
 		var k := float(i) / 39.0
@@ -125,7 +125,7 @@ func _draw_background() -> void:
 	for i in 1500:
 		var p := Vector2(rng.randf() * 1280, rng.randf() * 720)
 		bg.draw_line(p, p + Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(2, 6), Color(0.4, 0.15, 0.0, rng.randf_range(0.03, 0.08)), 1.0)
-	# sebes recortadas, com folhas nas bordas
+	# cut-out hedges, with leaves on the edges
 	for y in FireflyGame.H:
 		for x in FireflyGame.W:
 			var t := Vector2i(x, y)
@@ -136,7 +136,7 @@ func _draw_background() -> void:
 		var b: Vector2 = e[1]
 		var n := (b - a).orthogonal().normalized()
 		var mid := (a + b) / 2
-		# a folha cresce para o lado do corredor
+		# the leaf grows towards the corridor
 		var probe := mid + n * 4.0
 		var probe_tile := Vector2i(((probe - FireflyGame.ORIGIN) / T).floor())
 		if FireflyGame.is_wall(probe_tile):
@@ -144,7 +144,7 @@ func _draw_background() -> void:
 		for k in 3:
 			var p := a.lerp(b, (k + 0.5) / 3.0)
 			bg.draw_circle(p + n * 1.0, 3.2 + rng.randf() * 1.6, DARK, true, -1.0, true)
-	# moldura de madeira e cortinas
+	# wooden frame and curtains
 	bg.draw_rect(maze.grow(10), Color("3b1d0e"), false, 12.0)
 	bg.draw_rect(maze.grow(4), GOLD.darkened(0.3), false, 2.0)
 	for side in [0, 1]:
@@ -167,7 +167,7 @@ func _draw() -> void:
 	if g.state == FireflyGame.State.CLEARED and fmod(g.timer, 0.5) < 0.25:
 		draw_rect(maze_rect(), Color(1, 1, 0.9, 0.35))
 	draw_rect(Rect2(tile_rect(FireflyGame.DOOR).position + Vector2(2, T / 2 - 2), Vector2(T - 4, 4)), Color(DARK, 0.6))
-	# sementes e flores
+	# seeds and flowers
 	for y in FireflyGame.H:
 		for x in FireflyGame.W:
 			var p := pellet_at(x, y)
@@ -183,7 +183,7 @@ func _draw() -> void:
 		draw_texture(bt, px(Vector2(FireflyGame.BONUS_TILE)) - bt.get_size() / 2)
 	for p in puffs:
 		draw_circle(p.pos, p.r, Color(DARK, 0.35 * p.life), true, -1.0, true)
-	# morcegos
+	# bats
 	var fr := int(time * 8.0) % 2
 	for b in g.bats:
 		if not bat_visible(b):
@@ -199,7 +199,7 @@ func _draw() -> void:
 		else:
 			var t: Texture2D = tex["bat%d" % fr]
 			draw_texture(t, c - t.get_size() / 2)
-	# pirilampo (a silhueta; a luz vai na camada aditiva)
+	# firefly (the silhouette; the light goes on the additive layer)
 	if player_visible():
 		var c := px(g.player_pos)
 		var ft := face_transform()
@@ -219,7 +219,7 @@ func _draw() -> void:
 
 func _draw_fx() -> void:
 	var g := game
-	# olhos dos morcegos
+	# bats' eyes
 	for b in g.bats:
 		if not bat_visible(b) or b.fright or b.state == FireflyGame.Bat.EATEN:
 			continue
@@ -231,7 +231,7 @@ func _draw_fx() -> void:
 			fx.draw_circle(e, 1.6, EYE_COLORS[b.id], true, -1.0, true)
 	if not player_visible():
 		return
-	# a luz do pirilampo
+	# the firefly's light
 	var c := px(g.player_pos)
 	var k := 1.0
 	if g.state == FireflyGame.State.DYING:
@@ -250,15 +250,15 @@ func _draw_panels() -> void:
 	var lx := 110.0
 	var rx := 1170.0
 	var a0 := 1.0 if (g.current == 0 or g.players.size() == 1) else 0.45
-	_text(I18n.t("JOGADOR 1"), Vector2(lx, 110), 20, Color(GOLD, a0))
+	_text(I18n.t("PLAYER 1"), Vector2(lx, 110), 20, Color(GOLD, a0))
 	_text(str(g.players[0].score), Vector2(lx, 162), 42, Color(PAPER_CUT, a0))
-	_text(I18n.t("RECORDE"), Vector2(lx, 240), 18, GOLD)
+	_text(I18n.t("HI-SCORE"), Vector2(lx, 240), 18, GOLD)
 	_text(str(maxi(g.best, g.player().score)), Vector2(lx, 280), 30, PAPER_CUT)
 	if g.players.size() > 1:
-		_text(I18n.t("JOGADOR 2"), Vector2(rx, 110), 20, Color(GOLD, 1.0 if g.current == 1 else 0.45))
+		_text(I18n.t("PLAYER 2"), Vector2(rx, 110), 20, Color(GOLD, 1.0 if g.current == 1 else 0.45))
 		_text(str(g.players[1].score), Vector2(rx, 162), 42, Color(PAPER_CUT, 1.0 if g.current == 1 else 0.45))
-	_text(I18n.t("ATO %d") % g.level(), Vector2(rx, 260), 26, GOLD)
-	_text(I18n.t("VIDAS"), Vector2(lx, 560), 18, GOLD)
+	_text(I18n.t("ACT %d") % g.level(), Vector2(rx, 260), 26, GOLD)
+	_text(I18n.t("LIVES"), Vector2(lx, 560), 18, GOLD)
 	var n := mini(maxi(g.player().lives, 0), 5)
 	for i in n:
 		var p := Vector2(lx - (n - 1) * 20.0 + i * 40.0, 600)

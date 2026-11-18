@@ -1,6 +1,6 @@
 extends CentipedeSkin
-## Clássico 1981: fundo negro, pixel art e cores que mudam a cada vaga (como na máquina),
-## cogumelos envenenados com as cores trocadas e a batida dos passos da centopeia.
+## Classic 1981: black background, pixel art and colours that change every wave (as in the machine),
+## poisoned mushrooms with swapped colours and the beat of the centipede's footsteps.
 
 const PALETTES := [
 	{"cap": Color("e8590c"), "spot": Color("ffe8cc"), "stem": Color("37b24d"), "body": Color("f783ac"), "dark": Color("a61e4d"), "legs": Color("ffd43b")},
@@ -133,14 +133,14 @@ func _draw_hud() -> void:
 	var p: Dictionary = PALETTES[_tex_wave]
 	var lx := panel_left_x()
 	var rx := panel_right_x()
-	PixelFont.draw(self, I18n.t("PONTOS<1>"), lx, 40, 3, Color(p.cap, 1.0 if (g.current == 0 or g.players.size() == 1) else 0.4))
+	PixelFont.draw(self, I18n.t("SCORE<1>"), lx, 40, 3, Color(p.cap, 1.0 if (g.current == 0 or g.players.size() == 1) else 0.4))
 	PixelFont.draw(self, "%06d" % g.players[0].score, lx, 80, 4, TEXT_C)
-	PixelFont.draw(self, I18n.t("RECORDE"), lx, 160, 3, p.cap)
+	PixelFont.draw(self, I18n.t("HI-SCORE"), lx, 160, 3, p.cap)
 	PixelFont.draw(self, "%06d" % maxi(g.best, g.player().score), lx, 200, 4, TEXT_C)
 	if g.players.size() > 1:
-		PixelFont.draw(self, I18n.t("PONTOS<2>"), rx, 40, 3, Color(p.cap, 1.0 if g.current == 1 else 0.4))
+		PixelFont.draw(self, I18n.t("SCORE<2>"), rx, 40, 3, Color(p.cap, 1.0 if g.current == 1 else 0.4))
 		PixelFont.draw(self, "%06d" % g.players[1].score, rx, 80, 4, TEXT_C)
-	PixelFont.draw(self, I18n.t("VAGA %d") % g.wave(), rx, 160, 3, p.body)
+	PixelFont.draw(self, I18n.t("WAVE %d") % g.wave(), rx, 160, 3, p.body)
 	for i in mini(maxi(g.player().lives - 1, 0), 6):
 		draw_texture(tex.player, Vector2(lx - 100 + i * 36, 640))
 

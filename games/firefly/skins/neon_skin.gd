@@ -1,6 +1,6 @@
 extends FireflySkin
-## Neon: labirinto de tubos de luz, pontos que pulsam, o pirilampo com um halo dourado,
-## morcegos de néon e ondas de luz quando o pirilampo apanha uma flor.
+## Neon: maze of light tubes, pulsing dots, the firefly with a golden halo,
+## neon bats and light waves when the firefly takes a flower.
 
 const BG_TOP := Color("0a0320")
 const BG_BOTTOM := Color("1b0639")
@@ -28,7 +28,7 @@ func _setup() -> void:
 	m.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
 	fx.material = m
 	fx.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
-	# as paredes ficam num nó próprio, só redesenhado quando o labirinto pisca
+	# the walls live in their own node, only redrawn when the maze blinks
 	walls = Node2D.new()
 	walls.material = m
 	add_child(walls)
@@ -204,16 +204,16 @@ func _draw_panels() -> void:
 	var rx := 1162.0
 	var label_c := Color("8a5cff").lerp(Color.WHITE, 0.3)
 	var a0 := 1.0 if (g.current == 0 or g.players.size() == 1) else 0.4
-	_text(I18n.t("JOGADOR 1"), lx, 100, label_c, 20, a0)
+	_text(I18n.t("PLAYER 1"), lx, 100, label_c, 20, a0)
 	_text(str(g.players[0].score), lx, 156, Color("19f0ff"), 44, a0)
-	_text(I18n.t("RECORDE"), lx, 240, label_c, 20, 0.9)
+	_text(I18n.t("HI-SCORE"), lx, 240, label_c, 20, 0.9)
 	_text(str(maxi(g.best, g.player().score)), lx, 286, GLOW_C, 34, 0.9)
 	if g.players.size() > 1:
-		_text(I18n.t("JOGADOR 2"), rx, 100, label_c, 20, 1.0 if g.current == 1 else 0.4)
+		_text(I18n.t("PLAYER 2"), rx, 100, label_c, 20, 1.0 if g.current == 1 else 0.4)
 		_text(str(g.players[1].score), rx, 156, Color("ff2bd6"), 44, 1.0 if g.current == 1 else 0.4)
-	_text(I18n.t("NÍVEL"), rx, 240, label_c, 20, 0.9)
+	_text(I18n.t("LEVEL"), rx, 240, label_c, 20, 0.9)
 	_text(str(g.level()), rx, 286, Color("3dffa0"), 34, 0.9)
-	_text(I18n.t("VIDAS"), lx, 570, label_c, 20, 0.9)
+	_text(I18n.t("LIVES"), lx, 570, label_c, 20, 0.9)
 	var n := mini(maxi(g.player().lives, 0), 5)
 	for i in n:
 		var c := Vector2(lx - (n - 1) * 20.0 + i * 40.0, 610)

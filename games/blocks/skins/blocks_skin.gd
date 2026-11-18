@@ -1,7 +1,7 @@
 class_name BlocksSkin
-extends Node2D
-## Base dos estilos do Encaixe: poço, peças, sombra, peça guardada, próximas peças, marcadores,
-## animação das linhas completas, partículas, avisos e música. Os estilos escolhem o aspeto.
+extends SkinBase
+## Base of the Stack styles: well, pieces, ghost, hold piece, next pieces, scores,
+## line-clear animation, particles, messages and music. The styles choose the look.
 
 const CELL := 30.0
 const BX := 490.0
@@ -9,26 +9,20 @@ const BY := 60.0
 const WELL := Rect2(BX, BY, CELL * BlocksGame.COLS, CELL * (BlocksGame.ROWS - BlocksGame.HIDDEN))
 const HOLD_BOX := Rect2(286, 60, 170, 120)
 const NEXT_BOX := Rect2(824, 60, 170, 120)
-const CLEAR_NAMES := ["", "", "DUPLA", "TRIPLA", "QUATRO LINHAS!"]
+const CLEAR_NAMES := ["", "", "DOUBLE", "TRIPLE", "FOUR LINES!"]
 
 var game: BlocksGame
-var sfx := {}
 var time := 0.0
 var parts: Array[Dictionary] = []
 var popups: Array[Dictionary] = []
 var shake := 0.0
 var music_on := true
-var _players: Array[AudioStreamPlayer] = []
-var _next_player := 0
 var _music: AudioStreamPlayer
 
 
 func attach(g: BlocksGame) -> void:
 	game = g
-	for i in 8:
-		var p := AudioStreamPlayer.new()
-		add_child(p)
-		_players.append(p)
+	add_voices(8)
 	_music = AudioStreamPlayer.new()
 	_music.volume_db = -6.0
 	add_child(_music)
@@ -46,36 +40,25 @@ func attach(g: BlocksGame) -> void:
 			_row_burst(r)
 		var txt: String = I18n.t(CLEAR_NAMES[n]) if n > 1 else ""
 		if game.last_b2b:
-			txt = I18n.t("OUTRA VEZ ") + txt
+			txt = I18n.t("AGAIN ") + txt
 		if game.combo > 0:
-			txt += ("  " if txt != "" else "") + I18n.t("SEGUIDAS x%d") % (game.combo + 1)
+			txt += ("  " if txt != "" else "") + I18n.t("COMBO x%d") % (game.combo + 1)
 		if txt != "":
 			popups.append({"text": txt, "t": 0.0, "y": cell_rect(0, rows[0]).position.y}))
 	g.level_up.connect(func(l: int) -> void:
 		play("level")
-		popups.append({"text": I18n.t("NÍVEL %d") % l, "t": 0.0, "y": WELL.position.y + 200.0}))
+		popups.append({"text": I18n.t("LEVEL %d") % l, "t": 0.0, "y": WELL.position.y + 200.0}))
 	g.game_over.connect(func() -> void: play("over"))
-	var cached: Variant = Synth.cache_get(get_script().resource_path)
-	if cached != null:
-		sfx = cached
-	else:
-		_build_sfx()
-		Synth.cache_set(get_script().resource_path, sfx)
+	load_sfx()
 	_setup()
 
 
-func play(id: String, pitch := 1.0, volume_db := 0.0) -> void:
-	if game == null or game.mode == BlocksGame.Mode.DEMO or not sfx.has(id):
-		return
-	var p := _players[_next_player]
-	_next_player = (_next_player + 1) % _players.size()
-	p.stream = sfx[id]
-	p.pitch_scale = pitch
-	p.volume_db = volume_db
-	p.play()
+## The menu demo is silent.
+func _is_silent() -> bool:
+	return game == null or game.mode == BlocksGame.Mode.DEMO
 
 
-## Retângulo no ecrã da casa (coluna, linha do tabuleiro).
+## On-screen rectangle of a cell (board column, row).
 func cell_rect(c: int, r: int) -> Rect2:
 	return Rect2(BX + c * CELL, BY + (r - BlocksGame.HIDDEN) * CELL, CELL, CELL)
 
@@ -130,7 +113,7 @@ func _update_music() -> void:
 		_music.stop()
 
 
-# ---------------------------------------------------------------- desenho
+# ---------------------------------------------------------------- drawing
 
 func _draw() -> void:
 	if game == null or game.board.is_empty():
@@ -164,10 +147,10 @@ func _draw() -> void:
 	for p in parts:
 		_draw_part(p)
 	draw_set_transform(Vector2.ZERO)
-	_draw_box(HOLD_BOX, I18n.t("GUARDADA"))
+	_draw_box(HOLD_BOX, I18n.t("HOLD"))
 	if g.hold >= 0:
 		draw_piece_preview(g.hold, HOLD_BOX.get_center() + Vector2(0, 12), 26.0, not g.can_hold)
-	_draw_box(NEXT_BOX, I18n.t("A SEGUIR"))
+	_draw_box(NEXT_BOX, I18n.t("NEXT"))
 	draw_piece_preview(g.next[0], NEXT_BOX.get_center() + Vector2(0, 12), 26.0, false)
 	for i in range(1, 4):
 		draw_piece_preview(g.next[i], Vector2(NEXT_BOX.get_center().x, NEXT_BOX.end.y + 30 + i * 62 - 40), 18.0, false)
@@ -179,7 +162,7 @@ func _draw() -> void:
 	_draw_front()
 
 
-## Peça pequena (pré-visualização) centrada em c, com casas de tamanho s.
+## Small piece (preview) centred on c, with cells of size s.
 func draw_piece_preview(k: int, c: Vector2, s: float, dim: bool) -> void:
 	var cs := BlocksGame.cells_of(k, 0)
 	var mn := Vector2(99, 99)
@@ -196,7 +179,7 @@ func _draw_stats() -> void:
 	var g := game
 	var x := HOLD_BOX.get_center().x
 	var y := HOLD_BOX.end.y + 40.0
-	for row: Array in [[I18n.t("PONTOS"), str(g.score)], [I18n.t("NÍVEL"), str(g.level)], [I18n.t("LINHAS"), str(g.lines)], [I18n.t("RECORDE"), str(maxi(g.best, g.score))]]:
+	for row: Array in [[I18n.t("SCORE"), str(g.score)], [I18n.t("LEVEL"), str(g.level)], [I18n.t("LINES"), str(g.lines)], [I18n.t("HI-SCORE"), str(maxi(g.best, g.score))]]:
 		label(row[0], Vector2(x, y), 18.0, false)
 		label(row[1], Vector2(x, y + 26.0), 30.0, true)
 		y += 92.0
@@ -208,7 +191,7 @@ func _draw_popup(text: String, y: float, a: float) -> void:
 
 func _draw_over() -> void:
 	draw_rect(WELL, Color(0, 0, 0, 0.55))
-	label(I18n.t("FIM"), Vector2(WELL.get_center().x, WELL.get_center().y - 30), 44.0, true)
+	label(I18n.t("END"), Vector2(WELL.get_center().x, WELL.get_center().y - 30), 44.0, true)
 
 
 func _draw_part(p: Dictionary) -> void:
@@ -219,13 +202,9 @@ func _draw_part(p: Dictionary) -> void:
 	draw_rect(Rect2(p.pos - Vector2.ONE * p.size * 0.5, Vector2.ONE * p.size), Color(piece_color(p.kind), clampf(p.life * 2.0, 0.0, 1.0)))
 
 
-# ---------------------------------------------------------------- para os estilos
+# ---------------------------------------------------------------- for the styles
 
 func _setup() -> void:
-	pass
-
-
-func _build_sfx() -> void:
 	pass
 
 
@@ -253,12 +232,12 @@ func _draw_well_front(_r: Rect2) -> void:
 	pass
 
 
-## Desenha uma casa: style 0 = peça/tabuleiro, 1 = sombra, 2 = pré-visualização, 3 = guardada inativa.
+## Draws a cell: style 0 = piece/board, 1 = ghost, 2 = preview, 3 = inactive hold.
 func draw_block(_r: Rect2, _k: int, _style: int) -> void:
 	pass
 
 
-## Linha a desaparecer (t de 0 a 1).
+## Line being cleared (t from 0 to 1).
 func _draw_clearing(r: int, t: float) -> void:
 	for c in BlocksGame.COLS:
 		var k := game.board[r * BlocksGame.COLS + c] - 1
@@ -271,7 +250,7 @@ func _draw_box(_r: Rect2, _title: String) -> void:
 	pass
 
 
-## Texto centrado em p (p.y = topo). big = valor/destaque.
+## Text centred on p (p.y = top). big = value/highlight.
 func label(_text: String, _p: Vector2, _size: float, _big: bool, _alpha := 1.0) -> void:
 	pass
 
@@ -279,6 +258,3 @@ func label(_text: String, _p: Vector2, _size: float, _big: bool, _alpha := 1.0) 
 func _draw_front() -> void:
 	pass
 
-
-func ui_palette() -> Dictionary:
-	return UI.LAUNCHER_PALETTE

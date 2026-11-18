@@ -1,7 +1,7 @@
 extends SchoolSkin
-## Giz no Quadro: a escola inteira desenhada a giz num quadro de ardósia verde — traços tremidos
-## e falhados, giz branco, amarelo, cor-de-rosa e azul, marcas de apagador, bonecos de pauzinhos
-## (o Zé a amarelo, os professores de beca a cor-de-rosa) e um parapeito de madeira com o painel.
+## Chalkboard: the whole school drawn in chalk on a green slate board — wobbly,
+## broken strokes, white, yellow, pink and blue chalk, eraser marks, stick figures
+## (Zé in yellow, the gowned teachers in pink) and a wooden ledge with the panel.
 
 const BOARD := Color("23382c")
 const CHALK := Color("eef0e6")
@@ -18,7 +18,7 @@ func _setup() -> void:
 
 
 func _build_sfx() -> void:
-	# guinchos de giz, toques de campainha e um apagador
+	# chalk squeaks, bell rings and an eraser
 	sfx.bell = Synth.tone(1300.0, 0.9, {"wave": "triangle", "volume": 0.2, "decay": 3.0})
 	sfx.lines = Synth.tone(2600.0, 0.25, {"wave": "sine", "freq_end": 3200.0, "volume": 0.08, "decay": 6.0})
 	sfx.shield = Synth.tone(0.0, 0.15, {"wave": "noise", "volume": 0.25, "lowpass": 0.7, "decay": 18.0})
@@ -38,7 +38,7 @@ func _build_sfx() -> void:
 	sfx.expelled = Synth.tone(3000.0, 0.9, {"wave": "sine", "freq_end": 1800.0, "volume": 0.08})
 
 
-## Traço de giz: várias passagens, falhas e grão.
+## Chalk stroke: several passes, gaps and grain.
 func chalk_line(ci: CanvasItem, a: Vector2, b: Vector2, col: Color, w: float, seed := 0) -> void:
 	var n := maxi(int(a.distance_to(b) / 18.0), 1)
 	for pass_i in 2:
@@ -79,11 +79,11 @@ func _paint_world(ci: CanvasItem) -> void:
 	var W := SchoolGame.WORLD_W
 	var BW := SchoolGame.BUILDING_W
 	ci.draw_rect(Rect2(0, 0, W, 600), BOARD)
-	# marcas de apagador
+	# eraser marks
 	for k in 40:
 		var p := Vector2(hash01(k, 1, 5) * W, hash01(k, 2, 5) * 600.0)
 		ci.draw_circle(p, 40.0 + hash01(k, 3, 5) * 70.0, Color(1, 1, 1, 0.014))
-	# telhado
+	# roof
 	chalk_line(ci, Vector2(0, 8), Vector2(BW / 2, -30), CHALK, 3.0, 1)
 	chalk_line(ci, Vector2(BW / 2, -30), Vector2(BW, 8), CHALK, 3.0, 2)
 	for f in 3:
@@ -100,7 +100,7 @@ func _paint_world(ci: CanvasItem) -> void:
 		var x := float(r.x0)
 		if x > 0.0 and x < BW + 1.0:
 			chalk_line(ci, Vector2(x, top), Vector2(x, float(SchoolGame.FLOOR_Y[f]) - 112.0), CHALK, 4.0, int(x) + f)
-	# escadas em degraus
+	# stepped stairs
 	for s: Dictionary in SchoolGame.STAIRS:
 		var f := int(s.f)
 		var a := Vector2(s.top, SchoolGame.FLOOR_Y[f])
@@ -112,7 +112,7 @@ func _paint_world(ci: CanvasItem) -> void:
 				chalk_line(ci, p, Vector2(q.x, p.y), CHALK, 2.5, k * 3 + f)
 				chalk_line(ci, Vector2(q.x, p.y), q, CHALK, 2.5, k * 3 + f + 1)
 		chalk_line(ci, a + Vector2(0, -42), b + Vector2(0, -42), Color(CHALK, 0.7), 2.0, 77 + f)
-	# quadros, carteiras, mesas
+	# boards, desks, tables
 	for i in SchoolGame.ROOMS.size():
 		var r: Dictionary = SchoolGame.ROOMS[i]
 		var y: float = SchoolGame.FLOOR_Y[int(r.floor)]
@@ -127,7 +127,7 @@ func _paint_world(ci: CanvasItem) -> void:
 				chalk_line(ci, Vector2(sx - 12, y - 30), Vector2(sx - 12, y), Color("d8b48a"), 2.5, k + i * 9 + 2)
 				chalk_line(ci, Vector2(sx - 6, y - 17), Vector2(sx + 8, y - 17), CHALK, 2.0, k + i * 9 + 3)
 				chalk_line(ci, Vector2(sx + 8, y - 34), Vector2(sx + 8, y), CHALK, 2.0, k + i * 9 + 4)
-		elif r.name == "Refeitório":
+		elif r.name == "Dining Hall":
 			for k in 3:
 				var x0 := float(r.x0) + 260 + k * 250
 				chalk_line(ci, Vector2(x0, y - 34), Vector2(x0 + 190, y - 34), Color("d8b48a"), 4.0, k)
@@ -135,16 +135,16 @@ func _paint_world(ci: CanvasItem) -> void:
 				chalk_line(ci, Vector2(x0 + 178, y - 34), Vector2(x0 + 178, y), Color("d8b48a"), 3.0, k + 9)
 				for t in 3:
 					ci.draw_arc(Vector2(x0 + 40 + t * 55, y - 40), 9, PI, TAU, 8, Color(CHALK, 0.7), 2.0)
-		elif r.name == "Gabinete do Diretor":
+		elif r.name == "Head's Study":
 			chalk_line(ci, Vector2(1900, y - 40), Vector2(2060, y - 40), Color("d8b48a"), 4.0, 3)
 			chalk_line(ci, Vector2(1914, y - 40), Vector2(1914, y), Color("d8b48a"), 3.0, 4)
 			chalk_line(ci, Vector2(2046, y - 40), Vector2(2046, y), Color("d8b48a"), 3.0, 5)
 			chalk_rect(ci, Rect2(2150, y - 150, 100, 70), YELLOW, 2.5, 6)
-			chalk_text(ci, I18n.t("QUADRO DE HONRA"), Vector2(2200, y - 118), 13, YELLOW)
-		elif r.name == "Átrio":
+			chalk_text(ci, I18n.t("HONOUR ROLL"), Vector2(2200, y - 118), 13, YELLOW)
+		elif r.name == "Hall":
 			for k in 8:
 				chalk_rect(ci, Rect2(1500 + k * 46, y - 100, 40, 100), BLUE, 2.0, 40 + k)
-	# recreio: árvore, sol, vedação, baliza
+	# playground: tree, sun, fence, goal
 	var gy: float = SchoolGame.FLOOR_Y[2]
 	for k in 26:
 		var x := BW + 20.0 + k * 40.0
@@ -186,7 +186,7 @@ func _draw_safe(p: Vector2, open: bool) -> void:
 	else:
 		draw_arc(r.get_center(), 13, 0, TAU, 16, Color(CHALK, 0.8), 2.5)
 		chalk_line(self, r.get_center(), r.get_center() + Vector2.from_angle(time * 0.7) * 10.0, YELLOW, 2.0, 930)
-	chalk_text(self, I18n.t("COFRE"), Vector2(p.x, r.position.y - 14), 16, YELLOW)
+	chalk_text(self, I18n.t("SAFE"), Vector2(p.x, r.position.y - 14), 16, YELLOW)
 
 
 func _draw_person(c: Dictionary, j: Dictionary) -> void:
@@ -249,7 +249,7 @@ func _draw_bubble(p: Vector2, text: String, teacher: bool) -> void:
 
 func _draw_hud() -> void:
 	var g := game
-	# parapeito de madeira com pauzinhos de giz
+	# wooden ledge with sticks of chalk
 	draw_rect(Rect2(0, 600, 1280, 120), Color("6a4628"))
 	draw_rect(Rect2(0, 600, 1280, 10), Color("8a6038"))
 	for k in 3:
@@ -257,15 +257,15 @@ func _draw_hud() -> void:
 	chalk_text(self, period_text(), Vector2(400, 628), 22, YELLOW)
 	draw_rect(Rect2(110, 648, 580, 8), Color(0, 0, 0, 0.3))
 	draw_rect(Rect2(110, 648, 580 * period_left(), 8), Color(CHALK, 0.8))
-	chalk_text(self, I18n.t("DIA %d") % g.day, Vector2(56, 652), 16, CHALK)
-	chalk_text(self, I18n.t("ESCUDOS %d/%d") % [g.shields_done(), SchoolGame.SHIELDS.size()], Vector2(220, 686), 22, BLUE)
-	chalk_text(self, I18n.t("COFRE:  ") + code_text(), Vector2(560, 686), 22, CHALK)
-	chalk_text(self, I18n.t("LINHAS %d") % g.lines, Vector2(960, 626), 24, PINK)
+	chalk_text(self, I18n.t("DAY %d") % g.day, Vector2(56, 652), 16, CHALK)
+	chalk_text(self, I18n.t("SHIELDS %d/%d") % [g.shields_done(), SchoolGame.SHIELDS.size()], Vector2(220, 686), 22, BLUE)
+	chalk_text(self, I18n.t("SAFE:  ") + code_text(), Vector2(560, 686), 22, CHALK)
+	chalk_text(self, I18n.t("LINES %d") % g.lines, Vector2(960, 626), 24, PINK)
 	draw_rect(Rect2(820, 648, 280, 8), Color(0, 0, 0, 0.3))
 	draw_rect(Rect2(820, 648, 280.0 * g.lines / SchoolGame.MAX_LINES, 8), PINK)
-	chalk_text(self, I18n.t("PONTOS %d   RECORDE %d") % [g.score, maxi(g.best, g.score)], Vector2(960, 686), 20, CHALK)
+	chalk_text(self, I18n.t("SCORE %d   HI-SCORE %d") % [g.score, maxi(g.best, g.score)], Vector2(960, 686), 20, CHALK)
 	if g.state == SchoolGame.State.OVER:
-		chalk_text(self, I18n.t("EXPULSO!"), Vector2(640, 290), 90, PINK)
+		chalk_text(self, I18n.t("EXPELLED!"), Vector2(640, 290), 90, PINK)
 
 
 func ui_palette() -> Dictionary:

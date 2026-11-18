@@ -1,7 +1,7 @@
 extends FroggerSkin
-## Feltro (estilo próprio): o jogo como um livro de atividades em feltro. Peças recortadas
-## com pespontos à vista, botões a fazer de olhos e de rodas, um rio de feltro azul com
-## ondas cosidas e painéis em retalhos. Sons de brinquedo: apitos, xilofone e caixa de música.
+## Felt (original style): the game as a felt activity book. Cut-out pieces
+## with visible stitching, buttons for eyes and wheels, a blue felt river with
+## sewn waves and patchwork panels. Toy sounds: whistles, xylophone and music box.
 
 const SHADOW := Color(0.1, 0.06, 0.02, 0.28)
 const THREAD := Color("fff8e7")
@@ -39,7 +39,7 @@ func _setup() -> void:
 	bg.draw.connect(_draw_background)
 
 
-# ---------------------------------------------------------------- sons
+# ---------------------------------------------------------------- sounds
 
 static func _pluck(f: float, dur: float, vol: float) -> PackedFloat32Array:
 	return Synth.mix([
@@ -81,7 +81,7 @@ func _build_sfx() -> void:
 	sfx.music = Synth.concat(box)
 
 
-# ---------------------------------------------------------------- ajudas de costura
+# ---------------------------------------------------------------- sewing helpers
 
 func _stitch_line(ci: CanvasItem, a: Vector2, b: Vector2, c := THREAD, w := 1.6) -> void:
 	ci.draw_dashed_line(a, b, c, w, 5.0)
@@ -127,12 +127,12 @@ func _felt_rect(ci: CanvasItem, r: Rect2, c: Color, radius := 6, stitch := true)
 		_stitch_rect(ci, r, c.lightened(0.45), 3.5)
 
 
-# ---------------------------------------------------------------- fundo
+# ---------------------------------------------------------------- background
 
 func _draw_background() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 21
-	# retalhos nas laterais
+	# patchwork on the sides
 	var patches := [Color("c96f5b"), Color("e3b04b"), Color("7fb069"), Color("6c9bd2"), Color("b07cc6"), Color("e8a0a0")]
 	for y in range(0, 720, 80):
 		for x in range(0, 1280, 76):
@@ -141,18 +141,18 @@ func _draw_background() -> void:
 			_stitch_rect(bg, r, Color(THREAD, 0.7), 5.0)
 	var f := field_rect()
 	bg.draw_rect(f.grow(10), Color("3b2a1a"))
-	# regiões do tabuleiro
+	# board regions
 	var fills := {0: FELT_DGREEN, 6: FELT_SAND, 12: FELT_SAND, 13: Color("4a3a2a")}
 	for row in range(0, 14):
 		var rr := row_rect(row)
 		var c: Color = fills.get(row, FELT_BLUE if row <= 5 else FELT_GREY)
 		bg.draw_rect(rr, c)
-	# fibras do feltro
+	# felt fibres
 	for i in 4000:
 		var p := Vector2(rng.randf_range(f.position.x, f.end.x), rng.randf_range(f.position.y, f.end.y))
 		var col := Color(1, 1, 1, rng.randf_range(0.03, 0.08)) if rng.randf() < 0.5 else Color(0, 0, 0, rng.randf_range(0.03, 0.08))
 		bg.draw_line(p, p + Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(1.5, 4.0), col, 1.0)
-	# ondas cosidas no rio
+	# sewn waves on the river
 	for row in range(1, 6):
 		var rr := row_rect(row)
 		for k in 2:
@@ -161,13 +161,13 @@ func _draw_background() -> void:
 			while x < rr.end.x:
 				bg.draw_arc(Vector2(x + 10, y), 10.0, PI, TAU, 6, Color(THREAD, 0.35), 1.4, true)
 				x += 32.0
-	# estrada: traços a meio das faixas
+	# road: dashes between the lanes
 	for row in range(7, 11):
 		var y := row_rect(row).end.y
 		_stitch_line(bg, Vector2(f.position.x, y), Vector2(f.end.x, y), Color("f2d16b"), 2.0)
 	for row in [6, 12]:
 		_stitch_rect(bg, row_rect(row), Color("8a5a36"), 4.0)
-	# sebe com recortes ondulados e as 5 tocas
+	# hedge with wavy cut-outs and the 5 homes
 	var top := row_rect(0)
 	for x in range(0, int(top.size.x), 24):
 		bg.draw_circle(Vector2(top.position.x + x + 12, top.end.y), 12.0, FELT_DGREEN, true, -1.0, true)
@@ -176,7 +176,7 @@ func _draw_background() -> void:
 		bg.draw_circle(br.get_center() + Vector2(0, 4), 26.0, FELT_DBLUE, true, -1.0, true)
 		_stitch_circle(bg, br.get_center() + Vector2(0, 4), 22.0, Color(THREAD, 0.8))
 	_stitch_rect(bg, f.grow(6), Color(THREAD, 0.6), 0.0)
-	# etiquetas para os textos
+	# labels for the texts
 	for cx in [panel_left_x(), panel_right_x()]:
 		var lab := Rect2(cx - 120, 40, 240, 290)
 		bg.draw_rect(Rect2(lab.position + Vector2(4, 5), lab.size), SHADOW)
@@ -188,7 +188,7 @@ func _draw_background() -> void:
 	_stitch_rect(bg, lab2, Color("b0453a"), 6.0)
 
 
-# ---------------------------------------------------------------- desenho
+# ---------------------------------------------------------------- drawing
 
 func _draw() -> void:
 	var g := game
@@ -307,7 +307,7 @@ func _draw_death() -> void:
 			var t := fmod(k + i * 0.33, 1.0)
 			_stitch_circle(self, c, 6.0 + 24.0 * t, Color(THREAD, 1.0 - t))
 	else:
-		# rã de feltro achatada, com olhos em cruz
+		# flat felt frog with cross-stitched eyes
 		draw_set_transform(c, 0.0, Vector2(1.5, 0.5))
 		draw_circle(Vector2.ZERO, 13.0, Color("63b84f"), true, -1.0, true)
 		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
@@ -324,28 +324,28 @@ func _draw_hud() -> void:
 	var lx := panel_left_x()
 	var rx := panel_right_x()
 	var a0 := 1.0 if (g.current == 0 or g.players.size() == 1) else 0.45
-	_text(I18n.t("JOGADOR 1"), Vector2(lx, 90), 20, Color(FELT_TEXT, a0))
+	_text(I18n.t("PLAYER 1"), Vector2(lx, 90), 20, Color(FELT_TEXT, a0))
 	_text(str(g.players[0].score), Vector2(lx, 146), 46, Color("b0453a", a0))
-	_text(I18n.t("RECORDE"), Vector2(lx, 222), 18, FELT_TEXT)
+	_text(I18n.t("HI-SCORE"), Vector2(lx, 222), 18, FELT_TEXT)
 	_text(str(maxi(g.best, g.player().score)), Vector2(lx, 270), 34, Color("3b6fb6"))
 	if g.players.size() > 1:
-		_text(I18n.t("JOGADOR 2"), Vector2(rx, 90), 20, Color(FELT_TEXT, 1.0 if g.current == 1 else 0.45))
+		_text(I18n.t("PLAYER 2"), Vector2(rx, 90), 20, Color(FELT_TEXT, 1.0 if g.current == 1 else 0.45))
 		_text(str(g.players[1].score), Vector2(rx, 146), 46, Color("b0453a", 1.0 if g.current == 1 else 0.45))
-		_text(I18n.t("NÍVEL %d") % g.level(), Vector2(rx, 250), 26, FELT_TEXT)
+		_text(I18n.t("LEVEL %d") % g.level(), Vector2(rx, 250), 26, FELT_TEXT)
 	else:
-		_text(I18n.t("NÍVEL"), Vector2(rx, 110), 20, FELT_TEXT)
+		_text(I18n.t("LEVEL"), Vector2(rx, 110), 20, FELT_TEXT)
 		_text(str(g.level()), Vector2(rx, 186), 64, Color("4f9d4a"))
-	_text(I18n.t("VIDAS"), Vector2(lx, 520), 18, FELT_TEXT)
+	_text(I18n.t("LIVES"), Vector2(lx, 520), 18, FELT_TEXT)
 	var n := mini(maxi(g.player().lives, 0), 6)
 	for i in n:
 		_draw_frog(Vector2(lx - (mini(n, 3) - 1) * 30.0 + (i % 3) * 60.0, 566 + (i / 3) * 52), 0.0, 0.8, false)
-	# tempo: fita de feltro
+	# time: felt ribbon
 	var hud := row_rect(13)
 	var frac := clampf(g.time_left / g.time_limit(), 0.0, 1.0)
 	var bar := Rect2(hud.end.x - 16 - 430 * frac, hud.position.y + 12, 430 * frac, 22)
 	if bar.size.x > 6:
 		_felt_rect(self, bar, Color("7fb069") if g.time_left > 8.0 else Color("d64545"), 4)
-	_text(I18n.t("TEMPO"), Vector2(hud.end.x - 500, hud.position.y + 31), 18, Color("f6ecd6"))
+	_text(I18n.t("TIME"), Vector2(hud.end.x - 500, hud.position.y + 31), 18, Color("f6ecd6"))
 
 
 func _text(text: String, pos: Vector2, size: int, c: Color, outline := false) -> void:

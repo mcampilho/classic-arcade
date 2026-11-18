@@ -1,7 +1,7 @@
 extends PalaceSkin
-## Iluminura Persa: o palácio pintado como uma miniatura persa — fundo lápis-lazúli com estrelas
-## de oito pontas a ouro, paredes de azulejo turquesa com rosáceas, lajes de mármore debruadas
-## a ouro, figuras de traje colorido com contorno escuro e uma moldura dourada à volta de tudo.
+## Persian Miniature: the palace painted as a Persian miniature — lapis lazuli background with gold
+## eight-pointed stars, turquoise tile walls with rosettes, marble slabs edged
+## in gold, figures in colourful dress with dark outlines and a gilded frame around it all.
 
 const LAPIS := Color("1f3a7a")
 const LAPIS2 := Color("2a4a96")
@@ -19,7 +19,7 @@ var star: Texture2D
 
 func _setup() -> void:
 	texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
-	# azulejo de fundo: estrela de oito pontas a ouro sobre lápis-lazúli
+	# background tile: gold eight-pointed star on lapis lazuli
 	var img := Image.create(64, 64, false, Image.FORMAT_RGBA8)
 	img.fill(LAPIS)
 	for y in 64:
@@ -35,7 +35,7 @@ func _setup() -> void:
 
 
 func _build_sfx() -> void:
-	# alaúde (triângulo dedilhado) e tambor de mão
+	# lute (plucked triangle) and hand drum
 	sfx.step = Synth.tone(120.0, 0.05, {"wave": "sine", "volume": 0.12, "decay": 40.0})
 	sfx.jump = Synth.tone(0.0, 0.08, {"wave": "noise", "volume": 0.06, "lowpass": 0.3, "decay": 30.0})
 	sfx.land = Synth.tone(90.0, 0.15, {"wave": "sine", "volume": 0.3, "decay": 20.0})
@@ -94,7 +94,7 @@ func _paint_tile(ci: CanvasItem, gc: int, _gr: int, ch: String, r: Rect2) -> voi
 		ci.draw_rect(r, INK, false, 2.0)
 		return
 	if PalaceGame.FLOOR.contains(ch):
-		# arco por cima de cada casa com chão
+		# arch above each floor cell
 		if gc % 2 == 0:
 			var top := r.position.y + 30
 			ci.draw_arc(Vector2(r.end.x, top + 60), 58, PI, TAU, 20, Color(GOLD, 0.6), 4.0)
@@ -135,13 +135,13 @@ func _draw_figure(j: Dictionary, is_guard: bool, sword: bool, info: Dictionary) 
 	_limb(j.knee_b, j.foot_b, trousers.darkened(0.15), 11.0)
 	_limb(j.sh_b, j.elbow_b, robe2, 10.0)
 	_limb(j.elbow_b, j.hand_b, skin.darkened(0.15), 8.0)
-	# túnica: tronco largo com aba
+	# tunic: wide torso with a skirt
 	_limb(j.hip, j.neck, robe, 22.0)
 	draw_colored_polygon(PackedVector2Array([j.hip + Vector2(-16, -6), j.hip + Vector2(16, -6), j.hip + Vector2(20, 26), j.hip + Vector2(-20, 26)]), robe)
 	draw_line(j.hip + Vector2(-14, -8), j.hip + Vector2(14, -8), Color(GOLD, a), 4.0)
 	draw_circle(j.head, 15.0, INK)
 	draw_circle(j.head, 13.0, skin)
-	# turbante
+	# turban
 	var turban := Color(Color.WHITE if not is_guard else RED, a)
 	draw_circle(j.head + Vector2(0, -10), 15.0, INK)
 	draw_circle(j.head + Vector2(0, -10), 13.0, turban)
@@ -151,7 +151,7 @@ func _draw_figure(j: Dictionary, is_guard: bool, sword: bool, info: Dictionary) 
 	_limb(j.hip, j.knee_f, trousers, 13.0)
 	_limb(j.knee_f, j.foot_f, trousers, 11.0)
 	if sword:
-		# cimitarra curva
+		# curved scimitar
 		var dirv: Vector2 = j.sword_dir
 		var pts := PackedVector2Array()
 		for k in 8:
@@ -227,7 +227,7 @@ func _draw_debris(p: Vector2) -> void:
 
 
 func _draw_front() -> void:
-	# moldura dourada da iluminura
+	# gilded frame of the miniature
 	draw_rect(Rect2(4, OFF_Y - 4, 1272, ROOM_H + 8), GOLD, false, 6.0)
 	draw_rect(Rect2(12, OFF_Y + 4, 1256, ROOM_H - 8), Color(INK, 0.8), false, 2.0)
 
@@ -246,7 +246,7 @@ func _draw_hud() -> void:
 			var c := Vector2(1150 - i * 34, 686)
 			draw_circle(c, 12, INK)
 			draw_circle(c, 10, Color("8ad0c8") if i < int(foe.hp) else Color("1f3a3a"))
-	PixelFont.draw(self, I18n.t("%d MINUTOS") % g.minutes_left(), 640, 674, 3, MARBLE)
+	PixelFont.draw(self, I18n.t("%d MINUTES") % g.minutes_left(), 640, 674, 3, MARBLE)
 
 
 func ui_palette() -> Dictionary:

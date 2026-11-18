@@ -1,10 +1,10 @@
 extends InvadersSkin
-## Azulejo (estilo próprio): a invasão pintada num painel de azulejos portugueses.
-## Invasores a azul-cobalto com pinceladas irregulares, disco voador e canhão com ocre,
-## azulejos que estalam a cada invasor abatido e lascas de cerâmica a cair.
-## Sons de marimba, cerâmica e sinos.
+## Azulejo (original style): the invasion painted on a panel of Portuguese tiles.
+## Cobalt-blue invaders with uneven brushstrokes, saucer and cannon in ochre,
+## tiles that crack with each invader shot and falling ceramic chips.
+## Marimba, ceramic and bell sounds.
 
-const TILE := 16.0                       # 1 azulejo = 16 unidades (48 px)
+const TILE := 16.0                       # 1 tile = 16 units (48 px)
 const GLAZE := Color("f4f1e8")
 const GROUT := Color("d6d0bf")
 const COBALT := Color("1f3f9e")
@@ -26,7 +26,7 @@ var shake := 0.0
 func _setup() -> void:
 	font = ThemeDB.fallback_font
 	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	# Fundo estático (milhares de traços): desenhado uma única vez para uma textura.
+	# Static background (thousands of strokes): drawn only once into a texture.
 	bg_vp = SubViewport.new()
 	bg_vp.size = Vector2i(1280, 720)
 	bg_vp.disable_3d = true
@@ -51,7 +51,7 @@ func _setup() -> void:
 			tex["b%d%d" % [k, f]] = InvaderSprites.texture(InvaderSprites.BOMBS[k][f], COBALT, 3, 0, _brush)
 
 
-## Pincelada: cada ponto com uma variação ligeira de tom, como tinta à mão sobre o vidrado.
+## Brushstroke: each dot with a slight shade variation, like hand paint on the glaze.
 static func _brush(x: int, y: int, c: Color) -> Color:
 	var h := hash(Vector2i(x * 31 + 7, y * 17 + 3))
 	var v := float(h % 1000) / 1000.0
@@ -104,7 +104,7 @@ func _build_sfx() -> void:
 	sfx.bunker = Synth.tone(160.0, 0.08, {"wave": "sine", "volume": 0.3, "decay": 40.0})
 
 
-# ---------------------------------------------------------------- eventos
+# ---------------------------------------------------------------- events
 
 func _on_match_started() -> void:
 	super()
@@ -164,7 +164,7 @@ func _chips(pos: Vector2, n: int, c: Color) -> void:
 		chips = chips.slice(chips.size() - 160)
 
 
-# ---------------------------------------------------------------- animação
+# ---------------------------------------------------------------- animation
 
 func _tick(dt: float) -> void:
 	shake = move_toward(shake, 0.0, dt * 30.0)
@@ -180,7 +180,7 @@ func _tick(dt: float) -> void:
 	fx.queue_redraw()
 
 
-# ---------------------------------------------------------------- desenho
+# ---------------------------------------------------------------- drawing
 
 func _draw_background() -> void:
 	var field := Rect2(InvadersGame.ORIGIN, InvadersGame.FIELD * S)
@@ -202,10 +202,10 @@ func _draw_background() -> void:
 			bg.draw_rect(r, GROUT, false, 2.0)
 			x += t
 		y += t
-	# moldura (barra) à volta do campo
+	# border (barra) around the field
 	bg.draw_rect(field.grow(10), COBALT, false, 8.0)
 	bg.draw_rect(field.grow(4), BLUE_LIGHT, false, 2.0)
-	# cartelas para os textos dos painéis
+	# cartouches for the panel texts
 	for cx in [panel_left_x(), panel_right_x()]:
 		var sb := StyleBoxFlat.new()
 		sb.bg_color = GLAZE
@@ -217,7 +217,7 @@ func _draw_background() -> void:
 		bg.draw_style_box(sb, Rect2(cx - 120, 520, 240, 190))
 
 
-## Padrão clássico de azulejo: quartos de círculo nos cantos e uma flor ao centro.
+## Classic tile pattern: quarter circles in the corners and a flower in the centre.
 func _tile_pattern(r: Rect2, alpha: float) -> void:
 	var c := Color(COBALT, 0.85 * alpha)
 	var l := Color(BLUE_LIGHT, 0.7 * alpha)
@@ -236,7 +236,7 @@ func _tile_pattern(r: Rect2, alpha: float) -> void:
 func _draw() -> void:
 	var g := game
 	draw_texture(bg_vp.get_texture(), Vector2.ZERO)
-	# chão: faixa de azulejos de barra
+	# ground: a strip of border tiles
 	var gy := px(Vector2(0, InvadersGame.GROUND_Y))
 	draw_rect(Rect2(gy, Vector2(InvadersGame.FIELD.x * S, 4)), COBALT)
 	for i in 4:
@@ -291,28 +291,28 @@ func _draw_panels() -> void:
 	var lx := panel_left_x()
 	var rx := panel_right_x()
 	var a0 := 1.0 if (g.current == 0 or g.players.size() == 1) else 0.45
-	_text(I18n.t("JOGADOR 1"), lx, 84, Color(BLUE_MID, a0), 20)
+	_text(I18n.t("PLAYER 1"), lx, 84, Color(BLUE_MID, a0), 20)
 	_text(str(g.players[0].score), lx, 146, Color(COBALT, a0), 50)
-	_text(I18n.t("RECORDE"), lx, 222, BLUE_MID, 20)
+	_text(I18n.t("HI-SCORE"), lx, 222, BLUE_MID, 20)
 	_text(str(maxi(g.best, g.players[0].score)), lx, 276, OCHRE.darkened(0.25), 40)
 	if g.players.size() > 1:
 		var a1 := 1.0 if g.current == 1 else 0.45
-		_text(I18n.t("JOGADOR 2"), rx, 84, Color(BLUE_MID, a1), 20)
+		_text(I18n.t("PLAYER 2"), rx, 84, Color(BLUE_MID, a1), 20)
 		_text(str(g.players[1].score), rx, 146, Color(COBALT, a1), 50)
-		_text(I18n.t("VAGA"), rx, 222, BLUE_MID, 20)
+		_text(I18n.t("WAVE"), rx, 222, BLUE_MID, 20)
 		_text(str(g.player().wave), rx, 276, COBALT, 40)
 	else:
-		_text(I18n.t("VAGA"), rx, 84, BLUE_MID, 20)
+		_text(I18n.t("WAVE"), rx, 84, BLUE_MID, 20)
 		_text(str(g.player().wave), rx, 146, COBALT, 50)
-		_text(I18n.t("VIDA EXTRA"), rx, 222, BLUE_MID, 20)
+		_text(I18n.t("EXTRA LIFE"), rx, 222, BLUE_MID, 20)
 		var got: bool = g.player().extra
-		_text(I18n.t("obtida") if got else str(InvadersGame.EXTRA_LIFE_AT), rx, 270, OCHRE.darkened(0.25), 32 if got else 40)
-	_text(I18n.t("VIDAS"), lx, 566, BLUE_MID, 20)
+		_text(I18n.t("earned") if got else str(InvadersGame.EXTRA_LIFE_AT), rx, 270, OCHRE.darkened(0.25), 32 if got else 40)
+	_text(I18n.t("LIVES"), lx, 566, BLUE_MID, 20)
 	var lives: int = maxi(g.player().lives, 0)
 	var n := mini(lives, 4)
 	for i in n:
 		fx.draw_texture(tex.player, Vector2(lx - (n - 1) * 26.0 + i * 52.0 - 19.5, 600))
-	# tabela de pontos, como no ecrã de apresentação das máquinas
+	# points table, as on the machines' attract screen
 	for k in 3:
 		var y := 548.0 + k * 40.0
 		fx.draw_texture(tex["a%d0" % k], Vector2(rx - 70, y))

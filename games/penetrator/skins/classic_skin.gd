@@ -1,6 +1,6 @@
 extends PenetratorSkin
-## Clássico 1981: fundo preto e o terreno desenhado só com a linha de contorno, como nos micros
-## de 8 bits, com uma cor por zona; sons de altifalante.
+## Classic 1981: black background and the terrain drawn only as an outline, as on 8-bit
+## home computers, with one colour per zone; speaker beeps.
 
 const ZONE_COLORS := [Color("ffffff"), Color("00ffff"), Color("ffff00"), Color("ff00ff"), Color("00ff00")]
 const YELLOW := Color("ffff00")
@@ -51,7 +51,7 @@ func _draw_terrain() -> void:
 	draw_polyline(contour(false), col, 3.0)
 	if has_ceiling():
 		var top := contour(true)
-		# só onde há teto
+		# only where there is a ceiling
 		var seg := PackedVector2Array()
 		for p in top:
 			if p.y > PenetratorGame.TOP + 0.5:
@@ -98,12 +98,12 @@ func _draw_hud() -> void:
 	var g := game
 	draw_rect(Rect2(0, 0, PenetratorGame.W, PenetratorGame.TOP - 4), Color.BLACK)
 	draw_line(Vector2(0, PenetratorGame.TOP - 4), Vector2(PenetratorGame.W, PenetratorGame.TOP - 4), Color("0000d7"), 3.0)
-	PixelFont.draw(self, I18n.t("PONTOS %06d") % g.score, 170, 12, 3, Color.WHITE)
-	PixelFont.draw(self, I18n.t("REC %06d") % maxi(g.best, g.score), 170, 40, 2, CYAN)
-	PixelFont.draw(self, I18n.t("MISSAO %d") % g.mission, 1120, 12, 3, YELLOW)
+	PixelFont.draw(self, I18n.t("SCORE %06d") % g.score, 170, 12, 3, Color.WHITE)
+	PixelFont.draw(self, I18n.t("HI %06d") % maxi(g.best, g.score), 170, 40, 2, CYAN)
+	PixelFont.draw(self, I18n.t("MISSION %d") % g.mission, 1120, 12, 3, YELLOW)
 	for i in mini(g.lives - 1, 6):
 		draw_tex_center(tex.ship, Vector2(1040 + i * 30, 46), 1.0)
-	# mapa das zonas
+	# zone map
 	var x0 := 420.0
 	var w := 440.0
 	for z in PenetratorGame.ZONES:

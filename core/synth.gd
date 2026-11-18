@@ -1,12 +1,12 @@
 class_name Synth
 extends RefCounted
-## Sintetizador minimalista: gera efeitos sonoros em código (sem ficheiros de áudio).
-## Cada jogo/estilo pode criar os seus sons com tone()/render()/mix()/concat().
+## Minimal synthesizer: generates sound effects in code (no audio files).
+## Each game/style can create its sounds with tone()/render()/mix()/concat().
 
 const RATE := 22050
 const WAVES := {"square": 0, "sine": 1, "saw": 2, "triangle": 3, "noise": 4}
 
-# Sons já gerados, por estilo (a síntese é feita uma única vez por sessão).
+# Sounds already generated, per style (synthesis happens only once per session).
 static var _cache := {}
 static var _mutex := Mutex.new()
 
@@ -24,8 +24,8 @@ static func cache_set(key: String, value: Dictionary) -> void:
 	_mutex.unlock()
 
 
-## Gera em segundo plano os sons de vários estilos (scripts de skin com _build_sfx()),
-## para que trocar de estilo no menu seja instantâneo. Devolve o id da tarefa.
+## Generates the sounds of several styles in the background (skin scripts with _build_sfx()),
+## so that switching styles in the menu is instant. Returns the task id.
 static func prewarm(skin_scripts: Array) -> int:
 	return WorkerThreadPool.add_task(func() -> void:
 		for script: Script in skin_scripts:
@@ -37,15 +37,15 @@ static func prewarm(skin_scripts: Array) -> int:
 			skin.free())
 
 
-## Gera um som simples e devolve-o pronto a tocar.
+## Generates a simple sound, ready to play.
 static func tone(freq: float, dur: float, opts := {}) -> AudioStreamWAV:
 	return to_stream(render(freq, dur, opts))
 
 
-## Gera amostras (-1..1). Opções:
+## Generates samples (-1..1). Options:
 ##  wave: "square" | "sine" | "saw" | "triangle" | "noise"
-##  volume, freq_end (varrimento de frequência), decay (decaimento exponencial /s),
-##  attack, release (segundos), lowpass (0..1, suaviza o som; 1 = sem filtro)
+##  volume, freq_end (frequency sweep), decay (exponential decay /s),
+##  attack, release (seconds), lowpass (0..1, softens the sound; 1 = no filter)
 static func render(freq: float, dur: float, opts := {}) -> PackedFloat32Array:
 	var wave: int = WAVES.get(opts.get("wave", "square"), 0)
 	var vol: float = opts.get("volume", 0.5)
@@ -65,7 +65,7 @@ static func render(freq: float, dur: float, opts := {}) -> PackedFloat32Array:
 	var phase := 0.0
 	var y := 0.0
 	var env := 1.0
-	var env_mul := exp(-decay * inv_rate)        # decaimento exponencial, passo a passo
+	var env_mul := exp(-decay * inv_rate)        # exponential decay, step by step
 	var attack_n := attack * RATE
 	var release_n := release * RATE
 	for i in n:
@@ -103,7 +103,7 @@ static func silence(dur: float) -> PackedFloat32Array:
 	return out
 
 
-## Sobrepõe vários sons (soma amostra a amostra).
+## Mixes several sounds (sample-by-sample sum).
 static func mix(parts: Array) -> PackedFloat32Array:
 	var size := 0
 	for p: PackedFloat32Array in parts:
@@ -118,7 +118,7 @@ static func mix(parts: Array) -> PackedFloat32Array:
 
 
 
-## Coloca vários sons em sequência.
+## Puts several sounds in sequence.
 static func concat(parts: Array) -> AudioStreamWAV:
 	var all := PackedFloat32Array()
 	for p: PackedFloat32Array in parts:

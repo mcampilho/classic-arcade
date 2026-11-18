@@ -1,18 +1,18 @@
 class_name CentipedeGame
 extends Node2D
-## Lógica do Centipede (1981), independente do visual.
-## Grelha de 28 x 30 casas de 8 unidades (224 x 240), desenhada a SCALE píxeis por unidade.
+## Centipede (1981) logic, independent of the visuals.
+## Grid of 28 x 30 cells of 8 units (224 x 240), drawn at SCALE pixels per unit.
 ##
-## Regras do original:
-##  - a centopeia (12 segmentos) desce em zigue-zague: ao bater num cogumelo ou na margem
-##    desce uma linha e inverte; cada segmento abatido vira cogumelo e o seguinte passa a cabeça
-##  - cabeça 100, corpo 10; cogumelos aguentam 4 tiros (+1 ao destruir)
-##  - pulga (200, 2 tiros): cai a semear cogumelos quando há poucos na zona do jogador
-##  - aranha (300/600/900, conforme a distância): salta na zona do jogador e come cogumelos
-##  - escorpião (1000): atravessa a parte de cima e envenena cogumelos — a centopeia que
-##    toca num cogumelo envenenado mergulha a direito até ao fundo
-##  - ao perder uma vida, os cogumelos danificados são reparados (+5 cada)
-##  - vida extra a cada 12 000 pontos; a cada vaga a centopeia traz mais cabeças soltas
+## Rules of the original:
+##  - the centipede (12 segments) zigzags down: on hitting a mushroom or the edge
+##    it moves down a row and turns; each segment shot becomes a mushroom and the next one becomes a head
+##  - head 100, body 10; mushrooms take 4 shots (+1 when destroyed)
+##  - flea (200, 2 shots): drops down sowing mushrooms when there are few in the player area
+##  - spider (300/600/900, by distance): bounces in the player area and eats mushrooms
+##  - scorpion (1000): crosses the upper part and poisons mushrooms — a centipede that
+##    touches a poisoned mushroom dives straight to the bottom
+##  - on losing a life, damaged mushrooms are repaired (+5 each)
+##  - extra life every 12,000 points; each wave the centipede brings more loose heads
 
 signal match_started
 signal turn_started(player: int)
@@ -38,7 +38,7 @@ const ROWS := 30
 const CELL := 8.0
 const W := 224.0
 const H := 240.0
-const ZONE_TOP := 24                  # primeira linha da zona do jogador
+const ZONE_TOP := 24                  # first row of the player area
 const PLAYER_SIZE := Vector2(7, 8)
 const PLAYER_SPEED := 110.0
 const SHOT_SPEED := 480.0
@@ -52,10 +52,10 @@ var paused := false
 var skin: CentipedeSkin
 var best := 0
 
-var players: Array[Dictionary] = []   # score, lives, wave, next_extra, mushrooms (guardados)
+var players: Array[Dictionary] = []   # score, lives, wave, next_extra, mushrooms (saved)
 var current := 0
-var mushrooms := PackedByteArray()    # vida 0..4 por casa
-var poisoned := PackedByteArray()     # 1 = envenenado
+var mushrooms := PackedByteArray()    # health 0..4 per cell
+var poisoned := PackedByteArray()     # 1 = poisoned
 var segments: Array[Dictionary] = []  # cell, pos, dx, dy, head, dive
 var player_pos := Vector2(W / 2, 228)
 var shot: Variant = null
@@ -118,7 +118,7 @@ static func _joy_axis(axis: JoyAxis, value: float) -> InputEventJoypadMotion:
 	return e
 
 
-# ---------------------------------------------------------------- consultas
+# ---------------------------------------------------------------- queries
 
 func to_px(u: Vector2) -> Vector2:
 	return ORIGIN + u * SCALE
@@ -162,7 +162,7 @@ static func cell_of(p: Vector2) -> Vector2i:
 	return Vector2i(clampi(floori(p.x / CELL), 0, COLS - 1), clampi(floori(p.y / CELL), 0, ROWS - 1))
 
 
-# ---------------------------------------------------------------- partida
+# ---------------------------------------------------------------- match
 
 func start(p_mode: Mode, lives := 3) -> void:
 	mode = p_mode
@@ -198,7 +198,7 @@ func _random_field() -> PackedByteArray:
 	var placed := 0
 	while placed < 42:
 		var c := Vector2i(randi() % COLS, 1 + randi() % (ROWS - 3))
-		# menos cogumelos na zona do jogador
+		# fewer mushrooms in the player area
 		if c.y >= ZONE_TOP and randf() < 0.7:
 			continue
 		if m[c.y * COLS + c.x] == 0:
@@ -227,7 +227,7 @@ func _save_player() -> void:
 func _new_centipede() -> void:
 	segments.clear()
 	var w := wave()
-	var loose := mini(w - 1, 6)           # cabeças soltas extra a cada vaga
+	var loose := mini(w - 1, 6)           # extra loose heads every wave
 	var chain := 12 - loose
 	_seg_speed = minf(60.0 + (w - 1) * 4.0, 90.0) * (1.25 if w % 2 == 0 else 1.0)
 	for i in chain:
@@ -254,7 +254,7 @@ func _reset_turn() -> void:
 	timer = 1.2
 
 
-# ---------------------------------------------------------------- ciclo
+# ---------------------------------------------------------------- loop
 
 func _process(delta: float) -> void:
 	if paused:
@@ -308,7 +308,7 @@ func _step(dt: float) -> void:
 					reset_match()
 
 
-# ---------------------------------------------------------------- centopeia
+# ---------------------------------------------------------------- centipede
 
 func _blocked(c: Vector2i, s: Dictionary) -> bool:
 	if c.x < 0 or c.x >= COLS:
@@ -329,7 +329,7 @@ func _choose_next(s: Dictionary) -> void:
 	if not _blocked(ahead, s):
 		s.next = ahead
 		return
-	# bateu: desce (ou sobe, na zona do jogador) e inverte
+	# hit: moves down (or up, in the player area) and turns
 	if c.x >= 0 and c.x < COLS and mushroom_at(ahead) > 0 and is_poisoned(ahead):
 		s.dive = true
 	var ny: int = c.y + s.dy
@@ -354,7 +354,7 @@ func _move_segments(dt: float) -> void:
 			_choose_next(s)
 		else:
 			s.pos += (target - s.pos).normalized() * step
-	# cabeças novas entram pelas laterais quando a centopeia chega à zona do jogador
+	# new heads come in from the sides when the centipede reaches the player area
 	var in_zone := false
 	for s in segments:
 		if s.cell.y >= ZONE_TOP:
@@ -372,7 +372,7 @@ func _move_segments(dt: float) -> void:
 				segments.append(s)
 
 
-# ---------------------------------------------------------------- jogador
+# ---------------------------------------------------------------- player
 
 func _move_player(dt: float) -> void:
 	var move := Vector2.ZERO
@@ -447,14 +447,14 @@ func _move_shot(dt: float) -> void:
 	var from: Vector2 = shot
 	shot = from - Vector2(0, travel)
 	var r := Rect2(Vector2(shot.x - 0.5, shot.y), Vector2(1, travel + 4))
-	# segmentos
+	# segments
 	for i in segments.size():
 		var s: Dictionary = segments[i]
 		if seg_rect(s).intersects(r):
 			_kill_segment(i)
 			shot = null
 			return
-	# criaturas
+	# creatures
 	if flea != null and Rect2(flea.pos - Vector2(4, 4), Vector2(8, 8)).intersects(r):
 		flea.hp -= 1
 		shot = null
@@ -480,7 +480,7 @@ func _move_shot(dt: float) -> void:
 		_add_score(1000)
 		creature_killed.emit("escorpiao", p, 1000)
 		return
-	# cogumelos (o primeiro no caminho do tiro, de baixo para cima)
+	# mushrooms (the first in the shot's path, from bottom to top)
 	var c_from := cell_of(from)
 	var c_to := cell_of(shot)
 	for y in range(c_from.y, c_to.y - 1, -1):
@@ -521,11 +521,11 @@ func _add_score(pts: int) -> void:
 		extra_life.emit()
 
 
-# ---------------------------------------------------------------- criaturas
+# ---------------------------------------------------------------- creatures
 
 func _creatures(dt: float) -> void:
 	var w := wave()
-	# pulga: quando há poucos cogumelos na zona do jogador (a partir da vaga 2)
+	# flea: when there are few mushrooms in the player area (from wave 2)
 	if flea == null and w >= 2:
 		var count := 0
 		for y in range(ZONE_TOP, ROWS):
@@ -546,7 +546,7 @@ func _creatures(dt: float) -> void:
 		if flea.pos.y > H + 4:
 			flea = null
 			creature_gone.emit("pulga")
-	# aranha
+	# spider
 	if spider == null:
 		_spider_t -= dt
 		if _spider_t <= 0.0:
@@ -558,7 +558,7 @@ func _creatures(dt: float) -> void:
 		if spider.t <= 0.0:
 			spider.t = randf_range(0.3, 0.9)
 			spider.vel.y = (60.0 + randf() * 50.0) * (1 if randf() < 0.5 else -1)
-			# por vezes pára de avançar e só salta
+			# sometimes stops advancing and only bounces
 			spider.vel.x = signf(spider.vel.x) * (0.0 if randf() < 0.2 else 50.0 + w * 4.0)
 			if is_zero_approx(spider.vel.x):
 				spider.vel.x = 0.0001 * (1 if spider.pos.x < W / 2 else -1)
@@ -578,7 +578,7 @@ func _creatures(dt: float) -> void:
 			spider = null
 			_spider_t = randf_range(3.0, 7.0)
 			creature_gone.emit("aranha")
-	# escorpião (a partir da vaga 3)
+	# scorpion (from wave 3)
 	if scorpion == null and w >= 3:
 		_scorpion_t -= dt
 		if _scorpion_t <= 0.0:
@@ -651,7 +651,7 @@ func _after_death() -> void:
 	turn_started.emit(current)
 
 
-# ---------------------------------------------------------------- CPU da demonstração
+# ---------------------------------------------------------------- demo CPU
 
 func _ai_move(dt: float) -> Vector2:
 	var target_x := player_pos.x

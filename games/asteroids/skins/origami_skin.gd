@@ -1,8 +1,8 @@
 extends AsteroidsSkin
-## Origami (estilo próprio): asteroides de papel amarrotado e facetado, que mudam de sombra
-## ao rodar; a nave é um avião de papel e o disco voador um barquinho de papel.
-## O céu é uma cartolina azul-noite com estrelas recortadas, e tudo se desfaz em confettis.
-## Sons de papel: amarrotar, estalar, folhear e um apito de papel.
+## Origami (original style): crumpled, faceted paper asteroids whose shading changes
+## as they rotate; the ship is a paper plane and the saucer a little paper boat.
+## The sky is a midnight-blue card with cut-out stars, and everything breaks into confetti.
+## Paper sounds: crumpling, snapping, page-flipping and a paper whistle.
 
 const LIGHT := Vector2(-0.6, -0.8)
 const SKY_TOP := Color("1b2440")
@@ -21,7 +21,7 @@ var bg: Node2D
 var time := 0.0
 var shake := 0.0
 var confetti: Array[Dictionary] = []
-var debris: Array[Dictionary] = []     # metades do avião
+var debris: Array[Dictionary] = []     # halves of the plane
 var floaters: Array[Dictionary] = []
 
 
@@ -37,7 +37,7 @@ func _setup() -> void:
 	bg.draw.connect(_draw_background)
 
 
-# ---------------------------------------------------------------- sons
+# ---------------------------------------------------------------- sounds
 
 static func _bell(f: float, dur: float, vol: float) -> PackedFloat32Array:
 	var parts := []
@@ -49,7 +49,7 @@ static func _bell(f: float, dur: float, vol: float) -> PackedFloat32Array:
 	return Synth.mix(parts)
 
 
-## Amarrotar papel: muitos estalidos curtos de ruído com volumes e filtros ao acaso.
+## Crumpling paper: many short noise crackles with random volumes and filters.
 static func _crumple(dur: float, vol: float, seed_value: int, bright := 0.5) -> PackedFloat32Array:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = seed_value
@@ -107,7 +107,7 @@ func rock_color(r: Dictionary) -> Color:
 	return ROCK_COLORS[int(r.tint * ROCK_COLORS.size()) % ROCK_COLORS.size()]
 
 
-# ---------------------------------------------------------------- eventos
+# ---------------------------------------------------------------- events
 
 func _on_match_started() -> void:
 	confetti.clear()
@@ -156,7 +156,7 @@ func _confetti(pos: Vector2, n: int, c: Color, speed: float) -> void:
 		confetti = confetti.slice(confetti.size() - 400)
 
 
-# ---------------------------------------------------------------- animação
+# ---------------------------------------------------------------- animation
 
 func _tick(dt: float) -> void:
 	time += dt
@@ -180,19 +180,19 @@ func _tick(dt: float) -> void:
 	floaters = floaters.filter(func(f: Dictionary) -> bool: return f.life > 0.0)
 
 
-# ---------------------------------------------------------------- desenho
+# ---------------------------------------------------------------- drawing
 
 func _draw_background() -> void:
 	bg.draw_polygon(PackedVector2Array([Vector2.ZERO, Vector2(W, 0), Vector2(W, H), Vector2(0, H)]),
 		PackedColorArray([SKY_TOP, SKY_TOP, SKY_BOTTOM, SKY_BOTTOM]))
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 7
-	# fibras do papel
+	# paper fibres
 	for i in 1800:
 		var p := Vector2(rng.randf() * W, rng.randf() * H)
 		var c := Color(1, 1, 1, rng.randf_range(0.02, 0.06)) if rng.randf() < 0.6 else Color(0, 0, 0, rng.randf_range(0.03, 0.08))
 		bg.draw_line(p, p + Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(2, 7), c, 1.0)
-	# estrelas recortadas
+	# cut-out stars
 	for i in 30:
 		var p := Vector2(rng.randf() * W, rng.randf() * H)
 		var s := rng.randf_range(5.0, 13.0)
@@ -207,7 +207,7 @@ func _draw_background() -> void:
 func _draw() -> void:
 	var g := game
 	draw_texture(bg_vp.get_texture(), Vector2.ZERO)
-	# sombras primeiro (tudo "flutua" um pouco acima da cartolina)
+	# shadows first (everything "floats" a little above the card)
 	for r in g.rocks:
 		for off in wrap_offsets(r.pos, r.r):
 			draw_colored_polygon(shifted(g.rock_points(r, off), Vector2(6, 8) * (0.5 + r.r / 96.0)), SHADOW)
@@ -324,7 +324,7 @@ func _draw_hud() -> void:
 		_draw_plane(Vector2(x0 + i * 26.0, 104), -PI / 2, 0.55, false)
 
 
-## Fita-cola de papel com as pontas rasgadas.
+## Paper tape with torn ends.
 func _tape(center: Vector2, size: Vector2, rot: float) -> void:
 	var pts := PackedVector2Array()
 	var hw := size.x / 2

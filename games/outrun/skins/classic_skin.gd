@@ -1,6 +1,6 @@
 extends OutRunSkin
-## Clássico 1986: céu azul de verão, cores saturadas, cenário em sprites que crescem em direção
-## ao ecrã, bermas às riscas e o HUD amarelo dos arcades de condução.
+## Classic 1986: blue summer sky, saturated colours, sprite scenery growing towards
+## the screen, striped kerbs and the yellow HUD of driving arcades.
 
 const THEME_COLORS := {
 	"costa": {"sky": [Color("1c6fe0"), Color("8fd3ff")], "far": Color("6f9fd8"), "near": Color("2f8f6f"),
@@ -106,7 +106,7 @@ func _draw_background() -> void:
 		var y0 := hy * i / bands
 		draw_rect(Rect2(0, y0, W, hy / bands + 1), (sky[0] as Color).lerp(sky[1], float(i) / (bands - 1)))
 	draw_rect(Rect2(0, hy, W, H - hy), sky[1])
-	# nuvens
+	# clouds
 	for i in 5:
 		var cx := fposmod(i * 300.0 + 80.0 - bg_scroll * 0.4 + time * 6.0, 1500.0) - 110.0
 		var cy := 120.0 + float((i * 53) % 110)
@@ -189,7 +189,7 @@ func _draw_player() -> void:
 	var c := rect.get_center()
 	var flip := cos(game.crash_spin) if game.state == OutRunGame.State.CRASH else 1.0
 	draw_set_transform(c, game.steer * 0.05, Vector2(flip, 1.0))
-	# sombra
+	# shadow
 	draw_rect(Rect2(-rect.size.x / 2 + 6, rect.size.y / 2 - 10, rect.size.x - 12, 14), Color(0, 0, 0, 0.3))
 	draw_texture_rect(t, Rect2(-rect.size / 2, rect.size), false)
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
@@ -199,16 +199,16 @@ func _draw_player() -> void:
 
 func _draw_hud() -> void:
 	var g := game
-	PixelFont.draw(self, I18n.t("TEMPO"), W / 2, 18, 3, YELLOW)
+	PixelFont.draw(self, I18n.t("TIME"), W / 2, 18, 3, YELLOW)
 	var secs := str(ceili(g.time_left))
 	var warn := g.time_left < 10.0 and fmod(time, 0.5) < 0.25
 	PixelFont.draw(self, secs, W / 2 + 3, 48, 9, Color.BLACK)
 	PixelFont.draw(self, secs, W / 2, 45, 9, ORANGE if warn else YELLOW)
-	PixelFont.draw(self, I18n.t("PONTOS"), 120, 18, 3, YELLOW)
+	PixelFont.draw(self, I18n.t("SCORE"), 120, 18, 3, YELLOW)
 	PixelFont.draw(self, "%d" % g.score, 120, 46, 4, Color.WHITE)
-	PixelFont.draw(self, I18n.t("ETAPA %d") % (g.stage + 1), 1120, 18, 3, YELLOW)
+	PixelFont.draw(self, I18n.t("STAGE %d") % (g.stage + 1), 1120, 18, 3, YELLOW)
 	draw_route_map(Vector2(1040, 92), Vector2(40, 26), Color(1, 1, 1, 0.55), Color(1, 1, 1, 0.8), YELLOW, 2.0, 4.0)
-	# velocímetro e conta-rotações
+	# speedometer and rev counter
 	var kmh := g.kmh()
 	PixelFont.draw(self, "%3d" % kmh, 110, 640, 6, Color.WHITE)
 	PixelFont.draw(self, "KM/H", 110, 690, 2, YELLOW)
@@ -219,10 +219,10 @@ func _draw_hud() -> void:
 		var c := Color("51cf66") if i < 10 else (YELLOW if i < 13 else Color("ff3b3b"))
 		draw_rect(Rect2(212 + i * 12, 700 - hgt, 9, hgt), c if i < lit else Color(0, 0, 0, 0.35))
 	if g.manual_gears:
-		PixelFont.draw(self, I18n.t("ALTA") if g.high_gear else I18n.t("BAIXA"), 310, 600, 3, YELLOW)
+		PixelFont.draw(self, I18n.t("HI") if g.high_gear else I18n.t("LO"), 310, 600, 3, YELLOW)
 	for p in popups:
 		var a := clampf(float(p.life), 0.0, 1.0)
-		PixelFont.draw(self, I18n.t("TEMPO EXTRA ") + str(p.text), W / 2, 180, 5, Color(YELLOW, a))
+		PixelFont.draw(self, I18n.t("EXTRA TIME ") + str(p.text), W / 2, 180, 5, Color(YELLOW, a))
 
 
 func ui_palette() -> Dictionary:

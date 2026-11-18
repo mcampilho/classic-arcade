@@ -1,14 +1,14 @@
 class_name AsteroidsGame
 extends Node2D
-## Lógica do Asteroids (Atari, 1979), independente do visual.
+## Asteroids (Atari, 1979) logic, independent of the visuals.
 ##
-## Regras do original:
-##  - a nave roda, acelera com inércia e "flutua"; tudo dá a volta ao ecrã
-##  - até 4 tiros no ecrã; hiperespaço (com risco de explodir ao reaparecer)
-##  - asteroides grandes (20 pts) partem-se em 2 médios (50), que se partem em 2 pequenos (100)
-##  - disco voador grande (200 pts, dispara ao acaso) e pequeno (1000 pts, aponta à nave)
-##  - a "batida" de 2 notas acelera ao longo da vaga; vida extra a cada 10 000 pontos
-##  - cada vaga começa com mais asteroides (4, 6, 8... até 11)
+## Rules of the original:
+##  - the ship rotates, thrusts with inertia and "floats"; everything wraps around the screen
+##  - up to 4 shots on screen; hyperspace (with a risk of exploding on reappearing)
+##  - large asteroids (20 pts) split into 2 medium ones (50), which split into 2 small ones (100)
+##  - large saucer (200 pts, fires at random) and small one (1000 pts, aims at the ship)
+##  - the 2-note "beat" speeds up during the wave; extra life every 10,000 points
+##  - each wave starts with more asteroids (4, 6, 8... up to 11)
 
 signal match_started
 signal turn_started(player: int)
@@ -43,14 +43,14 @@ const BULLET_SPEED := 760.0
 const BULLET_LIFE := 0.85
 const MAX_BULLETS := 4
 const AUTOFIRE := 0.22
-const SAUCER_RADIUS := [20.0, 11.0]          # grande, pequeno
+const SAUCER_RADIUS := [20.0, 11.0]          # large, small
 const SAUCER_POINTS := [200, 1000]
 const SAUCER_SPEED := 150.0
 const SAUCER_BULLET_SPEED := 420.0
 const SAUCER_BULLET_LIFE := 1.1
 const EXTRA_LIFE_EVERY := 10000
 const SAFE_RADIUS := 150.0
-const HYPER_BUTTON := Vector2(1180, 600)      # botão tátil de hiperespaço
+const HYPER_BUTTON := Vector2(1180, 600)      # hyperspace touch button
 const HYPER_BUTTON_R := 58.0
 
 var mode := Mode.DEMO
@@ -60,7 +60,7 @@ var paused := false
 var skin: AsteroidsSkin
 var best := 0
 
-var players: Array[Dictionary] = []          # score, lives, wave, next_extra, rocks (guardados)
+var players: Array[Dictionary] = []          # score, lives, wave, next_extra, rocks (saved)
 var current := 0
 
 var rocks: Array[Dictionary] = []            # pos, vel, size, r, angle, spin, shape, tint
@@ -76,7 +76,7 @@ var ship_timer := 0.0
 var thrusting := false
 var over_timer := 0.0
 
-# controlos táteis (lidos também pelo desenho do joystick)
+# touch controls (also read when drawing the joystick)
 var touch_stick_origin: Variant = null
 var touch_stick_vec := Vector2.ZERO
 var touch_firing := false
@@ -140,7 +140,7 @@ static func _joy_axis(axis: JoyAxis, value: float) -> InputEventJoypadMotion:
 	return e
 
 
-# ---------------------------------------------------------------- partida
+# ---------------------------------------------------------------- match
 
 func start(p_mode: Mode, lives := 3) -> void:
 	mode = p_mode
@@ -182,7 +182,7 @@ func _new_wave() -> void:
 	var n := mini(4 + (player().wave - 1) * 2, 11)
 	for i in n:
 		var pos := Vector2.ZERO
-		# nasce junto às margens, longe do centro
+		# spawns near the edges, away from the centre
 		while true:
 			pos = Vector2(randf() * SCREEN.x, randf() * SCREEN.y)
 			if pos.distance_to(SCREEN / 2) > 260.0:
@@ -218,9 +218,9 @@ func _respawn() -> void:
 	thrusting = false
 
 
-# ---------------------------------------------------------------- consultas (para os skins)
+# ---------------------------------------------------------------- queries (for the skins)
 
-## Diferença mais curta entre dois pontos num ecrã que dá a volta.
+## Shortest difference between two points on a wrapping screen.
 static func wrap_delta(a: Vector2, b: Vector2) -> Vector2:
 	var d := a - b
 	d.x = wrapf(d.x, -SCREEN.x / 2, SCREEN.x / 2)
@@ -262,7 +262,7 @@ func is_ai() -> bool:
 	return mode == Mode.DEMO
 
 
-# ---------------------------------------------------------------- ciclo
+# ---------------------------------------------------------------- loop
 
 func _process(delta: float) -> void:
 	if paused:
@@ -292,7 +292,7 @@ func _step(dt: float) -> void:
 	_check_wave(dt)
 
 
-# ---------------------------------------------------------------- nave
+# ---------------------------------------------------------------- ship
 
 func _update_ship(dt: float) -> void:
 	match ship_state:
@@ -308,7 +308,7 @@ func _update_ship(dt: float) -> void:
 			if ship_timer <= 0.0:
 				ship_state = Ship.ALIVE
 				ship_vel = Vector2.ZERO
-				# Como no original, o regresso do hiperespaço nem sempre corre bem.
+				# As in the original, coming back from hyperspace does not always go well.
 				if randf() < 0.125 and not rocks.is_empty():
 					_kill_ship()
 		Ship.ALIVE:
@@ -435,7 +435,7 @@ func _after_death() -> void:
 	turn_started.emit(current)
 
 
-# ---------------------------------------------------------------- entrada
+# ---------------------------------------------------------------- input
 
 func _unhandled_input(event: InputEvent) -> void:
 	if paused or is_ai():
@@ -462,7 +462,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif event.button_index == MOUSE_BUTTON_MIDDLE and event.pressed:
 			_hyper_request = true
 	elif event is InputEventScreenTouch:
-		# Metade esquerda: joystick virtual (rodar + acelerar). Metade direita: disparar / hiperespaço.
+		# Left half: virtual joystick (rotate + thrust). Right half: fire / hyperspace.
 		if event.pressed:
 			if event.position.x < SCREEN.x / 2:
 				_stick_index = event.index
@@ -496,7 +496,7 @@ func clear_input() -> void:
 	_mouse_thrust = false
 
 
-# ---------------------------------------------------------------- mundo
+# ---------------------------------------------------------------- world
 
 func _move_rocks(dt: float) -> void:
 	for r in rocks:
@@ -552,7 +552,7 @@ func _spawn_saucer() -> void:
 func _saucer_fire() -> void:
 	var a := randf() * TAU
 	if saucer.small and ship_state == Ship.ALIVE:
-		# O disco pequeno aponta; fica mais certeiro com a pontuação.
+		# The small saucer aims; it gets more accurate as the score grows.
 		var err := lerpf(0.35, 0.06, clampf(player().score / 40000.0, 0.0, 1.0))
 		a = (-wrap_delta(saucer.pos, ship_pos)).angle() + randf_range(-err, err)
 	var pos: Vector2 = saucer.pos
@@ -560,10 +560,10 @@ func _saucer_fire() -> void:
 	saucer_fired.emit(pos)
 
 
-# ---------------------------------------------------------------- colisões
+# ---------------------------------------------------------------- collisions
 
 func _collisions() -> void:
-	# tiros do jogador
+	# player shots
 	for b in bullets.duplicate():
 		var hit := false
 		for r in rocks.duplicate():
@@ -576,7 +576,7 @@ func _collisions() -> void:
 			hit = true
 		if hit:
 			bullets.erase(b)
-	# tiros do disco voador
+	# saucer shots
 	for b in saucer_bullets.duplicate():
 		var hit := false
 		for r in rocks.duplicate():
@@ -589,7 +589,7 @@ func _collisions() -> void:
 			hit = true
 		if hit:
 			saucer_bullets.erase(b)
-	# nave contra asteroides e disco
+	# ship against asteroids and saucer
 	if ship_state == Ship.ALIVE:
 		for r in rocks.duplicate():
 			if wrap_delta(ship_pos, r.pos).length() < r.r + SHIP_RADIUS * 0.75:
@@ -599,7 +599,7 @@ func _collisions() -> void:
 	if ship_state == Ship.ALIVE and saucer != null and wrap_delta(ship_pos, saucer.pos).length() < saucer_radius() + SHIP_RADIUS:
 		_destroy_saucer(true)
 		_kill_ship()
-	# disco contra asteroides
+	# saucer against asteroids
 	if saucer != null:
 		for r in rocks.duplicate():
 			if wrap_delta(saucer.pos, r.pos).length() < r.r + saucer_radius():
@@ -643,7 +643,7 @@ func _add_score(pts: int) -> void:
 		extra_life.emit()
 
 
-# ---------------------------------------------------------------- batida e vagas
+# ---------------------------------------------------------------- beat and waves
 
 func _heartbeat(dt: float) -> void:
 	if rocks.is_empty() or ship_state == Ship.DEAD:
@@ -670,7 +670,7 @@ func _check_wave(dt: float) -> void:
 		_new_wave()
 
 
-# ---------------------------------------------------------------- CPU da demonstração
+# ---------------------------------------------------------------- demo CPU
 
 func _ai() -> Dictionary:
 	var out := {"turn": 0.0, "thrust": false, "fire": false, "hyper": false}
@@ -692,7 +692,7 @@ func _ai() -> Dictionary:
 	out.turn = clampf(diff * 5.0, -1.0, 1.0)
 	out.fire = absf(diff) < 0.12 and rel.length() < 620.0 and _fire_cd <= 0.0
 	out.thrust = best_d > 330.0 and absf(diff) < 0.4 and ship_vel.length() < 140.0
-	_ai_hyper_cd -= 1.0 / 240.0   # chamado a cada sub-passo (240 por segundo)
+	_ai_hyper_cd -= 1.0 / 240.0   # called on every sub-step (240 per second)
 	if best_d < 14.0 and _ai_hyper_cd <= 0.0:
 		out.hyper = true
 		_ai_hyper_cd = 3.0

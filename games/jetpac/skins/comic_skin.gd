@@ -1,7 +1,7 @@
 extends JetpacSkin
-## Banda Desenhada: uma revista de ficção científica dos anos 50 — céu em degradê com retícula de
-## pontos, planeta com anéis, rochas com traço grosso, tudo contornado a preto, onomatopeias
-## ("ZAP!", "BUM!") e legendas em caixas amarelas.
+## Comic Book: a 1950s science-fiction magazine — gradient sky with a
+## halftone dot screen, ringed planet, thick-lined rocks, everything outlined in black, sound words
+## ("ZAP!", "BOOM!") and captions in yellow boxes.
 
 const INK := Color("16121e")
 const SKY_TOP := Color("2b1b5e")
@@ -15,7 +15,7 @@ const WORDS := ["ZAP!", "POW!", "BUM!", "ZOK!", "PAF!"]
 
 var font: Font
 var dots: Texture2D
-var bubbles: Array[Dictionary] = []    # pos (unidades), text, life, color
+var bubbles: Array[Dictionary] = []    # pos (units), text, life, color
 
 
 func _setup() -> void:
@@ -25,7 +25,7 @@ func _setup() -> void:
 	build_common({"W": Color("f4f1ea"), "V": Color("2f8fd8"), "P": RED, "G": INK},
 		{"K": INK, "P": Color("3fb07a"), "W": Color("c8f0d8")},
 		[Color("2f8fd8"), RED, Color("3fb07a"), CAPTION])
-	# retícula de pontos (Ben-Day)
+	# halftone dots (Ben-Day)
 	var img := Image.create(12, 12, false, Image.FORMAT_RGBA8)
 	img.fill(Color(0, 0, 0, 0))
 	for y in 12:
@@ -108,7 +108,7 @@ func _draw_back() -> void:
 	for i in bands:
 		draw_rect(Rect2(0, 720.0 * i / bands, 1280, 720.0 / bands + 1), SKY_TOP.lerp(SKY_BOTTOM, float(i) / (bands - 1)))
 	draw_texture_rect(dots, Rect2(0, 0, 1280, 720), true, Color(1, 0.85, 0.6, 0.12))
-	# planeta com anéis
+	# ringed planet
 	var c := Vector2(980, 230)
 	draw_circle(c, 112, INK)
 	draw_circle(c, 106, Color("f2b630"))
@@ -160,7 +160,7 @@ func _on_alien_killed(pos: Vector2, kind: String, points: int) -> void:
 
 func _on_player_died(pos: Vector2) -> void:
 	super(pos)
-	bubbles.append({"pos": pos, "text": I18n.t("KABUM!"), "life": 1.2, "color": RED})
+	bubbles.append({"pos": pos, "text": I18n.t("KABOOM!"), "life": 1.2, "color": RED})
 
 
 func _draw_booms() -> void:
@@ -187,9 +187,9 @@ func caption(r: Rect2, text: String, size: int) -> void:
 
 func _draw_hud() -> void:
 	var g := game
-	caption(Rect2(16, 10, 230, 40), I18n.t("PONTOS  %06d") % g.score, 22)
-	caption(Rect2(525, 10, 230, 40), I18n.t("RECORDE  %06d") % maxi(g.best, g.score), 22)
-	caption(Rect2(1034, 10, 230, 40), I18n.t("PLANETA %d") % g.level, 22)
+	caption(Rect2(16, 10, 230, 40), I18n.t("SCORE  %06d") % g.score, 22)
+	caption(Rect2(525, 10, 230, 40), I18n.t("HI-SCORE  %06d") % maxi(g.best, g.score), 22)
+	caption(Rect2(1034, 10, 230, 40), I18n.t("PLANET %d") % g.level, 22)
 	for i in mini(g.lives - 1, 6):
 		draw_texture_rect(tex.man_stand, Rect2(1034 + i * 28, 58, 24, 36), false)
 	for p in popups:

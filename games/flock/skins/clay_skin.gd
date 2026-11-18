@@ -1,7 +1,7 @@
 extends FlockSkin
-## Plasticina: tudo parece moldado à mão — terreno de barro cor de terracota com relva de
-## plasticina verde e arestas macias, nuvens e sol de massa, ovelhas fofas feitas de bolinhas
-## brancas com cabeça castanha e olhos redondos, e botões de plasticina no painel.
+## Plasticine: everything looks hand-moulded — terracotta clay terrain with green
+## plasticine grass and soft edges, dough clouds and sun, fluffy sheep made of little white
+## balls with a brown head and round eyes, and plasticine buttons on the panel.
 
 const SKY_TOP := Color("8ec8e8")
 const SKY_BOT := Color("f4e8c8")
@@ -28,7 +28,7 @@ func _setup() -> void:
 
 func _build_sfx() -> void:
 	sfx.start = Synth.concat([Synth.render(392.0, 0.12, {"wave": "triangle", "volume": 0.2}), Synth.render(523.0, 0.12, {"wave": "triangle", "volume": 0.2}), Synth.render(659.0, 0.25, {"wave": "triangle", "volume": 0.2})])
-	# balido: onda triangular com vibrato
+	# bleat: triangle wave with vibrato
 	var b := PackedFloat32Array()
 	var n := int(0.35 * Synth.RATE)
 	b.resize(n)

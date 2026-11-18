@@ -1,7 +1,7 @@
 extends FlockSkin
-## Clássico 1991: o aspeto dos puzzles de computador de 16 bits — fundo negro, terra rosada e
-## granulada com relva por cima, placas de aço rebitadas, ovelhas de poucos píxeis, um alçapão de
-## madeira de onde caem e um celeiro vermelho com tochas. Painel azul com números verdes.
+## Classic 1991: the look of 16-bit computer puzzles — black background, pinkish grainy
+## earth with grass on top, riveted steel plates, sheep of a few pixels, a wooden trapdoor
+## they drop out of and a red barn with torches. Blue panel with green numbers.
 
 const EARTH_COLS := [Color("a0522d"), Color("b8653a"), Color("8a4628"), Color("c87a4a")]
 const GRASS := [Color("3aa83a"), Color("2a8a2a")]
@@ -65,7 +65,7 @@ func _draw_entrance(p: Vector2, open: float) -> void:
 	for k in 4:
 		draw_line(Vector2(r.position.x, top + 6 + k * 6), Vector2(r.end.x, top + 6 + k * 6), Color("4a2e18"), 2.0)
 	draw_rect(r, Color("a07040"), false, 3.0)
-	# portas do alçapão a abrir para baixo
+	# trapdoor doors opening downwards
 	var ang := open * PI * 0.45
 	var hinge_l := Vector2(r.position.x + 8, r.end.y)
 	var hinge_r := Vector2(r.end.x - 8, r.end.y)

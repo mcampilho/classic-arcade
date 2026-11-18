@@ -1,29 +1,23 @@
 class_name SchoolSkin
-extends Node2D
-## Base dos estilos dos Sarilhos na Escola: a escola inteira (3600 x 600) é pintada uma vez numa
-## textura e a câmara mostra a parte onde está o Zé; por cima, quadros escritos à mão, escudos,
-## cofre, personagens (um "esqueleto" simples animado por poses), fisgadas, balões de fala e o
-## painel com o horário, as linhas e o segredo do cofre. Os estilos escolhem o aspeto.
+extends SkinBase
+## Base of the School Trouble styles: the whole school (3600 x 600) is painted once into a
+## texture and the camera shows the part where Zé is; on top, hand-written boards, shields,
+## safe, characters (a simple "skeleton" animated by poses), catapult shots, speech balloons and the
+## panel with the timetable, the lines and the safe's code. The styles choose the look.
 
 const VIEW_H := 600.0
 const LIMB := 13.0
 
 var game: SchoolGame
-var sfx := {}
 var time := 0.0
 var vp: SubViewport
 var _paint: Node2D
-var _players: Array[AudioStreamPlayer] = []
-var _next_player := 0
 var _flash := 0.0
 
 
 func attach(g: SchoolGame) -> void:
 	game = g
-	for i in 8:
-		var p := AudioStreamPlayer.new()
-		add_child(p)
-		_players.append(p)
+	add_voices(8)
 	vp = SubViewport.new()
 	vp.size = Vector2i(int(SchoolGame.WORLD_W), int(VIEW_H))
 	vp.disable_3d = true
@@ -46,24 +40,13 @@ func attach(g: SchoolGame) -> void:
 	g.punched.connect(func() -> void: play("punch"))
 	g.jumped.connect(func() -> void: play("jump", 1.0, -6.0))
 	g.expelled.connect(func() -> void: play("expelled"))
-	var cached: Variant = Synth.cache_get(get_script().resource_path)
-	if cached != null:
-		sfx = cached
-	else:
-		_build_sfx()
-		Synth.cache_set(get_script().resource_path, sfx)
+	load_sfx()
 	_setup()
 
 
-func play(id: String, pitch := 1.0, volume_db := 0.0) -> void:
-	if game == null or game.mode == SchoolGame.Mode.DEMO or not sfx.has(id):
-		return
-	var p := _players[_next_player]
-	_next_player = (_next_player + 1) % _players.size()
-	p.stream = sfx[id]
-	p.pitch_scale = pitch
-	p.volume_db = volume_db
-	p.play()
+## The menu demo is silent.
+func _is_silent() -> bool:
+	return game == null or game.mode == SchoolGame.Mode.DEMO
 
 
 func _process(delta: float) -> void:
@@ -76,7 +59,7 @@ func _process(delta: float) -> void:
 	queue_redraw()
 
 
-## Posição no ecrã de um ponto do mundo.
+## On-screen position of a world point.
 func scr(p: Vector2) -> Vector2:
 	return Vector2(p.x - game.cam_x, p.y)
 
@@ -85,9 +68,9 @@ func floor_top(f: int) -> float:
 	return float(SchoolGame.FLOOR_Y[f]) - SchoolGame.ROOM_H
 
 
-# ---------------------------------------------------------------- figura
+# ---------------------------------------------------------------- figure
 
-## Pontos do corpo de uma personagem (no ecrã). Ângulos a partir da vertical, positivos para a frente.
+## Body points of a character (on screen). Angles from vertical, positive forwards.
 func rig(c: Dictionary) -> Dictionary:
 	var s := 1.22 if c.role == "teacher" else 1.0
 	var f := float(c.facing)
@@ -109,7 +92,7 @@ func rig(c: Dictionary) -> Dictionary:
 		p.fa_b = 0.5
 		p.hip -= absf(w) * 1.5
 	elif c.moving:
-		# escadas: um pé acima do outro
+		# stairs: one foot above the other
 		var w := sin(float(c.anim) * 9.0)
 		p.th_f = 0.6 + 0.3 * w
 		p.sh_f = 0.6 + 0.3 * w
@@ -165,7 +148,7 @@ func rig(c: Dictionary) -> Dictionary:
 	j.hip = hip
 	j.neck = neck
 	j.head = neck + dir.call(PI + p.lean) * 9.5 * s
-	# deitado (caído): roda tudo 90 graus para trás, à volta dos pés
+	# lying down (knocked over): rotates everything 90 degrees backwards around the feet
 	var ang := 0.0
 	if game.is_down(c):
 		ang = -PI / 2 * f
@@ -179,7 +162,7 @@ func rig(c: Dictionary) -> Dictionary:
 	return out
 
 
-# ---------------------------------------------------------------- desenho
+# ---------------------------------------------------------------- drawing
 
 func _draw() -> void:
 	if game == null or game.chars.is_empty():
@@ -198,7 +181,7 @@ func _draw() -> void:
 	var sp := scr(Vector2(SchoolGame.SAFE_X, SchoolGame.FLOOR_Y[0]))
 	if sp.x > -80 and sp.x < 1360:
 		_draw_safe(sp, g.safe_open)
-	# personagens: sentados/caídos atrás, depois os outros
+	# characters: seated/knocked-down ones behind, then the others
 	var order: Array[Dictionary] = []
 	for c in g.chars:
 		var x := float(c.x) - g.cam_x
@@ -231,7 +214,7 @@ func _z(c: Dictionary) -> float:
 	return z
 
 
-## Textos do painel.
+## Panel texts.
 func period_text() -> String:
 	var p := game.current_period()
 	match String(p.kind):
@@ -239,8 +222,8 @@ func period_text() -> String:
 			var t: Dictionary = SchoolGame.TEACHERS[int(p.teacher)]
 			return "%s  -  %s" % [I18n.t(String(SchoolGame.ROOMS[p.room].name)).to_upper(), I18n.t(String(t.name)).to_upper()]
 		"almoco":
-			return I18n.t("ALMOÇO NO REFEITÓRIO")
-	return I18n.t("RECREIO")
+			return I18n.t("LUNCH IN THE DINING HALL")
+	return I18n.t("PLAYTIME")
 
 
 func period_left() -> float:
@@ -254,7 +237,7 @@ func code_text() -> String:
 	return s.strip_edges()
 
 
-## Divide um texto em linhas de até n caracteres.
+## Splits a text into lines of up to n characters.
 static func wrap_text(text: String, n: int) -> PackedStringArray:
 	var out := PackedStringArray()
 	var line := ""
@@ -269,13 +252,9 @@ static func wrap_text(text: String, n: int) -> PackedStringArray:
 	return out
 
 
-# ---------------------------------------------------------------- para os estilos
+# ---------------------------------------------------------------- for the styles
 
 func _setup() -> void:
-	pass
-
-
-func _build_sfx() -> void:
 	pass
 
 
@@ -287,7 +266,7 @@ func _draw_back() -> void:
 	pass
 
 
-## Pinta a escola toda (coordenadas do mundo) — só uma vez.
+## Paints the whole school (world coordinates) — only once.
 func _paint_world(_ci: CanvasItem) -> void:
 	pass
 
@@ -323,6 +302,3 @@ func _draw_front() -> void:
 func _draw_hud() -> void:
 	pass
 
-
-func ui_palette() -> Dictionary:
-	return UI.LAUNCHER_PALETTE

@@ -1,6 +1,6 @@
 extends FireflySkin
-## Arcade 1980: ecrã negro, sebes do jardim com contorno verde, pontos de luz em píxeis,
-## flores a piscar, personagens em pixel art e sons de chip (grilos a cantar ao fundo).
+## Arcade 1980: black screen, garden hedges with a green outline, pixel light dots,
+## blinking flowers, pixel-art characters and chip sounds (crickets chirping in the background).
 
 const HEDGE := Color("1f5f2e")
 const HEDGE_EDGE := Color("69db7c")
@@ -26,7 +26,7 @@ func _setup() -> void:
 
 
 func _build_sfx() -> void:
-	# grilos: trios de chilreios agudos
+	# crickets: trios of high chirps
 	var cricket := []
 	for i in 3:
 		cricket.append(Synth.render(4200.0, 0.025, {"wave": "sine", "volume": 0.05}))
@@ -69,7 +69,7 @@ func _draw() -> void:
 	var g := game
 	draw_rect(Rect2(0, 0, 1280, 720), Color.BLACK)
 	var flashing := g.state == FireflyGame.State.CLEARED and fmod(g.timer, 0.5) < 0.25
-	# sebes
+	# hedges
 	for y in FireflyGame.H:
 		for x in FireflyGame.W:
 			var t := Vector2i(x, y)
@@ -78,7 +78,7 @@ func _draw() -> void:
 	for e in wall_edges:
 		draw_line(e[0], e[1], HEDGE_EDGE, 2.0)
 	draw_rect(Rect2(tile_rect(FireflyGame.DOOR).position + Vector2(0, T / 2 - 2), Vector2(T, 4)), DOOR_C)
-	# pontos e flores
+	# dots and flowers
 	for y in FireflyGame.H:
 		for x in FireflyGame.W:
 			var p := pellet_at(x, y)
@@ -89,7 +89,7 @@ func _draw() -> void:
 	if g.bonus != null:
 		var bt: Texture2D = tex["bonus%d" % g.bonus.kind]
 		draw_texture(bt, px(Vector2(FireflyGame.BONUS_TILE)) - bt.get_size() / 2)
-	# morcegos
+	# bats
 	var fr := int(time * 8.0) % 2
 	for b in g.bats:
 		if not bat_visible(b):
@@ -105,7 +105,7 @@ func _draw() -> void:
 		else:
 			t = tex["bat%d%d" % [b.id, fr]]
 		draw_texture(t, c - t.get_size() / 2)
-	# pirilampo
+	# firefly
 	if player_visible():
 		_draw_firefly()
 	for p in popups:
@@ -117,7 +117,7 @@ func _draw_firefly() -> void:
 	var g := game
 	var c := px(g.player_pos)
 	if g.state == FireflyGame.State.DYING:
-		# a luz vai-se apagando
+		# the light fades out
 		var k := clampf(g.timer / 2.0, 0.0, 1.0)
 		draw_circle(c, 13.0 * k, Color(DOT, k))
 		for i in 8:
@@ -136,15 +136,15 @@ func _draw_panels() -> void:
 	var g := game
 	var lx := 117.0
 	var rx := 1162.0
-	PixelFont.draw(self, I18n.t("PONTOS<1>"), lx, 90, 3, Color(LABEL_C, 1.0 if (g.current == 0 or g.players.size() == 1) else 0.4))
+	PixelFont.draw(self, I18n.t("SCORE<1>"), lx, 90, 3, Color(LABEL_C, 1.0 if (g.current == 0 or g.players.size() == 1) else 0.4))
 	PixelFont.draw(self, "%06d" % g.players[0].score, lx, 128, 3, TEXT_C)
-	PixelFont.draw(self, I18n.t("RECORDE"), lx, 200, 3, LABEL_C)
+	PixelFont.draw(self, I18n.t("HI-SCORE"), lx, 200, 3, LABEL_C)
 	PixelFont.draw(self, "%06d" % maxi(g.best, g.player().score), lx, 238, 3, TEXT_C)
 	if g.players.size() > 1:
-		PixelFont.draw(self, I18n.t("PONTOS<2>"), rx, 90, 3, Color(LABEL_C, 1.0 if g.current == 1 else 0.4))
+		PixelFont.draw(self, I18n.t("SCORE<2>"), rx, 90, 3, Color(LABEL_C, 1.0 if g.current == 1 else 0.4))
 		PixelFont.draw(self, "%06d" % g.players[1].score, rx, 128, 3, TEXT_C)
-	PixelFont.draw(self, I18n.t("NIVEL %d") % g.level(), rx, 200, 3, LABEL_C)
-	# vidas (pirilampos de reserva) e bónus dos níveis já jogados
+	PixelFont.draw(self, I18n.t("LEVEL %d") % g.level(), rx, 200, 3, LABEL_C)
+	# lives (spare fireflies) and the bonuses of the levels already played
 	for i in mini(maxi(g.player().lives - 1, 0), 5):
 		draw_texture(tex.ff0, Vector2(lx - 90 + i * 40, 620))
 	var n := mini(g.level(), FireflySprites.BONUS.size())

@@ -1,17 +1,17 @@
 class_name FireflyGame
 extends Node2D
-## Lógica do Pirilampo: um jogo original de perseguição em labirinto, ao estilo dos arcades de 1980.
-## Um pirilampo recolhe pontos de luz num jardim-labirinto, perseguido por 4 morcegos.
-## As flores de luz fazem-no brilhar: os morcegos ficam encandeados, fogem, e podem ser apanhados.
+## Firefly logic: an original maze-chase game in the style of 1980 arcades.
+## A firefly collects light dots in a garden maze, chased by 4 bats.
+## Light flowers make it shine: the bats are dazzled, flee, and can be caught.
 ##
-## Regras:
-##  - pontos de luz 10, flores 50; morcegos encandeados 200, 400, 800, 1600 (em sequência)
-##  - cada morcego tem a sua maneira de caçar: o Caçador vai direito a ti, o Emboscador
-##    tenta pôr-se à tua frente, o Cercador fecha-te pelo lado oposto ao Caçador e o Errante
-##    aproxima-se mas foge quando fica perto
-##  - os morcegos alternam entre "dispersar" (cada um para o seu canto) e "caçar"
-##  - túneis nas laterais (os morcegos abrandam lá dentro); bónus do jardim 2x por nível
-##  - vida extra aos 10 000 pontos
+## Rules:
+##  - light dots 10, flowers 50; dazzled bats 200, 400, 800, 1600 (in sequence)
+##  - each bat hunts its own way: the Hunter heads straight for you, the Ambusher
+##    tries to get ahead of you, the Flanker closes in from the side opposite the Hunter and the Wanderer
+##    comes closer but flees when it gets near
+##  - the bats alternate between "scatter" (each to its corner) and "hunt"
+##  - tunnels at the sides (bats slow down inside); garden bonus twice per level
+##  - extra life at 10,000 points
 
 signal match_started
 signal turn_started(player: int)
@@ -56,7 +56,7 @@ const MAZE := [
 const W := 27
 const H := 21
 const TILE := 30.0
-const ORIGIN := Vector2(235, 75)          # canto do labirinto no ecrã 1280x720
+const ORIGIN := Vector2(235, 75)          # maze corner on the 1280x720 screen
 const TUNNEL_ROW := 9
 const DOOR := Vector2i(13, 8)
 const CAVE_EXIT := Vector2i(13, 7)
@@ -64,11 +64,11 @@ const CAVE_CENTER := Vector2i(13, 10)
 const START := Vector2i(13, 15)
 const BONUS_TILE := Vector2i(13, 15)
 const DIRS := [Vector2i.UP, Vector2i.LEFT, Vector2i.DOWN, Vector2i.RIGHT]
-const BAT_NAMES := ["Caçador", "Emboscador", "Cercador", "Errante"]
+const BAT_NAMES := ["Hunter", "Ambusher", "Flanker", "Wanderer"]
 const BAT_START := [Vector2i(13, 7), Vector2i(13, 10), Vector2i(12, 10), Vector2i(14, 10)]
 const BAT_CORNER := [Vector2i(25, -2), Vector2i(1, -2), Vector2i(26, 22), Vector2i(0, 22)]
 const BAT_RELEASE := [0.0, 2.0, 5.0, 8.0]
-const SCHEDULE := [7.0, 20.0, 7.0, 20.0, 5.0, 20.0, 5.0]      # dispersar / caçar alternados; depois sempre caçar
+const SCHEDULE := [7.0, 20.0, 7.0, 20.0, 5.0, 20.0, 5.0]      # alternating scatter / hunt; then hunt forever
 const BONUS_POINTS := [100, 300, 500, 700, 1000, 2000, 3000, 5000]
 const EXTRA_LIFE_AT := 10000
 
@@ -79,9 +79,9 @@ var paused := false
 var skin: FireflySkin
 var best := 0
 
-var players: Array[Dictionary] = []       # score, lives, level, extra, pellets (guardados)
+var players: Array[Dictionary] = []       # score, lives, level, extra, pellets (saved)
 var current := 0
-var pellets := PackedByteArray()          # 0 nada, 1 ponto, 2 flor
+var pellets := PackedByteArray()          # 0 nothing, 1 dot, 2 flower
 var pellets_total := 0
 var pellets_eaten := 0
 
@@ -144,7 +144,7 @@ static func _joy_axis(axis: JoyAxis, value: float) -> InputEventJoypadMotion:
 	return e
 
 
-# ---------------------------------------------------------------- labirinto
+# ---------------------------------------------------------------- maze
 
 static func cell(t: Vector2i) -> String:
 	if t.y < 0 or t.y >= H:
@@ -158,7 +158,7 @@ static func is_wall(t: Vector2i) -> bool:
 	return cell(t) == "#"
 
 
-## O jogador só anda nos corredores; os morcegos também podem usar a porta e a gruta.
+## The player only moves in the corridors; the bats can also use the door and the cave.
 static func passable(t: Vector2i, bat_door := false) -> bool:
 	var c := cell(t)
 	if c == "#":
@@ -194,7 +194,7 @@ func _full_pellets() -> PackedByteArray:
 	return p
 
 
-# ---------------------------------------------------------------- partida
+# ---------------------------------------------------------------- match
 
 func start(p_mode: Mode, lives := 3) -> void:
 	mode = p_mode
@@ -251,7 +251,7 @@ func _reset_turn() -> void:
 	timer = 2.0
 
 
-# ---------------------------------------------------------------- velocidades
+# ---------------------------------------------------------------- speeds
 
 func player_speed() -> float:
 	var base := minf(6.0 + (level() - 1) * 0.25, 7.2)
@@ -269,7 +269,7 @@ func bat_speed(b: Dictionary) -> float:
 	if b.fright:
 		return 3.2
 	var base := minf(5.4 + (level() - 1) * 0.3, 6.9)
-	# o Caçador acelera quando restam poucos pontos
+	# the Hunter speeds up when few dots are left
 	if b.id == 0 and pellets_total - pellets_eaten < 30:
 		base += 0.5
 	return base
@@ -279,7 +279,7 @@ func fright_duration() -> float:
 	return maxf(1.2, 6.5 - (level() - 1) * 0.8)
 
 
-# ---------------------------------------------------------------- ciclo
+# ---------------------------------------------------------------- loop
 
 func _process(delta: float) -> void:
 	if paused:
@@ -334,7 +334,7 @@ func _update_modes(dt: float) -> void:
 			fright_time = 0.0
 			for b in bats:
 				b.fright = false
-		return   # o relógio de dispersar/caçar pára durante o encandeamento
+		return   # the scatter/hunt clock stops while the bats are dazzled
 	if mode_index < SCHEDULE.size():
 		mode_timer -= dt
 		if mode_timer <= 0.0:
@@ -343,10 +343,10 @@ func _update_modes(dt: float) -> void:
 			mode_timer = SCHEDULE[mode_index] if mode_index < SCHEDULE.size() else INF
 			for b in bats:
 				if b.state == Bat.ACTIVE:
-					_reverse(b)        # mudança de modo: todos dão meia-volta
+					_reverse(b)        # mode change: they all turn around
 
 
-# ---------------------------------------------------------------- jogador
+# ---------------------------------------------------------------- player
 
 func _read_input() -> void:
 	if is_ai():
@@ -367,7 +367,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	var emulated := event.device == InputEvent.DEVICE_ID_EMULATION
 	if emulated:
 		return
-	# Toque: deslizar o dedo na direção pretendida (em qualquer sítio do ecrã).
+	# Touch: swipe in the wanted direction (anywhere on the screen).
 	if event is InputEventScreenTouch:
 		_touch_start = event.position if event.pressed else null
 	elif event is InputEventScreenDrag and _touch_start != null:
@@ -376,7 +376,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			_wanted = _vec_to_dir(d)
 			_touch_start = event.position
 	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		# Rato: clicar num ponto do ecrã escolhe a direção a partir do pirilampo.
+		# Mouse: clicking a point on the screen picks the direction from the firefly.
 		_wanted = _vec_to_dir(event.position - to_px(player_pos))
 
 
@@ -389,7 +389,7 @@ static func _vec_to_dir(d: Vector2) -> Vector2i:
 func _move_player(dt: float) -> void:
 	if is_ai():
 		_ai(dt)
-	# meia-volta imediata a meio de um corredor
+	# immediate turn-around in the middle of a corridor
 	if player_dir != Vector2i.ZERO and _wanted == -player_dir:
 		player_tile += player_dir
 		player_dir = _wanted
@@ -479,14 +479,14 @@ func _update_bonus(dt: float) -> void:
 		bonus_eaten.emit(to_px(Vector2(BONUS_TILE)), pts)
 
 
-# ---------------------------------------------------------------- morcegos
+# ---------------------------------------------------------------- bats
 
 func _move_bats(dt: float) -> void:
 	for b in bats:
 		match b.state:
 			Bat.CAVE:
 				b.release -= dt
-				# esvoaça para cima e para baixo dentro da gruta
+				# flutters up and down inside the cave
 				b.pos.y = BAT_START[b.id].y + sin(Time.get_ticks_msec() / 250.0 + b.id) * 0.3
 				if b.release <= 0.0:
 					b.state = Bat.LEAVING
@@ -538,7 +538,7 @@ func _reverse(b: Dictionary) -> void:
 	if b.dir == Vector2i.ZERO:
 		return
 	if (b.pos as Vector2).distance_to(Vector2(b.tile)) > 0.01:
-		b.tile += b.dir          # já ia a caminho da casa seguinte: volta para trás
+		b.tile += b.dir          # was already heading to the next cell: goes back
 		b.dir = -b.dir
 	elif passable(b.tile - b.dir):
 		b.dir = -b.dir
@@ -552,15 +552,15 @@ func _bat_target(b: Dictionary) -> Vector2i:
 	if not chasing:
 		return BAT_CORNER[b.id]
 	match b.id:
-		0:  # Caçador: direito ao pirilampo
+		0:  # Hunter: straight at the firefly
 			return player_tile
-		1:  # Emboscador: 4 casas à frente do pirilampo
+		1:  # Ambusher: 4 cells ahead of the firefly
 			return player_tile + player_face * 4
-		2:  # Cercador: do lado oposto ao Caçador, em relação ao pirilampo
+		2:  # Flanker: on the side opposite the Hunter, relative to the firefly
 			var hunter: Vector2i = bats[0].tile
 			var ahead := player_tile + player_face * 2
 			return ahead + (ahead - hunter)
-		_:  # Errante: aproxima-se, mas foge para o seu canto quando está perto
+		_:  # Wanderer: comes closer, but flees to its corner when near
 			var d := Vector2(b.tile).distance_to(Vector2(player_tile))
 			return player_tile if d > 7.0 else BAT_CORNER[3]
 
@@ -573,7 +573,7 @@ func _choose_dir(b: Dictionary) -> void:
 			continue
 		var t: Vector2i = b.tile + d
 		if passable(t, door_ok):
-			# fora da gruta, um morcego ativo não volta a entrar pela porta
+			# outside the cave, an active bat does not go back through the door
 			if not door_ok and cell(t) in ["-", "C"]:
 				continue
 			options.append(d)
@@ -639,10 +639,10 @@ func _after_death() -> void:
 	turn_started.emit(current)
 
 
-# ---------------------------------------------------------------- CPU da demonstração
+# ---------------------------------------------------------------- demo CPU
 
 func _ai(_dt: float) -> void:
-	# Só decide nos centros das casas (ou quando parado).
+	# Only decides at cell centres (or when stopped).
 	var at_center := player_pos.distance_to(Vector2(player_tile)) < 0.05
 	if not at_center and player_dir != Vector2i.ZERO:
 		return
@@ -654,7 +654,7 @@ func _ai(_dt: float) -> void:
 			for d: Vector2i in DIRS:
 				danger[t + d] = true
 				danger[t + d * 2] = true
-	# procura em largura o objetivo mais próximo (morcego encandeado ou ponto de luz) evitando o perigo
+	# breadth-first search for the nearest goal (dazzled bat or light dot) avoiding danger
 	var start := player_tile
 	var first := {start: Vector2i.ZERO}
 	var queue: Array[Vector2i] = [start]
@@ -680,7 +680,7 @@ func _ai(_dt: float) -> void:
 			first[n] = d if t == start else first[t]
 			queue.append(n)
 	if goal_dir == Vector2i.ZERO:
-		# encurralado: escolhe a saída mais afastada do morcego mais próximo
+		# cornered: picks the exit farthest from the nearest bat
 		var best_score := -INF
 		for d: Vector2i in DIRS:
 			if passable(player_tile + d):

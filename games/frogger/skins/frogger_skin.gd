@@ -1,12 +1,12 @@
 class_name FroggerSkin
-extends Node2D
-## Base dos estilos visuais do Frogger: desenho por partes (veículos, troncos, tartarugas),
-## sons e uma pequena melodia de fundo.
+extends SkinBase
+## Base of the Frogger visual styles: drawing by parts (vehicles, logs, turtles),
+## sounds and a short background melody.
 
 const S := FroggerGame.SCALE
 const C := FroggerGame.CELL
 
-## Rã virada para cima: sentada e a saltar (desenho original).
+## Frog facing up: sitting and hopping (original drawing).
 const FROG := [
 	[
 		"..WW.....WW..",
@@ -48,20 +48,14 @@ const CROC := [
 ]
 
 var game: FroggerGame
-var sfx := {}
 var popups: Array[Dictionary] = []       # {pos (px), text, life}
-var _players: Array[AudioStreamPlayer] = []
-var _next_player := 0
 var _music: AudioStreamPlayer
 var time := 0.0
 
 
 func attach(g: FroggerGame) -> void:
 	game = g
-	for i in 8:
-		var p := AudioStreamPlayer.new()
-		add_child(p)
-		_players.append(p)
+	add_voices(8)
 	_music = AudioStreamPlayer.new()
 	add_child(_music)
 	g.match_started.connect(_on_match_started)
@@ -73,24 +67,13 @@ func attach(g: FroggerGame) -> void:
 	g.extra_life.connect(_on_extra_life)
 	g.level_cleared.connect(_on_level_cleared)
 	g.game_over.connect(_on_game_over)
-	var cached: Variant = Synth.cache_get(get_script().resource_path)
-	if cached != null:
-		sfx = cached
-	else:
-		_build_sfx()
-		Synth.cache_set(get_script().resource_path, sfx)
+	load_sfx()
 	_setup()
 
 
-func play(id: String, pitch := 1.0, volume_db := 0.0) -> void:
-	if game == null or game.mode == FroggerGame.Mode.DEMO or not sfx.has(id):
-		return
-	var p := _players[_next_player]
-	_next_player = (_next_player + 1) % _players.size()
-	p.stream = sfx[id]
-	p.pitch_scale = pitch
-	p.volume_db = volume_db
-	p.play()
+## The menu demo is silent.
+func _is_silent() -> bool:
+	return game == null or game.mode == FroggerGame.Mode.DEMO
 
 
 func _update_music() -> void:
@@ -122,11 +105,7 @@ func _process(delta: float) -> void:
 	queue_redraw()
 
 
-func ui_palette() -> Dictionary:
-	return UI.LAUNCHER_PALETTE
-
-
-# ---------------------------------------------------------------- geometria (em píxeis)
+# ---------------------------------------------------------------- geometry (in pixels)
 
 func px(u: Vector2) -> Vector2:
 	return game.to_px(u)
@@ -149,7 +128,7 @@ func bay_rect(i: int) -> Rect2:
 	return Rect2(px(Vector2(FroggerGame.BAYS[i] - 10, 2)), Vector2(20, 14) * S)
 
 
-## Partes de um veículo: [[Rect2, papel], ...]; papel: body, cabin, window, wheel, light, blade
+## Parts of a vehicle: [[Rect2, role], ...]; role: body, cabin, window, wheel, light, blade
 func vehicle_parts(o: Dictionary) -> Array:
 	var r := obj_rect(o)
 	var left: bool = game.lane_speed(o.row) < 0.0
@@ -184,7 +163,7 @@ func vehicle_parts(o: Dictionary) -> Array:
 	return parts
 
 
-## Tartarugas de um grupo: lista de [centro, raio] (já com o efeito de mergulho).
+## Turtles of a group: list of [centre, radius] (with the dive effect applied).
 func turtle_shells(o: Dictionary) -> Array:
 	var r := obj_rect(o)
 	var stage := game.turtle_stage(o)
@@ -211,7 +190,7 @@ func frog_angle() -> float:
 	return 0.0
 
 
-## Zonas fora do campo (tapadas depois de desenhar os objetos que estão a "dar a volta").
+## Areas outside the field (covered after drawing the objects that are "wrapping around").
 func side_rects() -> Array[Rect2]:
 	var f := field_rect()
 	return [Rect2(-40, -40, f.position.x + 40, 800), Rect2(f.end.x, -40, 1320 - f.end.x, 800)]
@@ -226,13 +205,9 @@ func panel_right_x() -> float:
 	return r + (1280.0 - r) / 2
 
 
-# ---------------------------------------------------------------- para os estilos reescreverem
+# ---------------------------------------------------------------- for the styles to override
 
 func _setup() -> void:
-	pass
-
-
-func _build_sfx() -> void:
 	pass
 
 

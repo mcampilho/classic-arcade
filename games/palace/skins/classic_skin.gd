@@ -1,7 +1,7 @@
 extends PalaceSkin
-## Clássico 1989: as masmorras de pedra azulada dos jogos de computador da época — tijolos,
-## lajes com aresta clara, tochas a tremeluzir — e um herói vestido de branco animado com
-## suavidade. Guardas de turbante colorido.
+## Classic 1989: the bluish stone dungeons of the computer games of the time — bricks,
+## slabs with light edges, flickering torches — and a hero dressed in white, animated
+## smoothly. Guards in colourful turbans.
 
 const STONE := Color("3a4462")
 const STONE2 := Color("2e3652")
@@ -62,7 +62,7 @@ func _paint_room(ci: CanvasItem, room: Vector2i) -> void:
 func _paint_tile(ci: CanvasItem, gc: int, gr: int, ch: String, r: Rect2) -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = gc * 131 + gr * 17
-	# tijolos ao fundo
+	# bricks in the background
 	for row in 6:
 		var y := r.position.y + row * 35.0
 		var off := 0.0 if row % 2 == 0 else 32.0
@@ -87,7 +87,7 @@ func _paint_tile(ci: CanvasItem, gc: int, gr: int, ch: String, r: Rect2) -> void
 		ci.draw_rect(slab, SLAB2 if ch != "~" else Color("6a6a82"))
 		ci.draw_rect(Rect2(slab.position, Vector2(slab.size.x, 5)), SLAB3)
 		ci.draw_rect(Rect2(slab.position.x, slab.end.y - 3, slab.size.x, 3), Color(0, 0, 0, 0.5))
-		# sombra por baixo do chão
+		# shadow below the floor
 		ci.draw_rect(Rect2(r.position.x, r.end.y, r.size.x, 10).intersection(Rect2(0, 0, ROOM_W, ROOM_H)), Color(0, 0, 0, 0.35))
 	if ch == "|":
 		ci.draw_rect(Rect2(r.position.x + 52, r.position.y, 24, 18), Color("2a2a36"))
@@ -100,7 +100,7 @@ func _paint_tile(ci: CanvasItem, gc: int, gr: int, ch: String, r: Rect2) -> void
 
 func _draw_dynamic() -> void:
 	super()
-	# tochas nas paredes (nas casas com chão, de vez em quando)
+	# torches on the walls (in floor cells, now and then)
 	each_tile(game.room, _torch)
 
 
@@ -132,12 +132,12 @@ func _draw_figure(j: Dictionary, is_guard: bool, sword: bool, info: Dictionary) 
 	body = Color(body, alpha)
 	body2 = Color(body2, alpha)
 	var skin := Color(SKIN, alpha)
-	# membros de trás (mais escuros)
+	# back limbs (darker)
 	_limb(j.hip, j.knee_b, body2, 13.0)
 	_limb(j.knee_b, j.foot_b, body2, 11.0)
 	_limb(j.sh_b, j.elbow_b, body2, 10.0)
 	_limb(j.elbow_b, j.hand_b, Color(SKIN.darkened(0.2), alpha), 8.0)
-	# tronco e cabeça
+	# torso and head
 	_limb(j.hip, j.neck, body, 20.0)
 	draw_circle(j.head, 13.0, skin)
 	if is_guard:
@@ -145,7 +145,7 @@ func _draw_figure(j: Dictionary, is_guard: bool, sword: bool, info: Dictionary) 
 		draw_circle(j.head + Vector2(0, -12), 9.0, body)
 	else:
 		draw_circle(j.head + Vector2(0, -6), 11.0, Color(Color("3a2a1a"), alpha))
-	# membros da frente
+	# front limbs
 	_limb(j.hip, j.knee_f, body, 13.0)
 	_limb(j.knee_f, j.foot_f, body, 11.0)
 	if sword:
@@ -223,9 +223,9 @@ func _draw_hud() -> void:
 			var x := 1170 - i * 30
 			var c := Color("3a8ac8") if i < int(foe.hp) else Color("1a2a3a")
 			draw_colored_polygon(PackedVector2Array([Vector2(x - 22, 700), Vector2(x, 700), Vector2(x - 11, 676)]), c)
-	PixelFont.draw(self, I18n.t("%d MINUTOS") % g.minutes_left(), 640, 672, 3, WHITE)
-	PixelFont.draw(self, I18n.t("NIVEL %d") % (g.level + 1), 400, 680, 2, WHITE2)
-	PixelFont.draw(self, I18n.t("VIDAS %d") % g.lives, 880, 680, 2, WHITE2)
+	PixelFont.draw(self, I18n.t("%d MINUTES") % g.minutes_left(), 640, 672, 3, WHITE)
+	PixelFont.draw(self, I18n.t("LEVEL %d") % (g.level + 1), 400, 680, 2, WHITE2)
+	PixelFont.draw(self, I18n.t("LIVES %d") % g.lives, 880, 680, 2, WHITE2)
 
 
 func ui_palette() -> Dictionary:

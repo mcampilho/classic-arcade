@@ -1,9 +1,9 @@
 class_name BlocksGame
 extends Node2D
-## Encaixe — puzzle de peças que caem, ao estilo de 1984: peças de 4 quadrados caem num poço de
-## 10 x 20; roda-as e encaixa-as para completar linhas, que desaparecem. Regras modernas:
-## saco de 7 peças, rotação com "chutes" nas paredes, peça guardada, sombra da peça, espera
-## antes de assentar, queda rápida e queda imediata.
+## Stack — falling-piece puzzle, 1984 style: 4-square pieces fall into a
+## 10 x 20 well; rotate and fit them to complete lines, which disappear. Modern rules:
+## 7-piece bag, rotation with wall "kicks", hold piece, ghost piece, lock delay
+## before locking, soft drop and hard drop.
 
 signal spawned(kind: int)
 signal moved
@@ -20,7 +20,7 @@ enum Mode { DEMO, PLAY }
 enum State { PLAY, CLEAR, OVER }
 
 const COLS := 10
-const ROWS := 22          # 2 linhas escondidas por cima
+const ROWS := 22          # 2 hidden rows at the top
 const HIDDEN := 2
 const CLEAR_TIME := 0.32
 const LOCK_DELAY := 0.5
@@ -28,7 +28,7 @@ const MAX_RESETS := 15
 const DAS := 0.16
 const ARR := 0.045
 const NAMES := ["I", "O", "T", "S", "Z", "J", "L"]
-## Peças (rotação 0) dentro de uma caixa de n x n.
+## Pieces (rotation 0) inside an n x n box.
 const SHAPES := [
 	[Vector2i(0, 1), Vector2i(1, 1), Vector2i(2, 1), Vector2i(3, 1)],
 	[Vector2i(1, 0), Vector2i(2, 0), Vector2i(1, 1), Vector2i(2, 1)],
@@ -39,7 +39,7 @@ const SHAPES := [
 	[Vector2i(2, 0), Vector2i(0, 1), Vector2i(1, 1), Vector2i(2, 1)],
 ]
 const BOX := [4, 4, 3, 3, 3, 3, 3]
-## Chutes (x, y para baixo) por transição "de>para" das rotações 0, 1 (R), 2, 3 (L).
+## Kicks (x, y downwards) per "from>to" transition of rotations 0, 1 (R), 2, 3 (L).
 const KICKS := {
 	"01": [Vector2i(0, 0), Vector2i(-1, 0), Vector2i(-1, -1), Vector2i(0, 2), Vector2i(-1, 2)],
 	"10": [Vector2i(0, 0), Vector2i(1, 0), Vector2i(1, 1), Vector2i(0, -2), Vector2i(1, -2)],
@@ -69,7 +69,7 @@ var skin: BlocksSkin
 var best := 0
 var start_level := 1
 
-var board := PackedByteArray()         # 0 vazio, 1..7 peça
+var board := PackedByteArray()         # 0 empty, 1..7 piece
 var kind := 0
 var rot := 0
 var px := 3
@@ -85,7 +85,7 @@ var b2b := false
 var clear_rows: Array[int] = []
 var clear_t := 0.0
 var timer := 0.0
-var last_clear := 0                    # n.º de linhas da última jogada (para os estilos)
+var last_clear := 0                    # number of lines of the last move (for the styles)
 var last_b2b := false
 
 var _bag: Array[int] = []
@@ -157,7 +157,7 @@ func is_ai() -> bool:
 	return mode == Mode.DEMO
 
 
-# ---------------------------------------------------------------- peças e tabuleiro
+# ---------------------------------------------------------------- pieces and board
 
 static func cells_of(k: int, r: int) -> Array[Vector2i]:
 	var n: int = BOX[k]
@@ -185,7 +185,7 @@ func fits(k: int, r: int, x: int, y: int) -> bool:
 	return true
 
 
-## Células da peça em jogo (coordenadas do tabuleiro).
+## Cells of the current piece (board coordinates).
 func piece_cells() -> Array[Vector2i]:
 	var out: Array[Vector2i] = []
 	for c in cells_of(kind, rot):
@@ -193,7 +193,7 @@ func piece_cells() -> Array[Vector2i]:
 	return out
 
 
-## Linha onde a peça assentaria (para a sombra).
+## Row where the piece would land (for the ghost).
 func ghost_y() -> int:
 	var y := py
 	while fits(kind, rot, px, y + 1):
@@ -206,7 +206,7 @@ func gravity() -> float:
 	return pow(0.8 - l * 0.007, l)
 
 
-# ---------------------------------------------------------------- partida
+# ---------------------------------------------------------------- match
 
 func start(p_mode: Mode, p_level := 1) -> void:
 	mode = p_mode
@@ -269,7 +269,7 @@ func _top_out() -> void:
 	game_over.emit()
 
 
-# ---------------------------------------------------------------- ações
+# ---------------------------------------------------------------- actions
 
 func try_move(dx: int) -> bool:
 	if state != State.PLAY or not fits(kind, rot, px + dx, py):
@@ -298,7 +298,7 @@ func try_rotate(dir: int) -> bool:
 
 
 func _after_action() -> void:
-	# reinicia a espera para assentar (com limite), como nas regras modernas
+	# restarts the lock delay (with a limit), as in the modern rules
 	if not fits(kind, rot, px, py + 1) and _resets < MAX_RESETS:
 		_lock_t = 0.0
 		_resets += 1
@@ -386,7 +386,7 @@ func _collapse() -> void:
 	_spawn(_take_next())
 
 
-# ---------------------------------------------------------------- ciclo
+# ---------------------------------------------------------------- loop
 
 func _process(delta: float) -> void:
 	if paused:
@@ -473,8 +473,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		hard_drop()
 	elif event.is_action_pressed("bl_hold"):
 		do_hold()
-	# Tátil (e rato): arrastar para os lados move, arrastar para baixo desce, um gesto rápido
-	# para baixo deixa cair, para cima guarda; um toque roda (metade esquerda: ao contrário).
+	# Touch (and mouse): dragging sideways moves, dragging down drops softly, a quick swipe
+	# down hard-drops, up holds; a tap rotates (left half: the other way).
 	if event is InputEventScreenTouch:
 		if event.pressed:
 			_touch = {"index": event.index, "start": event.position, "last": event.position, "t": Time.get_ticks_msec(), "moved": false, "soft": false, "acc": Vector2.ZERO}
@@ -508,7 +508,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		_touch.acc = Vector2(acc.x, maxf(acc.y, -200.0))
 
 
-# ---------------------------------------------------------------- CPU da demonstração
+# ---------------------------------------------------------------- demo CPU
 
 func _ai(delta: float) -> void:
 	_soft = false
@@ -533,7 +533,7 @@ func _ai(delta: float) -> void:
 		hard_drop()
 
 
-## Melhor posição (rotação, x) para a peça k, avaliando o tabuleiro resultante.
+## Best position (rotation, x) for piece k, scoring the resulting board.
 static func best_placement(b: PackedByteArray, k: int) -> Dictionary:
 	var best_v := -INF
 	var best := {"rot": 0, "x": 3}

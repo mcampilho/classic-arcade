@@ -1,6 +1,6 @@
 class_name PixelFont
 extends RefCounted
-## Letra de píxeis 5x7, ao estilo dos arcades dos anos 70 (maiúsculas, algarismos e alguns sinais).
+## 5x7 pixel font in the style of 70s arcades (capitals, digits and a few symbols).
 
 const GLYPHS := {
 	"A": [".###.", "#...#", "#...#", "#####", "#...#", "#...#", "#...#"],
@@ -69,7 +69,7 @@ static func width(text: String, cell: float) -> float:
 	return text.length() * 6 * cell - cell
 
 
-## Desenha `text` centrado em center_x, com `cell` píxeis por ponto.
+## Draws `text` centred on center_x, with `cell` pixels per dot.
 static func draw(ci: CanvasItem, text: String, center_x: float, top: float, cell: float, color: Color) -> void:
 	var x := center_x - width(text, cell) / 2
 	for ch in text.to_upper():

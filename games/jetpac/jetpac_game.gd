@@ -1,9 +1,9 @@
 class_name JetpacGame
 extends Node2D
-## Lógica do Jetpac (1983): um astronauta com mochila-foguete monta o foguete (3 peças),
-## abastece-o com 6 cápsulas de combustível e descola para o planeta seguinte, enquanto
-## enfrenta vagas de alienígenas com o laser. O ecrã dá a volta nas laterais.
-## Unidades: campo de 320 x 180 (x4 = 1280 x 720).
+## Jetpac (1983) logic: an astronaut with a jetpack assembles the rocket (3 parts),
+## fuels it with 6 fuel pods and takes off to the next planet, while
+## fighting waves of aliens with the laser. The screen wraps at the sides.
+## Units: 320 x 180 field (x4 = 1280 x 720).
 
 signal match_started
 signal level_started(level: int)
@@ -52,19 +52,19 @@ var lives := 4
 var level := 1
 var next_extra := EXTRA_LIFE_EVERY
 var timer := 0.0
-var pos := Vector2(100, GROUND_Y)    # pés do astronauta
+var pos := Vector2(100, GROUND_Y)    # astronaut's feet
 var vel := Vector2.ZERO
 var facing := 1
 var flying := false
 var grounded := true
 var anim := 0.0
-var rocket_stage := 3                # 1..3 peças montadas
+var rocket_stage := 3                # 1..3 parts assembled
 var fuel := 0
-var rocket_y := 0.0                  # deslocamento do foguete (descolagem/aterragem)
+var rocket_y := 0.0                  # rocket offset (take-off/landing)
 var items: Array[Dictionary] = []    # kind (part2, part3, fuel, gem), pos, vy, held, settled, gem
 var aliens: Array[Dictionary] = []   # kind, pos, vel, phase
 var lasers: Array[Dictionary] = []   # y, x0, len, dir, life, hue
-var carrying := -1                   # índice em items
+var carrying := -1                   # index in items
 var _laser_cool := 0.0
 var _spawn_t := 0.0
 var _item_t := 0.0
@@ -136,7 +136,7 @@ func alien_kind() -> String:
 	return ALIEN_KINDS[(level - 1) % ALIEN_KINDS.size()]
 
 
-## Modelo do foguete (muda a cada 4 níveis).
+## Rocket model (changes every 4 levels).
 func rocket_model() -> int:
 	return ((level - 1) / 4) % 4
 
@@ -151,7 +151,7 @@ func surfaces() -> Array:
 	return out
 
 
-# ---------------------------------------------------------------- partida
+# ---------------------------------------------------------------- match
 
 func start(p_mode: Mode, p_lives := 4) -> void:
 	mode = p_mode
@@ -172,7 +172,7 @@ func _begin_level(new_rocket: bool) -> void:
 	fuel = 0
 	if new_rocket:
 		rocket_stage = 1
-		# as duas peças que faltam ficam nas plataformas
+		# the two missing parts lie on the platforms
 		items.append({"kind": "part2", "pos": Vector2(PLATFORMS[1].get_center().x, PLATFORMS[1].position.y), "vy": 0.0, "settled": true})
 		items.append({"kind": "part3", "pos": Vector2(PLATFORMS[0].get_center().x, PLATFORMS[0].position.y), "vy": 0.0, "settled": true})
 	else:
@@ -208,7 +208,7 @@ func _add_points(n: int) -> void:
 		extra_life.emit()
 
 
-# ---------------------------------------------------------------- ciclo
+# ---------------------------------------------------------------- loop
 
 func _process(delta: float) -> void:
 	if paused:
@@ -275,7 +275,7 @@ func _step(dt: float) -> void:
 					start(Mode.DEMO, 3)
 
 
-# ---------------------------------------------------------------- astronauta
+# ---------------------------------------------------------------- astronaut
 
 func _controls() -> Dictionary:
 	if is_ai():
@@ -304,7 +304,7 @@ func _move_player(dt: float) -> void:
 	if c.up:
 		vel.y -= THRUST * dt
 	vel.y = clampf(vel.y + GRAVITY * dt, -MAX_VY, MAX_VY)
-	# horizontal (com a volta ao ecrã)
+	# horizontal (with screen wrap)
 	pos.x = fposmod(pos.x + vel.x * dt, FIELD.x)
 	var r := player_rect()
 	for s: Rect2 in PLATFORMS:
@@ -345,7 +345,7 @@ func _move_player(dt: float) -> void:
 
 func _pickups() -> void:
 	var r := player_rect().grow(2.0)
-	# entregar no foguete: largar quando estiver por cima
+	# deliver to the rocket: drop when above it
 	if carrying >= 0:
 		var it: Dictionary = items[carrying]
 		it.pos = pos + Vector2(0, 2)
@@ -374,7 +374,7 @@ func _pickups() -> void:
 				_add_points(100)
 				picked.emit(it.kind, it.pos)
 				return
-	# entrar no foguete pronto
+	# board the ready rocket
 	if rocket_ready() and absf(pos.x - ROCKET_X) < 10.0 and pos.y > GROUND_Y - 30.0:
 		state = State.TAKEOFF
 		timer = 2.5
@@ -392,12 +392,12 @@ func needed(kind: String) -> bool:
 	return false
 
 
-## Altura (topo) do foguete montado até agora.
+## Height (top) of the rocket assembled so far.
 func rocket_top_y() -> float:
 	return GROUND_Y - rocket_stage * 16.0
 
 
-# ---------------------------------------------------------------- objetos
+# ---------------------------------------------------------------- items
 
 func _move_items(dt: float) -> void:
 	for i in range(items.size() - 1, -1, -1):
@@ -427,7 +427,7 @@ func _move_items(dt: float) -> void:
 
 
 func _spawn(dt: float) -> void:
-	# combustível (um de cada vez) quando o foguete está montado
+	# fuel (one at a time) when the rocket is assembled
 	if rocket_stage >= 3 and fuel < FUEL_NEEDED:
 		var has_fuel := false
 		for it in items:
@@ -447,7 +447,7 @@ func _spawn(dt: float) -> void:
 				has_gem = true
 		if not has_gem:
 			items.append({"kind": "gem", "pos": Vector2(randf_range(20.0, FIELD.x - 20.0), HUD_H + 4.0), "vy": 0.0, "settled": false, "gem": randi() % 4})
-	# alienígenas
+	# aliens
 	var want := mini(3 + level / 2, 7)
 	_spawn_t -= dt
 	if aliens.size() < want and _spawn_t <= 0.0:
@@ -491,7 +491,7 @@ func _move_aliens(dt: float) -> void:
 				v.y += 60.0 * dt
 		var np := p + v * dt
 		np.x = fposmod(np.x + 8.0, FIELD.x + 16.0) - 8.0 if a.age > 0.5 else np.x
-		# superfícies
+		# surfaces
 		var hit := false
 		for s: Rect2 in surfaces():
 			if s.grow(4.0).has_point(np):
@@ -560,14 +560,14 @@ func _die() -> void:
 	player_died.emit(pos - Vector2(0, 8))
 
 
-# ---------------------------------------------------------------- entrada
+# ---------------------------------------------------------------- input
 
 func _unhandled_input(event: InputEvent) -> void:
 	if paused or is_ai():
 		return
 	if event.device == InputEvent.DEVICE_ID_EMULATION:
 		return
-	# Tátil: metade esquerda = joystick (para cima = propulsor), metade direita = disparar.
+	# Touch: left half = joystick (up = thrust), right half = fire.
 	if event is InputEventScreenTouch:
 		if event.pressed:
 			if event.position.x < 640.0:
@@ -596,7 +596,7 @@ func touch_stick() -> Variant:
 	return _touch_origin if _touch_index >= 0 else null
 
 
-# ---------------------------------------------------------------- CPU da demonstração
+# ---------------------------------------------------------------- demo CPU
 
 func _ai_think() -> void:
 	var goal := Vector2(ROCKET_X, 30.0)
@@ -615,14 +615,14 @@ func _ai_think() -> void:
 		if rocket_ready():
 			goal = Vector2(ROCKET_X, GROUND_Y)
 	var d := _wrap_delta(pos, goal)
-	# voar alto para atravessar e descer a direito por cima do objetivo
+	# fly high to cross and come straight down over the target
 	var cruise := 30.0
 	var want_y := goal.y if absf(d.x) < 8.0 else minf(cruise, goal.y)
 	if absf(d.x) < 8.0 and _blocked_below(goal):
 		want_y = goal.y
 	ai.x = clampf(d.x / 12.0, -1.0, 1.0)
 	ai.up = pos.y > want_y + 2.0 or (vel.y > 20.0 and pos.y > want_y - 6.0)
-	# por baixo de uma plataforma que tapa o caminho para cima: sair pela borda mais próxima
+	# below a platform blocking the way up: leave by the nearest edge
 	for s: Rect2 in PLATFORMS:
 		var head := pos.y - PLAYER_SIZE.y
 		if want_y < pos.y - 4.0 and pos.x > s.position.x - 7.0 and pos.x < s.end.x + 7.0 and s.end.y <= head + 2.0 and s.position.y > want_y - 20.0:
@@ -632,7 +632,7 @@ func _ai_think() -> void:
 			ai.x = clampf((gx - pos.x) / 6.0, -1.0, 1.0)
 			ai.up = head > s.end.y + 6.0 and vel.y > 0.0
 			break
-	# disparar contra o alienígena mais próximo à mesma altura
+	# shoot the nearest alien at the same height
 	ai.fire = false
 	for a in aliens:
 		var ad := _wrap_delta(pos, a.pos)
@@ -640,7 +640,7 @@ func _ai_think() -> void:
 			if signf(ad.x) != facing and absf(ad.x) > 6.0:
 				ai.x = signf(ad.x) * 0.3
 			ai.fire = true
-		# fugir se estiver muito perto
+		# flee if it is very close
 		if ad.length() < 22.0:
 			ai.up = ad.y > -8.0
 

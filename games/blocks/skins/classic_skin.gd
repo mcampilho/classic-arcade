@@ -1,7 +1,7 @@
 extends BlocksSkin
-## Clássico 1984: o ecrã de texto verde dos terminais dos anos 80 — o poço desenhado com
-## caracteres "<!" e "!>", peças feitas de pares de parênteses retos "[ ]", pontinhos nas casas
-## vazias, letras de terminal, linhas de varrimento e o brilho do fósforo. Sons de altifalante.
+## Classic 1984: the green text screen of 80s terminals — the well drawn with
+## "<!" and "!>" characters, pieces made of pairs of square brackets "[ ]", dots in the empty
+## cells, terminal lettering, scanlines and phosphor glow. Speaker beeps.
 
 const GREEN := Color("39ff6a")
 const DIM := Color("1a7a34")
@@ -116,7 +116,7 @@ func _draw_part(p: Dictionary) -> void:
 
 func _draw_over() -> void:
 	draw_rect(WELL, Color(0, 0, 0, 0.7))
-	_txt(I18n.t("FIM DO JOGO"), WELL.get_center().x, WELL.get_center().y - 20, 3.5, GREEN)
+	_txt(I18n.t("GAME OVER"), WELL.get_center().x, WELL.get_center().y - 20, 3.5, GREEN)
 
 
 func _draw_front() -> void:
@@ -124,7 +124,7 @@ func _draw_front() -> void:
 	while y < 720.0:
 		draw_line(Vector2(0, y), Vector2(1280, y), Color(0, 0, 0, 0.22), 1.0)
 		y += 3.0
-	# borda arredondada do ecrã de tubo
+	# rounded edge of the tube screen
 	for k in 6:
 		draw_rect(Rect2(k * 4, k * 4, 1280 - k * 8, 720 - k * 8), Color(0, 0, 0, 0.12), false, 8.0)
 

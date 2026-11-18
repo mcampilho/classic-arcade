@@ -1,10 +1,10 @@
 class_name SchoolGame
 extends Node2D
-## Sarilhos na Escola — aventura escolar original, ao estilo de 1985 (Skool Daze): o Zé tem de
-## tirar o boletim do cofre do gabinete do diretor antes que o vejam. Primeiro acerta (aos
-## saltos) em todos os escudos das paredes; depois, com a fisga, deita abaixo cada professor
-## para que, ao levantar-se, diga a sua letra do segredo do cofre. Tudo isto sem faltar às aulas
-## nem ser apanhado: cada asneira vista dá linhas de castigo, e com 10000 linhas és expulso.
+## School Trouble — original school adventure in the 1985 style (Skool Daze): Zé has to
+## take his report card from the safe in the head's study without being seen. First he hits (by
+## jumping) all the shields on the walls; then, with the catapult, he knocks down each teacher
+## so that, on getting up, they say their letter of the safe's code. All this without missing lessons
+## or being caught: each mischief seen earns lines, and with 10000 lines you are expelled.
 
 signal bell(period: Dictionary)
 signal lines_given(amount: int, who: String, reason: String)
@@ -30,26 +30,26 @@ const MAX_LINES := 10000
 const PERIOD := 70.0
 const STEP := 1.0 / 60.0
 
-## Salas: nome, piso, x inicial e final, se tem quadro (aula).
+## Rooms: name, floor, start and end x, whether it has a board (classroom).
 const ROOMS := [
-	{"name": "Sala do Mapa", "floor": 0, "x0": 0.0, "x1": 860.0, "board": true},
-	{"name": "Sala de Leitura", "floor": 0, "x0": 860.0, "x1": 1720.0, "board": true},
-	{"name": "Gabinete do Diretor", "floor": 0, "x0": 1720.0, "x1": 2560.0, "board": false},
-	{"name": "Sala Branca", "floor": 1, "x0": 0.0, "x1": 860.0, "board": true},
-	{"name": "Sala de Exames", "floor": 1, "x0": 860.0, "x1": 1720.0, "board": true},
-	{"name": "Laboratório", "floor": 1, "x0": 1720.0, "x1": 2560.0, "board": true},
-	{"name": "Refeitório", "floor": 2, "x0": 0.0, "x1": 1100.0, "board": false},
-	{"name": "Átrio", "floor": 2, "x0": 1100.0, "x1": 2560.0, "board": false},
-	{"name": "Recreio", "floor": 2, "x0": 2560.0, "x1": 3600.0, "board": false},
+	{"name": "Map Room", "floor": 0, "x0": 0.0, "x1": 860.0, "board": true},
+	{"name": "Reading Room", "floor": 0, "x0": 860.0, "x1": 1720.0, "board": true},
+	{"name": "Head's Study", "floor": 0, "x0": 1720.0, "x1": 2560.0, "board": false},
+	{"name": "White Room", "floor": 1, "x0": 0.0, "x1": 860.0, "board": true},
+	{"name": "Exam Room", "floor": 1, "x0": 860.0, "x1": 1720.0, "board": true},
+	{"name": "Science Lab", "floor": 1, "x0": 1720.0, "x1": 2560.0, "board": true},
+	{"name": "Dining Hall", "floor": 2, "x0": 0.0, "x1": 1100.0, "board": false},
+	{"name": "Hall", "floor": 2, "x0": 1100.0, "x1": 2560.0, "board": false},
+	{"name": "Playground", "floor": 2, "x0": 2560.0, "x1": 3600.0, "board": false},
 ]
-## Escadas: piso de cima, x em cima, x em baixo (ligam o piso f ao f + 1).
+## Stairs: upper floor, x at the top, x at the bottom (they link floor f to f + 1).
 const STAIRS := [
 	{"f": 0, "top": 310.0, "bottom": 120.0},
 	{"f": 1, "top": 120.0, "bottom": 310.0},
 	{"f": 0, "top": 2250.0, "bottom": 2440.0},
 	{"f": 1, "top": 2440.0, "bottom": 2250.0},
 ]
-## Escudos: piso, x, altura acima do chão (os mais altos só se alcançam em cima de um colega caído).
+## Shields: floor, x, height above the floor (the highest can only be reached standing on a knocked-down pupil).
 const SHIELDS := [
 	[0, 560.0, 108.0], [0, 1180.0, 108.0], [0, 1520.0, 140.0], [0, 2000.0, 108.0],
 	[1, 520.0, 108.0], [1, 1060.0, 140.0], [1, 1560.0, 108.0], [1, 2080.0, 108.0],
@@ -58,9 +58,9 @@ const SHIELDS := [
 const SAFE_X := 2420.0
 const TEACHERS := [
 	{"name": "Dr. Severino", "subject": "diretor"},
-	{"name": "Prof.ª Matilde", "subject": "matematica"},
-	{"name": "Prof. Faria", "subject": "ciencias"},
-	{"name": "Prof. Carvalho", "subject": "historia"},
+	{"name": "Mrs. Matilde", "subject": "matematica"},
+	{"name": "Mr. Faria", "subject": "ciencias"},
+	{"name": "Mr. Carvalho", "subject": "historia"},
 ]
 const KIDS := [
 	{"name": "Zé", "role": "hero"},
@@ -72,7 +72,7 @@ const KIDS := [
 	{"name": "Inês", "role": "kid"},
 	{"name": "Rui", "role": "kid"},
 ]
-## Horário de um dia (repete-se): tipo, sala (índice), professor (índice).
+## A day's timetable (it repeats): kind, room (index), teacher (index).
 const TIMETABLE := [
 	{"kind": "aula", "room": 0, "teacher": 3},
 	{"kind": "aula", "room": 5, "teacher": 2},
@@ -85,15 +85,15 @@ const TIMETABLE := [
 	{"kind": "aula", "room": 5, "teacher": 2},
 ]
 const LESSON_TALK := {
-	"historia": ["EM 1143 NASCEU PORTUGAL.", "QUEM FOI D. AFONSO HENRIQUES?", "1498: VASCO DA GAMA CHEGA À ÍNDIA.", "1640: A RESTAURAÇÃO!"],
-	"matematica": ["QUANTO É 7 x 8?", "A ÁREA DO CÍRCULO É PI R2.", "QUANTO É 144 / 12?", "UM MEIO MAIS UM QUARTO?"],
-	"ciencias": ["A ÁGUA É H2O.", "AS PLANTAS FAZEM FOTOSSÍNTESE.", "O CORAÇÃO TEM 4 CAVIDADES.", "A LUZ É MUITO RÁPIDA!"],
-	"diretor": ["SILÊNCIO NO REFEITÓRIO!", "COMAM A SOPA TODA!", "NADA DE CORRER!", "QUEM FEZ ESTE BARULHO?"],
+	"historia": ["PORTUGAL WAS BORN IN 1143.", "WHO WAS AFONSO HENRIQUES?", "1498: VASCO DA GAMA REACHES INDIA.", "1640: THE RESTORATION!"],
+	"matematica": ["WHAT IS 7 x 8?", "A CIRCLE'S AREA IS PI R2.", "WHAT IS 144 / 12?", "A HALF PLUS A QUARTER?"],
+	"ciencias": ["WATER IS H2O.", "PLANTS DO PHOTOSYNTHESIS.", "THE HEART HAS 4 CHAMBERS.", "LIGHT IS VERY FAST!"],
+	"diretor": ["SILENCE IN THE DINING HALL!", "EAT ALL YOUR SOUP!", "NO RUNNING!", "WHO MADE THAT NOISE?"],
 }
 const BOARD_TEXT := {
 	"historia": ["1143", "D. AFONSO", "1498", "1640"],
 	"matematica": ["7X8=56", "PI R2", "144/12=12", "1/2+1/4"],
-	"ciencias": ["H2O", "CO2 + LUZ", "4 CAVIDADES", "300000 KM/S"],
+	"ciencias": ["H2O", "CO2 + LIGHT", "4 CHAMBERS", "300000 KM/S"],
 	"diretor": ["", "", "", ""],
 }
 const LETTERS := "ABCDEFGHJKLMNPRSTUVWZ"
@@ -103,9 +103,9 @@ var state := State.PLAY
 var paused := false
 var skin: SchoolSkin
 var best := 0
-var strict := false                    # professores mais atentos
+var strict := false                    # more alert teachers
 
-var chars: Array[Dictionary] = []      # 0 = Zé; depois os colegas; depois os professores
+var chars: Array[Dictionary] = []      # 0 = Zé; then the pupils; then the teachers
 var pellets: Array[Dictionary] = []
 var shields_hit: Array[bool] = []
 var letters := ""
@@ -117,8 +117,8 @@ var level := 1
 var period := 0
 var period_t := 0.0
 var day := 1
-var lesson := {}                       # aula em curso: arrived, phase, phase_t, talk, board, absent_t
-var boards := {}                       # sala -> texto no quadro
+var lesson := {}                       # lesson in progress: arrived, phase, phase_t, talk, board, absent_t
+var boards := {}                       # room -> text on the board
 var timer := 0.0
 var cam_x := 0.0
 var hero_cool := 0.0
@@ -130,7 +130,7 @@ var _touch_index := -1
 var _touch_origin := Vector2.ZERO
 var _touch_dir := Vector2.ZERO
 var _ai := {}
-var _report := []                      # queixas do Marrão: [tempo, motivo]
+var _report := []                      # the swot's complaints: [time, reason]
 
 
 func _init() -> void:
@@ -232,7 +232,7 @@ func all_known() -> bool:
 	return true
 
 
-# ---------------------------------------------------------------- partida
+# ---------------------------------------------------------------- match
 
 func start(p_mode: Mode) -> void:
 	mode = p_mode
@@ -253,7 +253,7 @@ func start(p_mode: Mode) -> void:
 		c.speed = 120.0
 		chars.append(c)
 		col += 1
-	# posições iniciais: todos no recreio e no átrio
+	# starting positions: everyone in the playground and the hall
 	for c in chars:
 		c.floor = 2
 		c.x = randf_range(1500.0, 3300.0)
@@ -312,7 +312,7 @@ func _start_period() -> void:
 	bell.emit(p)
 
 
-# ---------------------------------------------------------------- ciclo
+# ---------------------------------------------------------------- loop
 
 func _process(delta: float) -> void:
 	if paused:
@@ -363,13 +363,13 @@ func _step(dt: float) -> void:
 	for r: Array in _report:
 		r[0] -= dt
 		if r[0] <= 0.0:
-			_give_lines(200, chars[2], I18n.t("O MARRÃO FOI CONTAR: ") + String(r[1]))
+			_give_lines(200, chars[2], I18n.t("SWOT TOLD ON YOU: ") + String(r[1]))
 	_report = _report.filter(func(r: Array) -> bool: return float(r[0]) > 0.0)
 
 
-# ---------------------------------------------------------------- movimento
+# ---------------------------------------------------------------- movement
 
-## Atualiza a posição (x, y) a partir do piso/escada; anima.
+## Updates the position (x, y) from the floor/stairs; animates.
 func _update_char(c: Dictionary, dt: float) -> void:
 	c.anim += dt * (1.0 if c.moving else 0.0)
 	c.act_t += dt
@@ -396,7 +396,7 @@ func jump_height(c: Dictionary) -> float:
 	return 52.0 * 4.0 * t * (1.0 - t)
 
 
-## Altura extra de estar em cima de um colega caído.
+## Extra height from standing on a knocked-down pupil.
 func stand_height(c: Dictionary) -> float:
 	return 24.0 if c.standing_on else 0.0
 
@@ -405,7 +405,7 @@ func is_down(c: Dictionary) -> bool:
 	return float(c.down_t) > 0.0
 
 
-## Anda na direção de (x, piso). Devolve true quando chegou.
+## Walks towards (x, floor). Returns true on arrival.
 func walk_to(c: Dictionary, tx: float, tf: int, dt: float) -> bool:
 	var spd := float(c.speed)
 	c.moving = true
@@ -431,7 +431,7 @@ func walk_to(c: Dictionary, tx: float, tf: int, dt: float) -> bool:
 		c.facing = 1 if dx > 0.0 else -1
 		c.x = float(c.x) + clampf(dx, -spd * dt, spd * dt)
 		return false
-	# escolher escada
+	# choose stairs
 	var best_i := -1
 	var best_d := INF
 	var best_x := 0.0
@@ -463,7 +463,7 @@ func walk_to(c: Dictionary, tx: float, tf: int, dt: float) -> bool:
 	return false
 
 
-# ---------------------------------------------------------------- o Zé
+# ---------------------------------------------------------------- Zé
 
 func _read_input() -> void:
 	if is_ai():
@@ -495,7 +495,7 @@ func _update_hero(h: Dictionary, dt: float) -> void:
 	var busy := String(h.act) != "" and float(h.act_t) < 0.3
 	if not busy:
 		h.act = ""
-	# escadas
+	# ladders
 	if int(h.stair) >= 0:
 		var s: Dictionary = STAIRS[h.stair]
 		var dir := 0.0
@@ -508,7 +508,7 @@ func _update_hero(h: Dictionary, dt: float) -> void:
 			walk_to(h, 0.0, int(s.f) + (1 if dir > 0.0 else 0), dt)
 		return
 	if not busy:
-		# entrar numa escada
+		# step onto the stairs
 		if int(_in.y) != 0:
 			for i in STAIRS.size():
 				var s: Dictionary = STAIRS[i]
@@ -520,7 +520,7 @@ func _update_hero(h: Dictionary, dt: float) -> void:
 					h.stair = i
 					h.st = 0.0
 					return
-			# abrir o cofre
+			# open the safe
 			if int(_in.y) < 0 and int(h.floor) == 0 and absf(float(h.x) - SAFE_X) < 50.0:
 				_try_safe()
 		if int(_in.x) != 0:
@@ -543,11 +543,11 @@ func _update_hero(h: Dictionary, dt: float) -> void:
 			h.act = "punch"
 			h.act_t = 0.0
 			_punch(h)
-	# em cima de um colega caído?
+	# standing on a knocked-down pupil?
 	for c in chars:
 		if c != h and is_down(c) and c.role != "teacher" and int(c.stair) < 0 and int(c.floor) == int(h.floor) and absf(float(c.x) - float(h.x)) < 24.0:
 			h.standing_on = true
-	# escudos
+	# shields
 	if float(h.jump_t) >= 0.0:
 		var top := float(h.y) - 74.0 - jump_height(h) - stand_height(h)
 		for i in SHIELDS.size():
@@ -605,7 +605,7 @@ func _update_pellets(dt: float) -> void:
 			if absf(float(c.x) - float(p.x)) < 14.0:
 				var by_hero := int(p.by) == 0
 				if c.role == "teacher":
-					# viu quem foi se estava virado para o atirador
+					# saw who did it if facing the shooter
 					var shooter: Dictionary = chars[int(p.by)]
 					c.saw_hit = signf(float(shooter.x) - float(c.x)) == float(c.facing)
 					c.blame = int(p.by)
@@ -625,17 +625,17 @@ func _got_up(c: Dictionary) -> void:
 	var h := hero()
 	var who := int(c.get("blame", -1))
 	if c.down_by_hero and c.saw_hit:
-		_give_lines(500, c, I18n.t("FOSTE TU, ZÉ! %d LINHAS!"))
+		_give_lines(500, c, I18n.t("IT WAS YOU, ZÉ! %d LINES!"))
 	elif who == 3 and absf(float(h.x) - float(c.x)) < 300.0 and int(h.floor) == int(c.floor) and randf() < 0.6:
-		# o Traquinas atirou, mas o Zé estava ali ao lado...
-		_give_lines(300, c, I18n.t("ZÉ, PARA COM ISSO! %d LINHAS!"))
+		# the tearaway fired, but Zé was right next to him...
+		_give_lines(300, c, I18n.t("ZÉ, STOP THAT! %d LINES!"))
 	else:
-		_say(c, I18n.t("AI! QUEM ME ATIROU ISTO?"))
+		_say(c, I18n.t("OW! WHO THREW THAT?"))
 	if c.down_by_hero and shields_done() == SHIELDS.size() and not known[int(c.teacher)]:
 		known[int(c.teacher)] = true
 		score += 200
-		var ord := ["1ª", "2ª", "3ª", "4ª"]
-		_say(c, I18n.t("A %s LETRA DO COFRE É %s!") % [I18n.t(ord[int(c.teacher)]), letters[int(c.teacher)]])
+		var ord := ["1ST", "2ND", "3RD", "4TH"]
+		_say(c, I18n.t("THE %s SAFE LETTER IS %s!") % [I18n.t(ord[int(c.teacher)]), letters[int(c.teacher)]])
 		letter_found.emit(int(c.teacher), letters[int(c.teacher)])
 	c.down_by_hero = false
 	c.saw_hit = false
@@ -646,10 +646,10 @@ func _try_safe() -> void:
 	if safe_open:
 		return
 	if shields_done() < SHIELDS.size():
-		_say(hero(), I18n.t("O COFRE ESTÁ FECHADO..."))
+		_say(hero(), I18n.t("THE SAFE IS LOCKED..."))
 		return
 	if not all_known():
-		_say(hero(), I18n.t("AINDA NÃO SEI O SEGREDO."))
+		_say(hero(), I18n.t("I DON'T KNOW THE SECRET YET."))
 		return
 	safe_open = true
 	score += 2000
@@ -659,7 +659,7 @@ func _try_safe() -> void:
 	level += 1
 
 
-# ---------------------------------------------------------------- os outros
+# ---------------------------------------------------------------- the others
 
 func _brain(c: Dictionary, dt: float) -> void:
 	c.moving = false
@@ -668,7 +668,7 @@ func _brain(c: Dictionary, dt: float) -> void:
 	var p := current_period()
 	var t: Vector3 = c.target
 	if t.x < 0.0:
-		# recreio, ou professor sem aula: passear
+		# playtime, or a teacher with no lesson: wander
 		c.wander_t -= dt
 		if float(c.wander_t) <= 0.0:
 			c.wander_t = randf_range(4.0, 9.0)
@@ -689,7 +689,7 @@ func _brain(c: Dictionary, dt: float) -> void:
 					c.facing = 1
 			elif p.kind == "aula":
 				c.facing = -1
-	# maldades
+	# mischief
 	c.cool -= dt
 	match String(c.role):
 		"bully":
@@ -705,7 +705,7 @@ func _brain(c: Dictionary, dt: float) -> void:
 						_knock(o, 1.6, false)
 						punched.emit()
 						if o == h:
-							_say(c, I18n.t("TOMA LÁ, ZÉ!"))
+							_say(c, I18n.t("TAKE THAT, ZÉ!"))
 						c.cool = randf_range(5.0, 9.0)
 						break
 		"tearaway":
@@ -716,7 +716,7 @@ func _brain(c: Dictionary, dt: float) -> void:
 				_fire(c)
 
 
-## Professores e o Marrão veem o Zé?
+## Do the teachers and the swot see Zé?
 func sees(o: Dictionary, h: Dictionary, reach := 520.0) -> bool:
 	if is_down(o) or int(o.stair) >= 0 or int(h.stair) >= 0 or int(o.floor) != int(h.floor):
 		return false
@@ -731,17 +731,17 @@ func _witness(what: String) -> void:
 	for o in chars:
 		if o.role == "teacher" and sees(o, h):
 			if what == "fire":
-				_give_lines(300, o, I18n.t("NADA DE FISGAS, ZÉ! %d LINHAS!"))
+				_give_lines(300, o, I18n.t("NO CATAPULTS, ZÉ! %d LINES!"))
 			else:
-				_give_lines(200, o, I18n.t("NADA DE ANDAR À PANCADA! %d LINHAS!"))
+				_give_lines(200, o, I18n.t("NO FIGHTING! %d LINES!"))
 			return
 	var sw: Dictionary = chars[2]
 	if sees(sw, h, 400.0) and _report.is_empty():
-		_say(sw, I18n.t("VOU CONTAR AO PROFESSOR!"))
-		_report.append([4.0, I18n.t("ANDASTE COM A FISGA. %d LINHAS!") if what == "fire" else I18n.t("ANDASTE À PANCADA. %d LINHAS!")])
+		_say(sw, I18n.t("I'M TELLING THE TEACHER!"))
+		_report.append([4.0, I18n.t("CATAPULT USE. %d LINES!") if what == "fire" else I18n.t("FIGHTING. %d LINES!")])
 
 
-## Vigilância: o Zé fora da aula, no gabinete...
+## Watching: Zé out of the lesson, in the study...
 func _watch(_dt: float) -> void:
 	var h := hero()
 	var p := current_period()
@@ -750,10 +750,10 @@ func _watch(_dt: float) -> void:
 		if o.role != "teacher" or float(o.seen_cool) > 0.0 or not sees(o, h, 420.0):
 			continue
 		if not in_place and float(lesson.get("since", 0.0)) > 6.0 and p.kind != "recreio":
-			_give_lines(100, o, I18n.t("JÁ PARA A %s, ZÉ! %%d LINHAS!") % I18n.t(String(ROOMS[p.room].name)).to_upper())
+			_give_lines(100, o, I18n.t("TO THE %s, ZÉ! %%d LINES!") % I18n.t(String(ROOMS[p.room].name)).to_upper())
 			o.seen_cool = 10.0
 		elif int(h.floor) == 0 and room_at(0, float(h.x)) == 2 and int(o.teacher) == 0 and not safe_open:
-			_give_lines(200, o, I18n.t("FORA DO MEU GABINETE! %d LINHAS!"))
+			_give_lines(200, o, I18n.t("OUT OF MY STUDY! %d LINES!"))
 			o.seen_cool = 10.0
 
 
@@ -785,7 +785,7 @@ func _lesson(dt: float) -> void:
 			lesson.arrived = true
 			lesson.phase_t = 0.0
 			lesson.since = 0.0
-			_say(t, I18n.t("BOM DIA, MENINOS.") if p.kind == "aula" else I18n.t("BOM APETITE."))
+			_say(t, I18n.t("GOOD MORNING, CHILDREN.") if p.kind == "aula" else I18n.t("ENJOY YOUR MEAL."))
 		return
 	lesson.since += dt
 	lesson.phase_t += dt
@@ -812,12 +812,12 @@ func _lesson(dt: float) -> void:
 	elif float(lesson.phase_t) > 9.0:
 		lesson.phase_t = 0.0
 		_say(t, I18n.t(LESSON_TALK[subj][randi() % 4]))
-	# falta à aula
+	# missing the lesson
 	if not _hero_in_place() and float(lesson.since) > 8.0:
 		lesson.absent_t += dt
 		if float(lesson.absent_t) > 14.0:
 			lesson.absent_t = 0.0
-			_give_lines(200, t, I18n.t("ONDE ESTÁ O ZÉ? %d LINHAS!"))
+			_give_lines(200, t, I18n.t("WHERE IS ZÉ? %d LINES!"))
 	else:
 		lesson.absent_t = 0.0
 
@@ -844,7 +844,7 @@ func _give_lines(n: int, who: Dictionary, text: String) -> void:
 		expelled.emit()
 
 
-# ---------------------------------------------------------------- entrada
+# ---------------------------------------------------------------- input
 
 func _unhandled_input(event: InputEvent) -> void:
 	if paused or is_ai():
@@ -857,7 +857,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		_buf.punch = 0.15
 	if event.device == InputEvent.DEVICE_ID_EMULATION:
 		return
-	# Tátil: metade esquerda = joystick; à direita, de cima para baixo: saltar, fisga, murro.
+	# Touch: left half = joystick; on the right, top to bottom: jump, catapult, punch.
 	if event is InputEventScreenTouch:
 		if event.pressed:
 			if event.position.x < 640.0:
@@ -888,9 +888,9 @@ func touch_stick() -> Variant:
 	return _touch_origin if _touch_index >= 0 else null
 
 
-# ---------------------------------------------------------------- CPU da demonstração
+# ---------------------------------------------------------------- demo CPU
 
-## A demonstração vai às aulas e, no recreio, salta aos escudos (quando ninguém está a ver).
+## The demo goes to lessons and, at playtime, jumps at the shields (when nobody is looking).
 func _ai_think() -> void:
 	var h := hero()
 	_in = {"x": 0, "y": 0, "jump": false, "fire": false, "punch": false}
@@ -935,7 +935,7 @@ func _ai_think() -> void:
 		_in.fire = not seen
 
 
-## Traduz "ir para (x, piso)" em direções de comando, como um jogador faria.
+## Turns "go to (x, floor)" into controller directions, as a player would.
 func _ai_walk(h: Dictionary, tx: float, tf: int) -> void:
 	if int(h.stair) >= 0:
 		var s: Dictionary = STAIRS[h.stair]

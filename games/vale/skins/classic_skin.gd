@@ -1,6 +1,6 @@
 extends ValeSkin
-## Clássico 1986: casas de 16 x 16 píxeis desenhadas como nas consolas de 8 bits — relva, árvores
-## redondas, rochas, água com ondas, masmorra de tijolo — e um HUD preto por cima.
+## Classic 1986: 16 x 16 pixel tiles drawn as on 8-bit consoles — grass, round
+## trees, rocks, rippling water, a brick dungeon — and a black HUD on top.
 
 var P := {
 	"grass": Color("5cb83c"), "grass2": Color("3f962c"), "path": Color("e8c88a"), "path2": Color("c9a468"),
@@ -33,7 +33,7 @@ func _make_tiles() -> void:
 		tiles_tex[ch] = ImageTexture.create_from_image(tile_image(ch))
 
 
-## Desenha uma casa de 16 x 16 com formas simples (círculos, retângulos) e a paleta P.
+## Draws a 16 x 16 tile with simple shapes (circles, rectangles) and palette P.
 func tile_image(ch: String) -> Image:
 	var img := Image.create(16, 16, false, Image.FORMAT_RGBA8)
 	var rng := RandomNumberGenerator.new()
@@ -173,7 +173,7 @@ func _paint_room(ci: CanvasItem, tl: Array[String], _dungeon: bool) -> void:
 
 
 func _draw_dynamic_tiles(off: Vector2) -> void:
-	# a água mexe-se
+	# the water moves
 	if fmod(time, 1.0) < 0.5:
 		return
 	for y in game.tiles.size():
@@ -196,10 +196,10 @@ func _draw_hud() -> void:
 	PixelFont.draw(self, "X%d" % g.coins, 350, 18, 3, P.hud_text)
 	draw_texture_rect(tex.key, Rect2(300, 46, 18, 26), false)
 	PixelFont.draw(self, "X%d" % g.keys, 350, 50, 3, P.hud_text)
-	PixelFont.draw(self, I18n.t("-VIDA-"), 840, 10, 3, Color("e83c3c"))
+	PixelFont.draw(self, I18n.t("-LIFE-"), 840, 10, 3, Color("e83c3c"))
 	draw_hearts(Vector2(760, 40), Color.WHITE, Color(0.3, 0.3, 0.3), 28.0)
 	PixelFont.draw(self, "%06d" % g.score, 560, 18, 3, P.hud_text)
-	PixelFont.draw(self, I18n.t("MASMORRA") if g.in_dungeon else I18n.t("VALE"), 560, 50, 2, P.accent)
+	PixelFont.draw(self, I18n.t("DUNGEON") if g.in_dungeon else I18n.t("VALLEY"), 560, 50, 2, P.accent)
 	for i in mini(g.lives - 1, 4):
 		draw_texture_rect(tex.hero_down0, Rect2(1172, 110 + i * 40, 30, 35), false)
 

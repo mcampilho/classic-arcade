@@ -1,6 +1,6 @@
 extends ChuckieSkin
-## Neon: a quinta à noite em tubos de luz — plataformas ciano, escadas magenta, galinhas cor-de-rosa
-## e ovos que brilham. Tudo com halo.
+## Neon: the farm at night in light tubes — cyan platforms, magenta ladders, pink hens
+## and glowing eggs. Everything with a halo.
 
 const BG := Color("05030f")
 const CYAN := Color("19f5ff")
@@ -54,7 +54,7 @@ func _build_sfx() -> void:
 	sfx.extra = Synth.concat(e)
 
 
-## Corridas de casas seguidas com chão numa linha: [início, fim].
+## Runs of consecutive floor cells in a row: [start, end].
 func floor_runs(r: int) -> Array:
 	var out := []
 	var c := 0
@@ -72,14 +72,14 @@ func floor_runs(r: int) -> Array:
 func _draw_static(ci: CanvasItem) -> void:
 	ci.draw_rect(Rect2(0, 0, 1280, 720), BG)
 	var f := field_rect()
-	# grelha discreta
+	# subtle grid
 	for c in ChuckieGame.COLS + 1:
 		ci.draw_line(Vector2(f.position.x + c * T * S, f.position.y), Vector2(f.position.x + c * T * S, f.end.y), Color(CYAN, 0.04), 1.0)
 	for r in ChuckieGame.ROWS + 1:
 		ci.draw_line(Vector2(f.position.x, f.position.y + r * T * S), Vector2(f.end.x, f.position.y + r * T * S), Color(CYAN, 0.04), 1.0)
 	ci.draw_rect(f.grow(6), Color(MAGENTA, 0.25), false, 6.0)
 	ci.draw_rect(f.grow(4), MAGENTA, false, 2.0)
-	# escadas
+	# ladders
 	for c in ChuckieGame.COLS:
 		var r := 0
 		while r < ChuckieGame.ROWS:
@@ -102,7 +102,7 @@ func _draw_static(ci: CanvasItem) -> void:
 						y += 4 * S
 			else:
 				r += 1
-	# plataformas
+	# platforms
 	for r in ChuckieGame.ROWS:
 		for run: Array in floor_runs(r):
 			var rect := Rect2(tile_rect(run[0], r).position + Vector2(0, 2 * S), Vector2((int(run[1]) - int(run[0]) + 1) * T * S, 4 * S))
@@ -140,24 +140,24 @@ func _draw_hud() -> void:
 	var lx := panel_left_x()
 	var rx := panel_right_x()
 	var two := g.players.size() > 1
-	neon_text(I18n.t("PONTOS") if not two else I18n.t("JOG. 1"), lx, 40, 3, Color(MAGENTA, 1.0 if g.current == 0 else 0.4))
+	neon_text(I18n.t("SCORE") if not two else I18n.t("P1"), lx, 40, 3, Color(MAGENTA, 1.0 if g.current == 0 else 0.4))
 	neon_text("%06d" % g.players[0].score, lx, 76, 4, WHITE)
 	if two:
-		neon_text(I18n.t("JOG. 2"), lx, 140, 3, Color(MAGENTA, 1.0 if g.current == 1 else 0.4))
+		neon_text(I18n.t("P2"), lx, 140, 3, Color(MAGENTA, 1.0 if g.current == 1 else 0.4))
 		neon_text("%06d" % g.players[1].score, lx, 176, 4, WHITE)
-	neon_text(I18n.t("RECORDE"), lx, 260, 3, CYAN)
+	neon_text(I18n.t("HI-SCORE"), lx, 260, 3, CYAN)
 	neon_text("%06d" % maxi(g.best, g.player().score), lx, 296, 4, WHITE)
-	neon_text(I18n.t("VIDAS"), lx, 560, 3, CYAN)
+	neon_text(I18n.t("LIVES"), lx, 560, 3, CYAN)
 	for i in mini(g.player().lives, 6):
 		draw_texture_rect(tex.farmer_stand, Rect2(lx - 84 + i * 28, 600, 24, 48), false)
-	neon_text(I18n.t("NIVEL"), rx, 40, 3, CYAN)
+	neon_text(I18n.t("LEVEL"), rx, 40, 3, CYAN)
 	neon_text(str(g.level()), rx, 76, 5, WHITE)
-	neon_text(I18n.t("TEMPO"), rx, 160, 3, CYAN)
+	neon_text(I18n.t("TIME"), rx, 160, 3, CYAN)
 	var low := g.time_left < 150.0 and fmod(time, 0.4) < 0.2
 	neon_text("%03d" % int(g.time_left), rx, 196, 5, MAGENTA if low else WHITE)
 	if g.freeze > 0.0:
-		neon_text(I18n.t("PARADO"), rx, 250, 2, YELLOW)
-	neon_text(I18n.t("OVOS"), rx, 320, 3, CYAN)
+		neon_text(I18n.t("FROZEN"), rx, 250, 2, YELLOW)
+	neon_text(I18n.t("EGGS"), rx, 320, 3, CYAN)
 	neon_text(str(g.eggs.size()), rx, 356, 5, WHITE)
 	for p in popups:
 		neon_text(p.text, px(p.pos).x, px(p.pos).y - 20, 2, YELLOW)

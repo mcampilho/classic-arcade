@@ -1,6 +1,6 @@
 extends FroggerSkin
-## Neon: autoestrada de luz com rastos, rio de néon com ondulação, veículos em contornos
-## brilhantes e uma rã verde-ácida; faíscas e anéis a cada toca e a cada acidente.
+## Neon: a light motorway with trails, a rippling neon river, vehicles as glowing
+## outlines and an acid-green frog; sparks and rings on every home and every accident.
 
 const BG_TOP := Color("0a0320")
 const BG_BOTTOM := Color("1b0639")
@@ -78,7 +78,7 @@ func _build_sfx() -> void:
 	for f in [523.25, 659.25, 783.99, 1046.5, 1318.5, 1568.0]:
 		fan.append(Synth.render(f, 0.09, {"wave": "square", "volume": 0.13, "lowpass": 0.3}))
 	sfx.clear = Synth.concat(fan)
-	# baixo sintetizado em loop
+	# looping synth bass
 	var groove := PackedFloat32Array()
 	for f in [55.0, 55.0, 82.4, 55.0, 73.4, 73.4, 65.4, 49.0]:
 		groove.append_array(Synth.render(f, 0.2, {"wave": "saw", "volume": 0.25, "lowpass": 0.08, "decay": 6.0}))
@@ -147,7 +147,7 @@ func _draw() -> void:
 
 func _draw_fx() -> void:
 	var g := game
-	# ondulação do rio e linhas da estrada
+	# river ripples and road lines
 	for r in range(1, 6):
 		var rr := row_rect(r)
 		var pts := PackedVector2Array()
@@ -164,7 +164,7 @@ func _draw_fx() -> void:
 	for i in 5:
 		fx.draw_rect(bay_rect(i), Color(FROG_C, 0.4), false, 2.0)
 	fx.draw_line(row_rect(0).end - Vector2(row_rect(0).size.x, 0), row_rect(0).end, Color(FROG_C, 0.5), 2.0)
-	# objetos
+	# objects
 	for o in g.objects:
 		if o.kind == "log":
 			var r := obj_rect(o).grow_individual(-2, -5, -2, -5)
@@ -187,7 +187,7 @@ func _draw_fx() -> void:
 					fx.draw_rect(part[0], Color(c, 0.5))
 				else:
 					fx.draw_rect(part[0], Color(c, 0.9 if role != "window" else 0.4), false, 2.0)
-			# rasto de luz atrás do veículo
+			# light trail behind the vehicle
 			var left: bool = g.lane_speed(o.row) < 0.0
 			var tail := r.end.x if left else r.position.x
 			fx.draw_line(Vector2(tail, r.get_center().y), Vector2(tail + (40 if left else -40), r.get_center().y), Color(c, 0.25), 4.0)
@@ -216,16 +216,16 @@ func _draw_hud() -> void:
 	var rx := panel_right_x()
 	var label_c := Color("8a5cff").lerp(Color.WHITE, 0.3)
 	var a0 := 1.0 if (g.current == 0 or g.players.size() == 1) else 0.4
-	_text(I18n.t("JOGADOR 1"), lx, 80, label_c, 20, a0)
+	_text(I18n.t("PLAYER 1"), lx, 80, label_c, 20, a0)
 	_text(str(g.players[0].score), lx, 140, Color("19f0ff"), 50, a0)
-	_text(I18n.t("RECORDE"), lx, 230, label_c, 20, 0.9)
+	_text(I18n.t("HI-SCORE"), lx, 230, label_c, 20, 0.9)
 	_text(str(maxi(g.best, g.player().score)), lx, 280, Color("ffd43b"), 38, 0.9)
 	if g.players.size() > 1:
-		_text(I18n.t("JOGADOR 2"), rx, 80, label_c, 20, 1.0 if g.current == 1 else 0.4)
+		_text(I18n.t("PLAYER 2"), rx, 80, label_c, 20, 1.0 if g.current == 1 else 0.4)
 		_text(str(g.players[1].score), rx, 140, Color("ff2bd6"), 50, 1.0 if g.current == 1 else 0.4)
-	_text(I18n.t("NÍVEL"), rx, 230, label_c, 20, 0.9)
+	_text(I18n.t("LEVEL"), rx, 230, label_c, 20, 0.9)
 	_text(str(g.level()), rx, 280, FROG_C, 38, 0.9)
-	_text(I18n.t("VIDAS"), lx, 540, label_c, 20, 0.9)
+	_text(I18n.t("LIVES"), lx, 540, label_c, 20, 0.9)
 	var n := mini(maxi(g.player().lives, 0), 6)
 	for i in n:
 		var c := Vector2(lx - (mini(n, 3) - 1) * 24.0 + (i % 3) * 48.0, 580 + (i / 3) * 44)
@@ -237,7 +237,7 @@ func _draw_hud() -> void:
 	var bar := Rect2(hud_row.end.x - 12 - 440 * frac, hud_row.position.y + 16, 440 * frac, 14)
 	hud.draw_rect(bar.grow(4), Color(c, 0.15))
 	hud.draw_rect(bar, c)
-	_text(I18n.t("TEMPO"), hud_row.end.x - 500, hud_row.position.y + 32, label_c, 18, 0.9)
+	_text(I18n.t("TIME"), hud_row.end.x - 500, hud_row.position.y + 32, label_c, 18, 0.9)
 
 
 func _text(text: String, center_x: float, baseline: float, c: Color, size: int, alpha: float, ci: CanvasItem = null) -> void:

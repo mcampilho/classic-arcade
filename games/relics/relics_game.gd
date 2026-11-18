@@ -1,11 +1,11 @@
 class_name RelicsGame
 extends Node2D
-## Torre das Relíquias — aventura isométrica original ao estilo dos jogos "Filmation" de 1984
-## (Knight Lore): um castelo de 4 x 4 salas vistas em perspetiva isométrica. O explorador tem de
-## recolher 8 relíquias e levá-las ao altar antes de acabarem os 30 dias. Há caixotes para
-## empurrar, carregar e empilhar (larga-se um caixote debaixo dos pés a meio de um salto para
-## subir), portas a várias alturas, espinhos, guardas, bolas saltitonas e fantasmas.
-## Coordenadas: x e y em casas (0..8 por sala), z em alturas de bloco.
+## Tower of Relics — original isometric adventure in the style of the 1984 "Filmation" games
+## (Knight Lore): a castle of 4 x 4 rooms seen in isometric perspective. The explorer must
+## collect 8 relics and take them to the altar before the 30 days run out. There are crates to
+## push, carry and stack (drop a crate underfoot in mid-jump to
+## climb up), doors at several heights, spikes, guards, bouncing balls and ghosts.
+## Coordinates: x and y in cells (0..8 per room), z in block heights.
 
 signal match_started
 signal room_entered(room: Vector2i)
@@ -39,14 +39,14 @@ const RELICS := 8
 const DOOR_A := 3.0
 const DOOR_B := 5.0
 const ROOM_NAMES := {
-	Vector2i(0, 0): "Sala das Armaduras", Vector2i(1, 0): "Corredor de Espinhos", Vector2i(2, 0): "Torre Alta", Vector2i(3, 0): "Sala das Bolas",
-	Vector2i(0, 1): "Armazém", Vector2i(1, 1): "Capela do Altar", Vector2i(2, 1): "Escadaria", Vector2i(3, 1): "Labirinto de Espinhos",
-	Vector2i(0, 2): "Salão de Jogos", Vector2i(1, 2): "Corredor da Guarda", Vector2i(2, 2): "Cripta", Vector2i(3, 2): "Cofre",
-	Vector2i(0, 3): "Adega", Vector2i(1, 3): "Galeria", Vector2i(2, 3): "Patamar", Vector2i(3, 3): "Sótão",
+	Vector2i(0, 0): "Armour Room", Vector2i(1, 0): "Spike Corridor", Vector2i(2, 0): "High Tower", Vector2i(3, 0): "Ball Room",
+	Vector2i(0, 1): "Storeroom", Vector2i(1, 1): "Altar Chapel", Vector2i(2, 1): "Staircase", Vector2i(3, 1): "Spike Maze",
+	Vector2i(0, 2): "Games Hall", Vector2i(1, 2): "Guard Corridor", Vector2i(2, 2): "Crypt", Vector2i(3, 2): "Vault",
+	Vector2i(0, 3): "Wine Cellar", Vector2i(1, 3): "Gallery", Vector2i(2, 3): "Landing", Vector2i(3, 3): "Attic",
 }
-## Salas (linhas = y, colunas = x): # bloco, 2/3 pilha de 2/3 blocos, * pilha de 2 com relíquia
-## em cima, c caixote, ^ espinhos, r relíquia, v coração, g/G guarda (eixo x/y), b/B bola,
-## h fantasma, A altar, P início.
+## Rooms (rows = y, columns = x): # block, 2/3 stack of 2/3 blocks, * stack of 2 with a relic
+## on top, c crate, ^ spikes, r relic, v heart, g/G guard (x/y axis), b/B ball,
+## h ghost, A altar, P start.
 const ROOMS := {
 	Vector2i(0, 0): ["##......", "#r......", "........", "........", "........", "..g.....", "...#....", "........"],
 	Vector2i(1, 0): ["........", ".^^^^^^.", ".^....^.", "...^^...", "...^^...", ".^....^.", ".^^^^^^.", "........"],
@@ -65,7 +65,7 @@ const ROOMS := {
 	Vector2i(2, 3): ["........", "........", ".G......", ".......#", ".......#", "........", "........", "........"],
 	Vector2i(3, 3): ["........", "........", "........", "#.......", "#....c..", "........", "......*.", "...b...."],
 }
-## Ligações: [sala A, sala B, altura da porta]. B fica a este (+x) ou a sul (+y) de A.
+## Links: [room A, room B, door height]. B is east (+x) or south (+y) of A.
 const LINKS := [
 	[Vector2i(0, 0), Vector2i(1, 0), 0], [Vector2i(0, 0), Vector2i(0, 1), 0], [Vector2i(1, 0), Vector2i(1, 1), 0],
 	[Vector2i(2, 0), Vector2i(2, 1), 2], [Vector2i(3, 0), Vector2i(3, 1), 0], [Vector2i(0, 1), Vector2i(1, 1), 0],
@@ -83,28 +83,28 @@ var skin: RelicsSkin
 var best := 0
 
 var room := START_ROOM
-var blocks: Array[Dictionary] = []    # pos (canto mínimo), size, kind (stone/crate/altar), vz
-var items: Array[Dictionary] = []     # pos (centro da base), kind (relic/heart), id
+var blocks: Array[Dictionary] = []    # pos (minimum corner), size, kind (stone/crate/altar), vz
+var items: Array[Dictionary] = []     # pos (centre of the base), kind (relic/heart), id
 var enemies: Array[Dictionary] = []   # kind, pos, dir, speed, phase
 var spikes := {}                      # Vector2i -> true
-var doors := {}                       # "N"/"S"/"W"/"E" -> altura
-var pos := Vector3(5.5, 5.5, 0.0)     # centro da base do explorador
+var doors := {}                       # "N"/"S"/"W"/"E" -> height
+var pos := Vector3(5.5, 5.5, 0.0)     # centre of the explorer's base
 var vz := 0.0
 var grounded := true
 var facing := Vector2(1, 0)
 var anim := 0.0
 var moving := false
-var carrying: Variant = null          # caixote ao colo
+var carrying: Variant = null          # crate being carried
 var entry := Vector3(5.5, 5.5, 0.0)
 var entry_facing := Vector2(1, 0)
 var lives := 5
 var score := 0
 var carried_relics := 0
 var deposited := 0
-var collected := {}                   # id -> true (relíquias e corações já apanhados)
+var collected := {}                   # id -> true (relics and hearts already taken)
 var visited := {}
 var clock := 0.0
-var safe_t := 0.0                     # invulnerável logo depois de entrar numa sala
+var safe_t := 0.0                     # invulnerable right after entering a room
 var timer := 0.0
 var _jump_buffer := 0.0
 var _action_buffer := 0.0
@@ -175,7 +175,7 @@ func day() -> int:
 	return mini(1 + int(clock / DAY_SECONDS), DAYS)
 
 
-## 0..1 ao longo do dia (0 = madrugada, 0.5 = meio-dia).
+## 0..1 through the day (0 = dawn, 0.5 = midday).
 func day_phase() -> float:
 	return fmod(clock / DAY_SECONDS, 1.0)
 
@@ -191,7 +191,7 @@ static func link_height(a: Vector2i, b: Vector2i) -> int:
 	return -1
 
 
-# ---------------------------------------------------------------- partida e salas
+# ---------------------------------------------------------------- match and rooms
 
 func start(p_mode: Mode, p_lives := 5) -> void:
 	mode = p_mode
@@ -274,7 +274,7 @@ func _add_item(kind: String, p: Vector3, id: String) -> void:
 	items.append({"pos": p, "kind": kind, "id": id, "phase": randf() * TAU})
 
 
-## Caixas sólidas das paredes (com as aberturas das portas).
+## Solid wall boxes (with the door openings).
 func wall_boxes() -> Array:
 	var out := []
 	var big := 20.0
@@ -315,7 +315,7 @@ static func _overlap(a: AABB, b: AABB, eps := 0.001) -> bool:
 		and a.position.z < b.end.z - eps and a.end.z > b.position.z + eps
 
 
-## Altura da superfície mais alta debaixo de uma caixa (que não esteja acima de `max_z`).
+## Height of the highest surface below a box (not above `max_z`).
 func support_under(box: AABB, max_z: float, ignore: Variant = null) -> float:
 	var best_z := 0.0
 	for b in blocks:
@@ -343,7 +343,7 @@ func _blocked(box: AABB, ignore: Variant = null) -> Variant:
 	return null
 
 
-# ---------------------------------------------------------------- ciclo
+# ---------------------------------------------------------------- loop
 
 func _process(delta: float) -> void:
 	if paused:
@@ -414,9 +414,9 @@ func _step(dt: float) -> void:
 					start(Mode.DEMO, 3)
 
 
-# ---------------------------------------------------------------- explorador
+# ---------------------------------------------------------------- explorer
 
-## Direção pedida, já convertida para o chão isométrico (cima no ecrã = -x -y).
+## Requested direction, already converted to the isometric floor (screen up = -x -y).
 func _input_dir() -> Vector2:
 	if is_ai():
 		return ai.dir
@@ -428,7 +428,7 @@ func _input_dir() -> Vector2:
 	var v := Vector2(sx, sy)
 	if v.length() < 0.3:
 		return Vector2.ZERO
-	# 8 direções no ecrã -> eixos do mundo (as diagonais do ecrã são os eixos do mundo)
+	# 8 screen directions -> world axes (the screen diagonals are the world axes)
 	var a := snappedf(v.angle(), PI / 4)
 	var s := Vector2.from_angle(a)
 	return Vector2(s.x + s.y, s.y - s.x).normalized()
@@ -489,13 +489,13 @@ func _move_axis(axis: int, delta: float) -> void:
 	if hit == null:
 		pos = np
 		return
-	# degrau baixo: sobe sozinho
+	# low step: climbs it automatically
 	if hit is Dictionary:
 		var top: float = (hit.pos as Vector3).z + (hit.size as Vector3).z
 		if top - pos.z <= 0.3 and _blocked(player_aabb(Vector3(np.x, np.y, top))) == null:
 			pos = Vector3(np.x, np.y, top)
 			return
-		# empurrar caixotes
+		# push crates
 		if hit.kind == "crate" and grounded:
 			var cp: Vector3 = hit.pos
 			cp[axis] += delta
@@ -515,7 +515,7 @@ func _player_on(b: Dictionary) -> bool:
 
 func _action() -> void:
 	if carrying == null:
-		# apanhar o caixote à frente (ou debaixo dos pés não)
+		# pick up the crate ahead (not the one underfoot)
 		var probe := Vector3(pos.x + facing.x * 0.7, pos.y + facing.y * 0.7, pos.z + 0.3)
 		for b in blocks:
 			if b.kind != "crate":
@@ -529,7 +529,7 @@ func _action() -> void:
 		return
 	var crate: Dictionary = carrying
 	var size: Vector3 = crate.size
-	# a meio de um salto, bem acima do chão: larga debaixo dos pés
+	# mid-jump, well above the floor: drop it underfoot
 	var under := support_under(player_aabb(), pos.z)
 	if not grounded and pos.z - under >= size.z - 0.02:
 		var cell := Vector2(floorf(pos.x) + 0.05, floorf(pos.y) + 0.05)
@@ -542,7 +542,7 @@ func _action() -> void:
 			vz = 0.0
 			dropped.emit()
 			return
-	# senão, à frente
+	# otherwise, in front
 	var fc := Vector2(floorf(pos.x + facing.x * 0.9), floorf(pos.y + facing.y * 0.9))
 	if fc.x < 0 or fc.y < 0 or fc.x >= ROOM or fc.y >= ROOM:
 		return
@@ -610,7 +610,7 @@ func _check_exit() -> void:
 			pos.y = ROOM - 0.35
 		"S":
 			pos.y = 0.35
-	# chegar acima do chão: assenta na superfície que houver
+	# landing above the floor: rests on whatever surface is there
 	var sup := support_under(player_aabb(Vector3(pos.x, pos.y, pos.z + 0.01)), pos.z + 0.01)
 	pos.z = maxf(sup, 0.0) if pos.z - sup < 0.05 else pos.z
 	entry = pos
@@ -636,7 +636,7 @@ func _pickups() -> void:
 			else:
 				lives += 1
 				heart_taken.emit()
-	# entregar as relíquias no altar
+	# deliver the relics to the altar
 	if carried_relics > 0:
 		for b in blocks:
 			if b.kind == "altar" and block_aabb(b).grow(0.25).intersects(pb):
@@ -654,7 +654,7 @@ func _pickups() -> void:
 				break
 
 
-# ---------------------------------------------------------------- perigos
+# ---------------------------------------------------------------- hazards
 
 func _move_enemies(dt: float) -> void:
 	for e in enemies:
@@ -705,7 +705,7 @@ func _die() -> void:
 	player_died.emit(pos)
 
 
-# ---------------------------------------------------------------- entrada
+# ---------------------------------------------------------------- input
 
 func _unhandled_input(event: InputEvent) -> void:
 	if paused or is_ai():
@@ -716,7 +716,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		_action_buffer = 0.15
 	if event.device == InputEvent.DEVICE_ID_EMULATION:
 		return
-	# Tátil: metade esquerda = joystick; metade direita: em cima salta, em baixo pega/larga.
+	# Touch: left half = joystick; right half: top jumps, bottom picks up/drops.
 	if event is InputEventScreenTouch:
 		if event.pressed:
 			if event.position.x < 640.0:
@@ -745,9 +745,9 @@ func touch_stick() -> Variant:
 	return _touch_origin if _touch_index >= 0 else null
 
 
-# ---------------------------------------------------------------- CPU da demonstração
+# ---------------------------------------------------------------- demo CPU
 
-## A demonstração passeia pelo chão: vai buscar relíquias ao nível do chão e muda de sala.
+## The demo wanders on the floor: fetches floor-level relics and changes rooms.
 func _ai_think(delta: float) -> void:
 	_ai_t -= delta
 	ai.dir = Vector2.ZERO
@@ -767,7 +767,7 @@ func _ai_think(delta: float) -> void:
 	if to.length() < 0.1:
 		_ai_path.remove_at(0)
 		return
-	# perigo por perto: esperar
+	# danger nearby: wait
 	for e in enemies:
 		var ep: Vector3 = e.pos
 		if Vector2(ep.x, ep.y).distance_to(target) < 1.0 and e.kind != "ghost":
@@ -793,7 +793,7 @@ func _ai_plan(here: Vector2i) -> void:
 		var ip: Vector3 = it.pos
 		if ip.z < 0.1:
 			goals[Vector2i(floori(ip.x), floori(ip.y))] = 3
-	# portas ao nível do chão (a sala seguinte é escolhida ao acaso)
+	# floor-level doors (the next room is picked at random)
 	var door_cells := {"N": Vector2i(3 + randi() % 2, 0), "S": Vector2i(3 + randi() % 2, 7), "W": Vector2i(0, 3 + randi() % 2), "E": Vector2i(7, 3 + randi() % 2)}
 	var sides: Array = doors.keys()
 	sides.shuffle()

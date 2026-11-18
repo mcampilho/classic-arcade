@@ -1,6 +1,6 @@
 extends OutRunSkin
-## Synthwave: noite eterna, sol às riscas no horizonte, montanhas de arame, chão em grelha
-## néon e silhuetas com contorno brilhante. Cada tema muda o par de cores néon.
+## Synthwave: eternal night, striped sun on the horizon, wireframe mountains, neon grid
+## floor and glowing-edged silhouettes. Each theme changes the pair of neon colours.
 
 const THEME_COLORS := {
 	"costa": {"sky": [Color("0b0326"), Color("5a0f6e")], "sun": [Color("ffd319"), Color("ff2975")], "neon": Color("ff2975"), "neon2": Color("00e5ff"), "ground": Color("3c3850")},
@@ -56,7 +56,7 @@ func _sun(t: String) -> Texture2D:
 	var r := size / 2.0
 	for y in size:
 		var k := float(y) / size
-		# riscas que engrossam para baixo
+		# stripes getting thicker downwards
 		if k > 0.5:
 			var band := fmod((k - 0.5) * 12.0, 1.0)
 			if band < (k - 0.5) * 1.3:
@@ -129,7 +129,7 @@ func frame_colors() -> Dictionary:
 		"lane": [_neon2, Color(0, 0, 0, 0)], "fog": sky[1]}
 
 
-## Grelha néon no chão: linhas transversais a cada 4 segmentos e linhas a fugir para o horizonte.
+## Neon grid on the ground: cross lines every 4 segments and lines running to the horizon.
 func _draw_row_extra(r: Dictionary) -> void:
 	var f: float = r.fog
 	if f >= 0.95:
@@ -167,7 +167,7 @@ func _draw_background() -> void:
 	for s in stars:
 		var tw := 0.5 + 0.5 * sin(time * 2.0 + s.z)
 		draw_rect(Rect2(fposmod(s.x - bg_scroll * 0.3, W), s.y, 2, 2), Color(1, 1, 1, 0.25 + 0.6 * tw * (1.0 - s.y / 320.0)))
-	# sol (troca suavemente de cor com o tema)
+	# sun (smoothly changes colour with the theme)
 	var sun_x := W / 2 - fposmod(bg_scroll * 0.5 + 640.0, 2400.0) + 640.0
 	var sun_rect := Rect2(sun_x - 150, hy - 230, 300, 300)
 	if theme_blend < 1.0:
@@ -225,7 +225,7 @@ func _draw_car(car: Dictionary, rect: Rect2, alpha: float, _r: Dictionary) -> vo
 	var t := _car_tex(car.kind, car.color)
 	var h := rect.size.x * t.get_height() / t.get_width()
 	var r := Rect2(rect.position.x, rect.position.y - h, rect.size.x, h)
-	# farolins a brilhar
+	# glowing tail lights
 	var gw := rect.size.x * 0.5
 	for fx: float in [0.13, 0.87]:
 		draw_texture_rect(glow_tex, Rect2(r.position.x + r.size.x * fx - gw / 2, r.position.y + h * 0.6 - gw / 2, gw, gw), false, Color(1.0, 0.16, 0.46, 0.5 * alpha))
@@ -259,17 +259,17 @@ func _draw_hud() -> void:
 	var neon: Color = col("neon")
 	var neon2: Color = col("neon2")
 	draw_texture_rect(scan_tex, Rect2(0, 0, W, H), true)
-	neon_text(I18n.t("TEMPO"), W / 2, 16, 3, neon2)
+	neon_text(I18n.t("TIME"), W / 2, 16, 3, neon2)
 	var secs := str(ceili(g.time_left))
 	var warn := g.time_left < 10.0 and fmod(time, 0.5) < 0.25
 	PixelFont.draw(self, secs, W / 2 - 4, 44, 9, Color(neon2, 0.7))
 	PixelFont.draw(self, secs, W / 2 + 4, 44, 9, Color(neon, 0.8))
 	PixelFont.draw(self, secs, W / 2, 44, 9, Color.WHITE if not warn else neon)
-	neon_text(I18n.t("PONTOS"), 130, 16, 3, neon)
+	neon_text(I18n.t("SCORE"), 130, 16, 3, neon)
 	neon_text("%d" % g.score, 130, 44, 4, Color.WHITE)
-	neon_text(I18n.t("ETAPA %d") % (g.stage + 1), 1120, 16, 3, neon)
+	neon_text(I18n.t("STAGE %d") % (g.stage + 1), 1120, 16, 3, neon)
 	draw_route_map(Vector2(1040, 92), Vector2(40, 26), Color(neon2, 0.35), Color(neon2, 0.7), neon, 2.0, 4.0)
-	# velocidade: barra em leque
+	# speed: fan-shaped bar
 	var kmh := g.kmh()
 	neon_text("%3d" % kmh, 120, 630, 6, neon2)
 	neon_text("KM/H", 120, 684, 2, neon)
@@ -281,10 +281,10 @@ func _draw_hud() -> void:
 		var cc := neon2.lerp(neon, i / 19.0)
 		draw_line(center + Vector2.from_angle(a) * 70, center + Vector2.from_angle(a) * 100, cc if on else Color(cc, 0.15), 5.0)
 	if g.manual_gears:
-		neon_text(I18n.t("ALTA") if g.high_gear else I18n.t("BAIXA"), 330, 600, 3, neon2)
+		neon_text(I18n.t("HI") if g.high_gear else I18n.t("LO"), 330, 600, 3, neon2)
 	for p in popups:
 		var a := clampf(float(p.life), 0.0, 1.0)
-		neon_text(I18n.t("TEMPO EXTRA ") + str(p.text), W / 2, 150, 5, Color(neon2, a))
+		neon_text(I18n.t("EXTRA TIME ") + str(p.text), W / 2, 150, 5, Color(neon2, a))
 
 
 func ui_palette() -> Dictionary:

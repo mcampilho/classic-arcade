@@ -1,6 +1,6 @@
 extends ChuckieSkin
-## Clássico 1983: a paleta de 8 cores dos micros de 8 bits (fundo preto, cores puras e brilhantes),
-## tijolos verdes, escadas magenta e os "bips" do altifalante interno.
+## Classic 1983: the 8-colour palette of 8-bit home computers (black background, pure bright colours),
+## green bricks, magenta ladders and the "beeps" of the internal speaker.
 
 const BLACK := Color("000000")
 const GREEN := Color("00d700")
@@ -75,12 +75,12 @@ func _draw_static(ci: CanvasItem) -> void:
 				ci.draw_texture_rect(tex.brick, rect, false)
 			if game.is_ladder(c, r):
 				ci.draw_texture_rect(tex.ladder, rect, false)
-				# as calhas da escada passam um pouco acima da plataforma
+				# the ladder rails stick out a little above the platform
 				if not game.is_ladder(c, r - 1) and game.is_floor(c, r):
 					ci.draw_rect(Rect2(rect.position + Vector2(1 * S, -6 * S), Vector2(S, 6 * S)), MAGENTA)
 					ci.draw_rect(Rect2(rect.position + Vector2(6 * S, -6 * S), Vector2(S, 6 * S)), MAGENTA)
 					ci.draw_rect(Rect2(rect.position + Vector2(1 * S, -3 * S), Vector2(6 * S, S)), MAGENTA)
-	# moldura do campo
+	# field frame
 	ci.draw_rect(field_rect().grow(4), BLUE, false, 4.0)
 
 
@@ -97,24 +97,24 @@ func _draw_hud() -> void:
 	var lx := panel_left_x()
 	var rx := panel_right_x()
 	var two := g.players.size() > 1
-	PixelFont.draw(self, I18n.t("PONTOS") if not two else I18n.t("JOG. 1"), lx, 40, 3, Color(YELLOW, 1.0 if g.current == 0 else 0.4))
+	PixelFont.draw(self, I18n.t("SCORE") if not two else I18n.t("P1"), lx, 40, 3, Color(YELLOW, 1.0 if g.current == 0 else 0.4))
 	PixelFont.draw(self, "%06d" % g.players[0].score, lx, 76, 4, WHITE)
 	if two:
-		PixelFont.draw(self, I18n.t("JOG. 2"), lx, 140, 3, Color(YELLOW, 1.0 if g.current == 1 else 0.4))
+		PixelFont.draw(self, I18n.t("P2"), lx, 140, 3, Color(YELLOW, 1.0 if g.current == 1 else 0.4))
 		PixelFont.draw(self, "%06d" % g.players[1].score, lx, 176, 4, WHITE)
-	PixelFont.draw(self, I18n.t("RECORDE"), lx, 260, 3, CYAN)
+	PixelFont.draw(self, I18n.t("HI-SCORE"), lx, 260, 3, CYAN)
 	PixelFont.draw(self, "%06d" % maxi(g.best, g.player().score), lx, 296, 4, WHITE)
-	PixelFont.draw(self, I18n.t("VIDAS"), lx, 560, 3, CYAN)
+	PixelFont.draw(self, I18n.t("LIVES"), lx, 560, 3, CYAN)
 	for i in mini(g.player().lives, 6):
 		draw_texture_rect(tex.farmer_stand, Rect2(lx - 84 + i * 28, 600, 24, 48), false)
-	PixelFont.draw(self, I18n.t("NIVEL"), rx, 40, 3, CYAN)
+	PixelFont.draw(self, I18n.t("LEVEL"), rx, 40, 3, CYAN)
 	PixelFont.draw(self, str(g.level()), rx, 76, 5, WHITE)
-	PixelFont.draw(self, I18n.t("TEMPO"), rx, 160, 3, CYAN)
+	PixelFont.draw(self, I18n.t("TIME"), rx, 160, 3, CYAN)
 	var low := g.time_left < 150.0 and fmod(time, 0.4) < 0.2
 	PixelFont.draw(self, "%03d" % int(g.time_left), rx, 196, 5, RED if low else WHITE)
 	if g.freeze > 0.0:
-		PixelFont.draw(self, I18n.t("PARADO"), rx, 250, 2, YELLOW)
-	PixelFont.draw(self, I18n.t("OVOS"), rx, 320, 3, CYAN)
+		PixelFont.draw(self, I18n.t("FROZEN"), rx, 250, 2, YELLOW)
+	PixelFont.draw(self, I18n.t("EGGS"), rx, 320, 3, CYAN)
 	PixelFont.draw(self, str(g.eggs.size()), rx, 356, 5, WHITE)
 	for p in popups:
 		PixelFont.draw(self, p.text, px(p.pos).x, px(p.pos).y - 20, 2, WHITE)

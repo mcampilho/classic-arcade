@@ -1,7 +1,7 @@
 extends PenetratorSkin
-## Mapa Topográfico: a missão vista numa carta militar em corte — papel com quadrícula, terreno
-## pintado em tintas hipsométricas com curvas de nível, inimigos como símbolos de mapa, legenda
-## em cartela e uma escala gráfica como barra de progresso.
+## Topographic Map: the mission seen on a military cross-section chart — grid paper, terrain
+## painted in hypsometric tints with contour lines, enemies as map symbols, a legend
+## in a cartouche and a scale bar as the progress bar.
 
 const PAPER := Color("efe7d2")
 const GRID := Color("d6ccb0")
@@ -21,7 +21,7 @@ func _setup() -> void:
 	font = ThemeDB.fallback_font
 	var pal := {"B": Color("f7f2e4"), "b": Color("d9d0bb"), "H": RED, "C": BLUE, "N": RED, "F": Color("e0a33a"), "K": INK}
 	tex.ship = PixelArt.outlined(SHIP, pal, INK, 1)
-	# papel: quadrícula de 40 px com linhas finas de 8 px
+	# paper: 40 px grid with thin 8 px lines
 	var img := Image.create(40, 40, false, Image.FORMAT_RGBA8)
 	img.fill(PAPER)
 	for i in 40:
@@ -38,7 +38,7 @@ func _setup() -> void:
 
 
 func _build_sfx() -> void:
-	# sons "de secretária": lápis, carimbo, papel
+	# "desk" sounds: pencil, stamp, paper
 	sfx.engine = Synth.to_stream(Synth.render(0.0, 1.0, {"wave": "noise", "volume": 0.05, "lowpass": 0.05, "attack": 0.0, "release": 0.0}))
 	sfx.shot = Synth.tone(0.0, 0.06, {"wave": "noise", "volume": 0.12, "lowpass": 0.6, "decay": 50.0})
 	sfx.bomb = Synth.tone(700.0, 0.4, {"wave": "triangle", "freq_end": 350.0, "volume": 0.12})
@@ -81,7 +81,7 @@ func _draw_terrain() -> void:
 	for i in BANDS.size():
 		bands.append([16.0, BANDS[i]])
 	fill_terrain(bands, false)
-	# teto das cavernas em cinzentos (rocha)
+	# cave ceilings in greys (rock)
 	if has_ceiling():
 		var v := visible_cols()
 		for c in range(v.x, v.y):
@@ -97,7 +97,7 @@ func _draw_terrain() -> void:
 					Vector2(x0 + PenetratorGame.CW, maxf(c1 - d, PenetratorGame.TOP)), Vector2(x0, maxf(c0 - d, PenetratorGame.TOP)), CAVE_BANDS[i])
 				d += t
 		_flush()
-	# curvas de nível
+	# contour lines
 	var base := contour(false)
 	for k in BANDS.size():
 		var pts := PackedVector2Array()
@@ -124,7 +124,7 @@ func _draw_terrain() -> void:
 func _draw_enemy(e: Dictionary, p: Vector2) -> void:
 	match e.kind:
 		"missile":
-			# símbolo de míssil: triângulo vermelho com haste
+			# missile symbol: red triangle on a stem
 			var c := p - Vector2(0, 20)
 			draw_line(p, c + Vector2(0, 6), INK, 3.0)
 			draw_colored_polygon(PackedVector2Array([c + Vector2(0, -20), c + Vector2(-9, 8), c + Vector2(9, 8)]), RED)
@@ -142,7 +142,7 @@ func _draw_enemy(e: Dictionary, p: Vector2) -> void:
 			draw_circle(p + Vector2(0, -6), 8, PAPER)
 			draw_arc(p + Vector2(0, -6), 8, PI, TAU, 16, INK, 2.0)
 		"store":
-			# símbolo de depósito: quadrado com X
+			# depot symbol: square with an X
 			var r := Rect2(p + Vector2(-45, -70), Vector2(90, 70))
 			draw_rect(r, Color(RED, 0.2))
 			draw_rect(r, INK, false, 3.0)
@@ -165,7 +165,7 @@ func _draw_bomb(p: Vector2, v: Vector2) -> void:
 
 func _draw_ship(p: Vector2) -> void:
 	draw_tex_center(tex.ship, p, 3.0, game.ship_tilt * 0.08)
-	# rasto tracejado
+	# dashed trail
 	for k in 6:
 		draw_line(p + Vector2(-44 - k * 18, 2), p + Vector2(-52 - k * 18, 2), Color(RED, 0.7 - k * 0.1), 2.0)
 
@@ -179,7 +179,7 @@ func _draw_booms() -> void:
 		var k: float = 1.0 - float(b.life) / float(b.max)
 		var c := Vector2(sx(b.pos.x), b.pos.y)
 		var r: float = float(b.size) * (0.4 + k)
-		# estrela de explosão desenhada a tinta
+		# ink-drawn explosion star
 		var pts := PackedVector2Array()
 		for i in 16:
 			var a := i * TAU / 16
@@ -199,11 +199,11 @@ func _draw_hud() -> void:
 	draw_rect(Rect2(0, 0, PenetratorGame.W, top), PAPER)
 	draw_line(Vector2(0, top), Vector2(PenetratorGame.W, top), INK, 3.0)
 	draw_line(Vector2(0, top - 5), Vector2(PenetratorGame.W, top - 5), INK, 1.0)
-	label(I18n.t("CARTA MILITAR  ·  MISSÃO %d") % g.mission, Vector2(24, 26), 18, INK)
-	label(I18n.t("Folha %d — %s") % [g.zone + 1, I18n.t(PenetratorGame.ZONE_NAMES[g.zone])], Vector2(24, 52), 16, RED)
-	label(I18n.t("PONTOS %06d") % g.score, Vector2(1000, 26), 20, INK)
-	label(I18n.t("recorde %06d   naves %d") % [maxi(g.best, g.score), g.lives], Vector2(1000, 52), 14, INK)
-	# escala gráfica = progresso das 5 folhas
+	label(I18n.t("MILITARY MAP  ·  MISSION %d") % g.mission, Vector2(24, 26), 18, INK)
+	label(I18n.t("Sheet %d — %s") % [g.zone + 1, I18n.t(PenetratorGame.ZONE_NAMES[g.zone])], Vector2(24, 52), 16, RED)
+	label(I18n.t("SCORE %06d") % g.score, Vector2(1000, 26), 20, INK)
+	label(I18n.t("record %06d   ships %d") % [maxi(g.best, g.score), g.lives], Vector2(1000, 52), 14, INK)
+	# scale bar = progress over the 5 sheets
 	var x0 := 440.0
 	var w := 420.0
 	for z in PenetratorGame.ZONES:

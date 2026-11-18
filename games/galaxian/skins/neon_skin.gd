@@ -1,6 +1,6 @@
 extends GalaxianSkin
-## Neon: naves de luz com rasto nos mergulhos, estrelas em riscos de velocidade, faíscas,
-## ondas de choque e pontos a flutuar, sobre a grelha roxa da coleção.
+## Neon: light ships with trails when diving, stars as speed streaks, sparks,
+## shock waves and floating points, on the collection's purple grid.
 
 const BG_TOP := Color("0a0320")
 const BG_BOTTOM := Color("1b0639")
@@ -16,7 +16,7 @@ var flash := 0.0
 var flash_color := Color.WHITE
 var tex := {}
 var glow := {}
-var trails := {}       # índice da nave -> Array[Vector2]
+var trails := {}       # ship index -> Array[Vector2]
 var sparks: Array[Dictionary] = []
 var rings: Array[Dictionary] = []
 
@@ -187,16 +187,16 @@ func _draw_panels() -> void:
 	var lx := panel_left_x()
 	var rx := panel_right_x()
 	var label_c := Color("8a5cff").lerp(Color.WHITE, 0.3)
-	_text(I18n.t("JOGADOR 1"), lx, 80, label_c, 20, 1.0 if (g.current == 0 or g.players.size() == 1) else 0.4)
+	_text(I18n.t("PLAYER 1"), lx, 80, label_c, 20, 1.0 if (g.current == 0 or g.players.size() == 1) else 0.4)
 	_text(str(g.players[0].score), lx, 140, PLAYER_C, 52, 1.0 if (g.current == 0 or g.players.size() == 1) else 0.4)
-	_text(I18n.t("RECORDE"), lx, 230, label_c, 20, 0.9)
+	_text(I18n.t("HI-SCORE"), lx, 230, label_c, 20, 0.9)
 	_text(str(maxi(g.best, g.player().score)), lx, 280, Color("ffd43b"), 40, 0.9)
 	if g.players.size() > 1:
-		_text(I18n.t("JOGADOR 2"), rx, 80, label_c, 20, 1.0 if g.current == 1 else 0.4)
+		_text(I18n.t("PLAYER 2"), rx, 80, label_c, 20, 1.0 if g.current == 1 else 0.4)
 		_text(str(g.players[1].score), rx, 140, Color("ff2bd6"), 52, 1.0 if g.current == 1 else 0.4)
-	_text(I18n.t("VAGA"), rx, 230, label_c, 20, 0.9)
+	_text(I18n.t("WAVE"), rx, 230, label_c, 20, 0.9)
 	_text(str(g.player().wave), rx, 280, Color("3dffa0"), 40, 0.9)
-	_text(I18n.t("VIDAS"), lx, 560, label_c, 20, 0.9)
+	_text(I18n.t("LIVES"), lx, 560, label_c, 20, 0.9)
 	var n := mini(maxi(g.player().lives, 0), 6)
 	for i in n:
 		var pos := Vector2(lx - (n - 1) * 24.0 + i * 48.0 - 19.5, 590)

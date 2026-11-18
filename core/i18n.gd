@@ -1,18 +1,18 @@
 class_name I18n
 extends RefCounted
-## Traduções: o texto original (português) é a chave; i18n/strings.gd tem o inglês e o espanhol.
-## I18n.t("Jogar") devolve o texto no idioma escolhido (ou o original, se não houver tradução).
-## Os Label/Button também se traduzem sozinhos quando o texto é exatamente uma chave.
+## Translations: the original English text is the key; i18n/strings.gd has Portuguese and Spanish.
+## I18n.t("Play") returns the text in the chosen language (or the English one if there is none).
+## Labels and Buttons also translate themselves when their text is exactly a key.
 
-const LANGS := ["pt", "en", "es"]
-const LANG_NAMES := ["Português", "English", "Español"]
+const LANGS := ["en", "pt", "es"]
+const LANG_NAMES := ["English", "Português", "Español"]
 const STRINGS := preload("res://i18n/strings.gd")
 
-static var lang := "pt"
-static var _ready := false
+static var lang := "en"
+static var _loaded := false
 
 
-## Idioma do sistema, se for um dos suportados (senão inglês).
+## The system language, if it is supported (otherwise English).
 static func system_lang() -> String:
 	var l := OS.get_locale_language()
 	return l if l in LANGS else "en"
@@ -20,8 +20,8 @@ static func system_lang() -> String:
 
 static func setup(p_lang: String) -> void:
 	lang = p_lang if p_lang in LANGS else "en"
-	if not _ready:
-		_ready = true
+	if not _loaded:
+		_loaded = true
 		for i in range(1, LANGS.size()):
 			var tr := Translation.new()
 			tr.locale = LANGS[i]
@@ -34,6 +34,6 @@ static func setup(p_lang: String) -> void:
 
 
 static func t(s: String) -> String:
-	if lang == "pt":
+	if lang == "en":
 		return s
 	return String(TranslationServer.translate(s))

@@ -1,6 +1,6 @@
 extends CentipedeSkin
-## Neon: cogumelos fosforescentes, centopeia de luz com rasto, aranha elétrica,
-## faíscas e ondas de choque.
+## Neon: phosphorescent mushrooms, a light centipede with a trail, electric spider,
+## sparks and shock waves.
 
 const BG_TOP := Color("0a0320")
 const BG_BOTTOM := Color("1b0639")
@@ -209,16 +209,16 @@ func _draw_hud() -> void:
 	var rx := panel_right_x()
 	var label_c := Color("8a5cff").lerp(Color.WHITE, 0.3)
 	var a0 := 1.0 if (g.current == 0 or g.players.size() == 1) else 0.4
-	_text(I18n.t("JOGADOR 1"), lx, 80, label_c, 20, a0)
+	_text(I18n.t("PLAYER 1"), lx, 80, label_c, 20, a0)
 	_text(str(g.players[0].score), lx, 140, Color("19f0ff"), 50, a0)
-	_text(I18n.t("RECORDE"), lx, 230, label_c, 20, 0.9)
+	_text(I18n.t("HI-SCORE"), lx, 230, label_c, 20, 0.9)
 	_text(str(maxi(g.best, g.player().score)), lx, 280, Color("ffd43b"), 38, 0.9)
 	if g.players.size() > 1:
-		_text(I18n.t("JOGADOR 2"), rx, 80, label_c, 20, 1.0 if g.current == 1 else 0.4)
+		_text(I18n.t("PLAYER 2"), rx, 80, label_c, 20, 1.0 if g.current == 1 else 0.4)
 		_text(str(g.players[1].score), rx, 140, Color("ff2bd6"), 50, 1.0 if g.current == 1 else 0.4)
-	_text(I18n.t("VAGA"), rx, 230, label_c, 20, 0.9)
+	_text(I18n.t("WAVE"), rx, 230, label_c, 20, 0.9)
 	_text(str(g.wave()), rx, 280, colors()[1], 38, 0.9)
-	_text(I18n.t("VIDAS"), lx, 560, label_c, 20, 0.9)
+	_text(I18n.t("LIVES"), lx, 560, label_c, 20, 0.9)
 	var n := mini(maxi(g.player().lives, 0), 6)
 	for i in n:
 		var c := Vector2(lx - (n - 1) * 18.0 + i * 36.0, 600)

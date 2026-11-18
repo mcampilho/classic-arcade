@@ -1,7 +1,7 @@
 extends PalaceSkin
-## Silhueta: teatro de sombras ao pôr do sol — o palácio e as personagens a negro recortados
-## contra um céu em degradê, arcos ao longe, tochas que são só luz e um lenço que esvoaça atrás
-## do herói. Cada linha de ecrãs tem a sua hora do dia.
+## Silhouette: a shadow play at sunset — the palace and characters cut out in black
+## against a gradient sky, arches in the distance, torches that are only light and a scarf fluttering behind
+## the hero. Each row of screens has its own time of day.
 
 const BLACK := Color("08070c")
 const SKIES := [[Color("2a1240"), Color("e8743b"), Color("ffd28a")], [Color("0e1a3a"), Color("3a6a9a"), Color("bfe0f0")]]
@@ -57,7 +57,7 @@ func _draw_back() -> void:
 		draw_rect(Rect2(0, OFF_Y + t * ROOM_H - 1, 1280, ROOM_H / 23.0 + 2), c)
 	draw_circle(Vector2(900 - game.room.x * 140, OFF_Y + 430), 120, Color(s[2], 0.55))
 	draw_circle(Vector2(900 - game.room.x * 140, OFF_Y + 430), 80, Color(s[2], 0.8))
-	# arcos ao longe
+	# arches in the distance
 	for k in 6:
 		var x := fposmod(k * 260.0 - game.room.x * 90.0, 1560.0) - 140.0
 		var base := OFF_Y + ROOM_H - 40
@@ -81,7 +81,7 @@ func _paint_tile(ci: CanvasItem, _gc: int, _gr: int, ch: String, r: Rect2) -> vo
 		if ch == "~":
 			slab = slab.grow_individual(-5, 0, -5, 0)
 		ci.draw_rect(slab, BLACK)
-		# franjas decorativas penduradas
+		# hanging decorative fringes
 		for k in 4:
 			ci.draw_circle(Vector2(r.position.x + 16 + k * 32, fy + 24), 5, BLACK)
 	if ch == "D":
@@ -92,7 +92,7 @@ func _paint_tile(ci: CanvasItem, _gc: int, _gr: int, ch: String, r: Rect2) -> vo
 
 
 func _tick(_d: float) -> void:
-	# o lenço segue o pescoço com atraso
+	# the scarf follows the neck with a delay
 	var j := joints(game.pos, game.facing, hero_pose())
 	var neck: Vector2 = j.neck
 	if scarf.is_empty() or scarf[0].distance_to(neck) > 200.0:

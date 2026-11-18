@@ -1,9 +1,9 @@
 class_name OutRunMusic
 extends RefCounted
-## Rádio do OutRun: três músicas originais, compostas para este projeto e sintetizadas em código.
-## Notação: cada compasso tem 8 colcheias; "-" prolonga a nota anterior e "." é pausa.
+## OutRun radio: three original songs, composed for this project and synthesized in code.
+## Notation: each bar has 8 eighth notes; "-" holds the previous note and "." is a rest.
 
-const NAMES := ["Onda Atlântica", "Estrada Mágica", "Pôr do Sol"]
+const NAMES := ["Atlantic Wave", "Magic Road", "Sunset"]
 const QUALITIES := {"": [0, 4, 7], "m": [0, 3, 7], "7": [0, 4, 7, 10], "m7": [0, 3, 7, 10], "maj7": [0, 4, 7, 11]}
 
 const SONGS := [
@@ -68,7 +68,7 @@ static func cache_key(i: int) -> String:
 	return "outrun_song_%d" % i
 
 
-## A música i, se já estiver pronta (gerada em segundo plano por prewarm()).
+## Song i, if it is ready (generated in the background by prewarm()).
 static func stream(i: int) -> AudioStreamWAV:
 	var d: Variant = Synth.cache_get(cache_key(i))
 	if d == null:
@@ -100,7 +100,7 @@ static func freq(m: int) -> float:
 	return 440.0 * pow(2.0, (m - 69) / 12.0)
 
 
-## "F#m7" -> [raiz MIDI na oitava 2, intervalos]
+## "F#m7" -> [MIDI root in octave 2, intervals]
 static func chord(sym: String) -> Array:
 	var root := sym[0]
 	var rest := sym.substr(1)
@@ -114,7 +114,7 @@ static func build(index: int) -> AudioStreamWAV:
 	return build_song(SONGS[index])
 
 
-## Sintetiza uma música descrita nesta notação (também usado por outros jogos).
+## Synthesizes a song written in this notation (also used by other games).
 static func build_song(song: Dictionary) -> AudioStreamWAV:
 	var eighth: float = 60.0 / float(song.bpm) / 2.0
 	var bars: int = song.melody.size()
@@ -126,7 +126,7 @@ static func build_song(song: Dictionary) -> AudioStreamWAV:
 	var notes := {}
 	var chords: PackedStringArray = (song.chords as String).split(" ", false)
 
-	# melodia
+	# melody
 	for b in bars:
 		var tokens: PackedStringArray = (song.melody[b] as String).split(" ", false)
 		for k in tokens.size():
@@ -139,7 +139,7 @@ static func build_song(song: Dictionary) -> AudioStreamWAV:
 			var m := midi(t)
 			_add(buf, _note(notes, "lead", m, length * eighth * 0.95, song.lead), (b * 8 + k) * step_n)
 
-	# baixo e arpejo, a partir dos acordes
+	# bass and arpeggio, from the chords
 	var bass: PackedStringArray = (song.bass as String).split(" ", false)
 	var arp: Array = song.arp
 	for b in bars:
@@ -159,7 +159,7 @@ static func build_song(song: Dictionary) -> AudioStreamWAV:
 			var m: int = root + 24 + int(iv[deg % iv.size()]) + (12 if deg >= iv.size() else 0)
 			_add(buf, _note(notes, "arp", m, eighth * 0.45, song.arp_opts), b * 8 * step_n + k * step_n / 2)
 
-	# bateria
+	# drums
 	var kick := Synth.render(120.0, 0.16, {"wave": "sine", "freq_end": 42.0, "volume": 0.45, "decay": 16.0})
 	var snare := Synth.mix([
 		Synth.render(0.0, 0.14, {"wave": "noise", "volume": 0.2, "lowpass": 0.55, "decay": 24.0}),
@@ -197,7 +197,7 @@ static func _note(cache: Dictionary, voice: String, m: int, dur: float, opts: Di
 	return cache[key]
 
 
-## Soma um som ao buffer; o que passar do fim continua no início (a música dá a volta sem cortes).
+## Adds a sound to the buffer; anything past the end wraps to the start (the song loops seamlessly).
 static func _add(buf: PackedFloat32Array, s: PackedFloat32Array, at: int) -> void:
 	var total := buf.size()
 	var n := s.size()

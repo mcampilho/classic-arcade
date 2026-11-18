@@ -1,7 +1,7 @@
 extends BlocksSkin
-## Brinquedo de Madeira: peças de madeira pintada, com arestas boleadas e veios, a cair numa
-## caixa de faia sobre uma mesa de quarto de brincar. A sombra é um contorno a lápis; as linhas
-## completas saltam em lascas. Sons de madeira e marimba; música de caixinha de música.
+## Wooden Toy: painted wooden pieces, with rounded edges and grain, falling into a
+## beech box on a playroom table. The ghost is a pencil outline; completed lines
+## burst into splinters. Wood and marimba sounds; music-box music.
 
 const PAINT := [Color("d8584a"), Color("e8b84a"), Color("8a6ab0"), Color("6aa85a"), Color("e0803a"), Color("4a78b8"), Color("4aa8a8")]
 const BEECH := Color("e2bc88")
@@ -61,7 +61,7 @@ func piece_color(k: int) -> Color:
 
 func _draw_back() -> void:
 	draw_rect(Rect2(0, 0, 1280, 720), Color("f2e6cc"))
-	# papel de parede às riscas com florzinhas
+	# striped wallpaper with little flowers
 	for x in range(0, 1280, 64):
 		draw_rect(Rect2(x, 0, 30, 720), Color("ecdcbc"))
 	for y in range(40, 720, 120):
@@ -70,7 +70,7 @@ func _draw_back() -> void:
 			for k in 5:
 				draw_circle(o + Vector2.from_angle(k * TAU / 5.0) * 5.0, 3.5, Color("e8b8a0", 0.6))
 			draw_circle(o, 2.5, Color("e8c870", 0.8))
-	# tampo da mesa
+	# table top
 	draw_rect(Rect2(0, 676, 1280, 44), Color("c08a5a"))
 	for k in 5:
 		draw_line(Vector2(0, 684 + k * 8), Vector2(1280, 682 + k * 8 + sin(k) * 3.0), Color("a87448", 0.6), 1.5)
@@ -102,7 +102,7 @@ func _draw_well(r: Rect2) -> void:
 func draw_block(r: Rect2, k: int, style: int) -> void:
 	var rr := r.grow(-1.5)
 	if style == 1:
-		# contorno a lápis
+		# pencil outline
 		draw_rect(rr.grow(-2), Color("f2e6cc", 0.55), false, 2.0)
 		return
 	var sb: StyleBoxFlat = _boxes[k]
@@ -112,7 +112,7 @@ func draw_block(r: Rect2, k: int, style: int) -> void:
 	if style != 2 and style != 3:
 		draw_style_box(_shadow, Rect2(rr.position + Vector2(2, 3), rr.size))
 	draw_style_box(sb, rr)
-	# brilho e veios
+	# shine and grain
 	draw_rect(Rect2(rr.position + Vector2(4, 3), Vector2(rr.size.x - 8, 3)), Color(1, 1, 1, 0.3))
 	var seed := int(r.position.x * 7 + r.position.y * 13) % 5
 	for g in 2:
@@ -168,7 +168,7 @@ func _draw_part(p: Dictionary) -> void:
 
 func _draw_over() -> void:
 	draw_rect(WELL, Color("2a1a10", 0.6))
-	_draw_popup(I18n.t("FIM DE JOGO"), WELL.get_center().y - 30, 1.0)
+	_draw_popup(I18n.t("GAME OVER"), WELL.get_center().y - 30, 1.0)
 
 
 func ui_palette() -> Dictionary:

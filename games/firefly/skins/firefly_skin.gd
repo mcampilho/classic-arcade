@@ -1,16 +1,13 @@
 class_name FireflySkin
-extends Node2D
-## Base dos estilos visuais do Pirilampo: desenho do labirinto, personagens e sons
-## (com 2 sons contínuos: ambiente noturno e "encandeamento").
+extends SkinBase
+## Base of the Firefly visual styles: maze drawing, characters and sounds
+## (with 2 continuous sounds: night ambience and "dazzle").
 
 const T := FireflyGame.TILE
 
 var game: FireflyGame
-var sfx := {}
 var popups: Array[Dictionary] = []          # {pos (px), text, life}
-var wall_edges: Array[PackedVector2Array] = []   # contornos das paredes (px), calculados uma vez
-var _players: Array[AudioStreamPlayer] = []
-var _next_player := 0
+var wall_edges: Array[PackedVector2Array] = []   # wall outlines (px), computed once
 var _ambient: AudioStreamPlayer
 var _ambient_id := ""
 var _eat_note := 0
@@ -19,10 +16,7 @@ var time := 0.0
 
 func attach(g: FireflyGame) -> void:
 	game = g
-	for i in 8:
-		var p := AudioStreamPlayer.new()
-		add_child(p)
-		_players.append(p)
+	add_voices(8)
 	_ambient = AudioStreamPlayer.new()
 	add_child(_ambient)
 	g.match_started.connect(_on_match_started)
@@ -36,25 +30,14 @@ func attach(g: FireflyGame) -> void:
 	g.extra_life.connect(_on_extra_life)
 	g.level_cleared.connect(_on_level_cleared)
 	g.game_over.connect(_on_game_over)
-	var cached: Variant = Synth.cache_get(get_script().resource_path)
-	if cached != null:
-		sfx = cached
-	else:
-		_build_sfx()
-		Synth.cache_set(get_script().resource_path, sfx)
+	load_sfx()
 	_compute_edges()
 	_setup()
 
 
-func play(id: String, pitch := 1.0, volume_db := 0.0) -> void:
-	if game == null or game.mode == FireflyGame.Mode.DEMO or not sfx.has(id):
-		return
-	var p := _players[_next_player]
-	_next_player = (_next_player + 1) % _players.size()
-	p.stream = sfx[id]
-	p.pitch_scale = pitch
-	p.volume_db = volume_db
-	p.play()
+## The menu demo is silent.
+func _is_silent() -> bool:
+	return game == null or game.mode == FireflyGame.Mode.DEMO
 
 
 func _update_ambient() -> void:
@@ -90,11 +73,7 @@ func _process(delta: float) -> void:
 	queue_redraw()
 
 
-func ui_palette() -> Dictionary:
-	return UI.LAUNCHER_PALETTE
-
-
-# ---------------------------------------------------------------- ajudas
+# ---------------------------------------------------------------- helpers
 
 func px(tile_pos: Vector2) -> Vector2:
 	return game.to_px(tile_pos)
@@ -108,7 +87,7 @@ func maze_rect() -> Rect2:
 	return Rect2(FireflyGame.ORIGIN, Vector2(FireflyGame.W, FireflyGame.H) * T)
 
 
-## Segmentos de contorno: bordas de paredes que dão para um corredor (ou para a gruta).
+## Outline segments: wall edges facing a corridor (or the cave).
 func _compute_edges() -> void:
 	wall_edges.clear()
 	for y in FireflyGame.H:
@@ -135,7 +114,7 @@ func pellet_at(x: int, y: int) -> int:
 	return game.pellets[y * FireflyGame.W + x]
 
 
-## Ângulo e espelho para desenhar o pirilampo virado para a direção em que anda.
+## Angle and mirroring to draw the firefly facing the way it moves.
 func face_transform() -> Array:
 	var f := game.player_face
 	if f == Vector2i.LEFT:
@@ -159,13 +138,9 @@ func player_visible() -> bool:
 	return game.state != FireflyGame.State.OVER
 
 
-# ---------------------------------------------------------------- para os estilos reescreverem
+# ---------------------------------------------------------------- for the styles to override
 
 func _setup() -> void:
-	pass
-
-
-func _build_sfx() -> void:
 	pass
 
 

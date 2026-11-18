@@ -1,9 +1,9 @@
 class_name PenetratorGame
 extends Node2D
-## Lógica do Penetrator (1981): a nave avança por um terreno com scroll horizontal, dispara em
-## frente e larga bombas. Cinco zonas por missão — montanhas, cavernas, base de radares, túneis
-## estreitos e o arsenal, onde é preciso destruir o depósito de bombas no fundo da caverna.
-## Mísseis saem do chão quando a nave se aproxima; nas cavernas há discos voadores.
+## Penetrator (1981) logic: the ship flies over horizontally scrolling terrain, fires
+## forward and drops bombs. Five zones per mission — mountains, caves, radar base, narrow
+## tunnels and the arsenal, where the bomb depot at the bottom of the cave must be destroyed.
+## Missiles rise from the ground when the ship gets near; there are flying saucers in the caves.
 
 signal match_started
 signal zone_started(zone: int)
@@ -23,12 +23,12 @@ enum State { READY, PLAY, DYING, COMPLETE, OVER }
 
 const W := 1280.0
 const H := 720.0
-const TOP := 70.0                 # topo do campo (por baixo do HUD)
+const TOP := 70.0                 # top of the field (below the HUD)
 const BOTTOM := 712.0
-const CW := 8.0                   # largura de uma coluna de terreno
+const CW := 8.0                   # width of a terrain column
 const ZONE_COLS := 560
 const ZONES := 5
-const ZONE_NAMES := ["Montanhas", "Cavernas", "Base de Radares", "Túneis", "Arsenal"]
+const ZONE_NAMES := ["Mountains", "Caverns", "Radar Base", "Tunnels", "Arsenal"]
 const SHIP_SIZE := Vector2(62, 24)
 const SHIP_SPEED := 280.0
 const SHOT_SPEED := 760.0
@@ -46,15 +46,15 @@ var skin: PenetratorSkin
 var best := 0
 var start_lives := 5
 
-var floor_y := PackedFloat32Array()     # topo do chão por coluna
-var ceil_y := PackedFloat32Array()      # fundo do teto por coluna (TOP = sem teto)
-var zone_start := PackedInt32Array()    # coluna onde começa cada zona
+var floor_y := PackedFloat32Array()     # top of the ground per column
+var ceil_y := PackedFloat32Array()      # bottom of the ceiling per column (TOP = no ceiling)
+var zone_start := PackedInt32Array()    # column where each zone starts
 var enemies: Array[Dictionary] = []     # kind, x, y, vy, alive, zone, phase, base_y
-var shots: Array[Dictionary] = []       # x, y (mundo)
+var shots: Array[Dictionary] = []       # x, y (world)
 var bombs: Array[Dictionary] = []       # x, y, vx, vy
 var cam_x := 0.0
 var scroll_speed := 130.0
-var ship := Vector2(200, 300)           # posição no ecrã
+var ship := Vector2(200, 300)           # on-screen position
 var ship_tilt := 0.0
 var score := 0
 var lives := 5
@@ -65,7 +65,7 @@ var store_left := STORE_HITS
 var next_extra := EXTRA_LIFE_EVERY
 var _fire_cool := 0.0
 var _bomb_cool := 0.0
-var _touch_move: Variant = null          # dedo do lado esquerdo: origem
+var _touch_move: Variant = null          # left-side finger: origin
 var _touch_ship: Vector2 = Vector2.ZERO
 var _touch_index := -1
 var _touch_fire := -1
@@ -127,7 +127,7 @@ func is_ai() -> bool:
 	return mode == Mode.DEMO
 
 
-# ---------------------------------------------------------------- terreno
+# ---------------------------------------------------------------- terrain
 
 func cols() -> int:
 	return floor_y.size()
@@ -137,7 +137,7 @@ func col_at(world_x: float) -> int:
 	return clampi(floori(world_x / CW), 0, cols() - 1)
 
 
-## Altura do chão / teto numa posição do mundo (interpolada entre colunas).
+## Ground / ceiling height at a world position (interpolated between columns).
 func floor_at(world_x: float) -> float:
 	var f := world_x / CW
 	var c := clampi(floori(f), 0, cols() - 2)
@@ -209,16 +209,16 @@ func _build_mission() -> void:
 				if lc > ZONE_COLS - 80:
 					f = 640.0
 					ce = TOP
-		# transição suave entre zonas (a zona anterior abre ou fecha aos poucos)
+		# smooth transition between zones (the previous zone opens or closes gradually)
 		floor_y[c] = clampf(f, TOP + 120.0, BOTTOM)
 		ceil_y[c] = clampf(ce, TOP, BOTTOM - 120.0)
-	# parede no fim do arsenal
+	# wall at the end of the arsenal
 	for c in range(n - 6, n):
 		floor_y[c] = TOP
 		ceil_y[c] = TOP
 	for z in ZONES:
 		zone_start[z] = z * ZONE_COLS
-	# suavizar fronteiras entre zonas
+	# smooth the borders between zones
 	for z in range(1, ZONES):
 		var c0 := z * ZONE_COLS - 30
 		var fa := floor_y[c0]
@@ -229,7 +229,7 @@ func _build_mission() -> void:
 			var t := k / 60.0
 			floor_y[c0 + k] = lerpf(fa, fb, t)
 			ceil_y[c0 + k] = lerpf(ca, cb, t)
-	# garantir passagem
+	# make sure there is a way through
 	for c in n - 6:
 		if floor_y[c] - ceil_y[c] < 150.0:
 			var mid := (floor_y[c] + ceil_y[c]) / 2.0
@@ -265,7 +265,7 @@ func _place_enemies(rng: RandomNumberGenerator) -> void:
 				enemies.append({"kind": kind, "x": x, "y": mid, "base_y": mid, "vy": 0.0, "alive": true, "zone": z, "phase": rng.randf() * TAU, "flying": false})
 			else:
 				enemies.append({"kind": kind, "x": x, "y": floor_at(x), "base_y": floor_at(x), "vy": 0.0, "alive": true, "zone": z, "phase": rng.randf() * TAU, "flying": false})
-	# o depósito de bombas, no fundo do arsenal
+	# the bomb depot, at the bottom of the arsenal
 	var sx := end_x() - 560.0
 	enemies.append({"kind": "store", "x": sx, "y": floor_at(sx), "base_y": floor_at(sx), "vy": 0.0, "alive": true, "zone": ZONES - 1, "phase": 0.0, "flying": false})
 
@@ -281,7 +281,7 @@ func _reset_zone_enemies(z: int) -> void:
 		store_left = STORE_HITS
 
 
-# ---------------------------------------------------------------- partida
+# ---------------------------------------------------------------- match
 
 func start(p_mode: Mode, p_lives := 5) -> void:
 	mode = p_mode
@@ -326,7 +326,7 @@ func _add_points(n: int) -> void:
 		extra_life.emit()
 
 
-# ---------------------------------------------------------------- ciclo
+# ---------------------------------------------------------------- loop
 
 func _process(delta: float) -> void:
 	if paused:
@@ -375,13 +375,13 @@ func _step(dt: float) -> void:
 
 
 func _play(dt: float) -> void:
-	# scroll (para no fim do arsenal)
+	# scrolling (stops at the end of the arsenal)
 	cam_x = minf(cam_x + scroll_speed * dt, end_x() - W + 40.0)
 	var z := zone_of(cam_x + ship.x)
 	if z != zone:
 		zone = z
 		zone_started.emit(zone)
-	# nave
+	# ship
 	var c := _controls()
 	var d: Vector2 = c.dir
 	ship += d * SHIP_SPEED * dt
@@ -402,7 +402,7 @@ func _play(dt: float) -> void:
 	_move_enemies(dt)
 	if state != State.PLAY:
 		return
-	# colisão com o terreno
+	# collision with the terrain
 	var wx := cam_x + ship.x
 	for k in 5:
 		var x := wx - SHIP_SIZE.x / 2 + k * SHIP_SIZE.x / 4
@@ -455,7 +455,7 @@ func _move_projectiles(dt: float) -> void:
 					_kill(e)
 				return false
 		if b.y > floor_at(b.x) or b.y < ceil_at(b.x):
-			# a explosão no chão também apanha o que estiver perto
+			# the explosion on the ground also hits whatever is near
 			for e in enemies:
 				if e.alive and e.kind != "saucer" and e.kind != "store" and absf(e.x - b.x) < 26.0 and absf(e.y - b.y) < 30.0:
 					_kill(e)
@@ -533,7 +533,7 @@ func _move_enemies(dt: float) -> void:
 				var lo := ceil_at(e.x) + 14.0
 				var hi := floor_at(e.x) - 14.0
 				e.y = clampf(e.y, lo, hi)
-		# colisão com a nave
+		# collision with the ship
 		if _hits(e, Vector2(wx, ship.y), 14.0) and absf(float(e.x) - wx) < enemy_size(e.kind).x / 2 + SHIP_SIZE.x / 2 - 6.0:
 			if e.kind == "store":
 				continue
@@ -550,15 +550,15 @@ func _die() -> void:
 	player_died.emit(ship)
 
 
-# ---------------------------------------------------------------- entrada
+# ---------------------------------------------------------------- input
 
 func _unhandled_input(event: InputEvent) -> void:
 	if paused or is_ai():
 		return
 	if event.device == InputEvent.DEVICE_ID_EMULATION:
 		return
-	# Tátil: metade esquerda = arrastar para mover a nave (como um rato relativo);
-	# metade direita: em cima dispara (manter), em baixo larga bombas.
+	# Touch: left half = drag to move the ship (like a relative mouse);
+	# right half: top fires (hold), bottom drops bombs.
 	if event is InputEventScreenTouch:
 		if event.pressed:
 			if event.position.x < 640.0:
@@ -588,11 +588,11 @@ func clear_input() -> void:
 	_touch_bomb_pending = false
 
 
-# ---------------------------------------------------------------- CPU da demonstração
+# ---------------------------------------------------------------- demo CPU
 
 func _ai_think() -> void:
 	var wx := cam_x + ship.x
-	# meio da passagem um pouco à frente
+	# middle of the passage a little ahead
 	var lo := TOP
 	var hi := BOTTOM
 	for k in 12:
@@ -601,8 +601,8 @@ func _ai_think() -> void:
 		hi = minf(hi, floor_at(x))
 	var target := Vector2(220.0, (lo + hi) / 2.0)
 	if hi - lo > 260.0:
-		target.y = hi - 110.0          # perto do chão para bombardear
-	# fugir de mísseis no ar
+		target.y = hi - 110.0          # close to the ground to bomb
+	# dodge missiles in the air
 	for e in enemies:
 		if e.alive and e.flying and absf(float(e.x) - wx) < 90.0 and float(e.y) > ship.y:
 			target.x = ship.x - 80.0 if float(e.x) > wx else ship.x + 80.0
@@ -622,7 +622,7 @@ func _ai_think() -> void:
 		var t := (-40.0 + sqrt(1600.0 + 4.0 * 210.0 * h)) / 420.0
 		var disp := (scroll_speed + 70.0) * t - 20.0 * t * t
 		if e.kind == "store":
-			# o depósito: alinhar a nave para o bombardear
+			# the depot: line the ship up to bomb it
 			target = Vector2(clampf(float(e.x) - cam_x - disp, 60.0, 650.0), clampf(float(e.y) - 170.0, lo + 30.0, hi - 40.0))
 			ai.dir = ((target - ship) / 30.0).limit_length(1.0)
 		if absf(dx - disp) < 14.0:

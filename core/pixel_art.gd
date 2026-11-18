@@ -1,9 +1,9 @@
 class_name PixelArt
 extends RefCounted
-## Desenhos em píxeis multicolores: cada letra corresponde a uma cor da paleta ("." = transparente).
+## Multicolour pixel drawings: each letter is a palette colour ("." = transparent).
 
 
-## Cria uma textura (scale píxeis por ponto). `palette`: {"B": Color, ...}.
+## Creates a texture (scale pixels per dot). `palette`: {"B": Color, ...}.
 static func texture(rows: Array, palette: Dictionary, scale := 3) -> ImageTexture:
 	var w: int = (rows[0] as String).length()
 	var h := rows.size()
@@ -18,7 +18,7 @@ static func texture(rows: Array, palette: Dictionary, scale := 3) -> ImageTextur
 	return ImageTexture.create_from_image(img)
 
 
-## Brilho desfocado (1 píxel por ponto, com margem `pad`), na cor de cada ponto.
+## Blurred glow (1 pixel per dot, with a `pad` margin), in the colour of each dot.
 static func glow(rows: Array, palette: Dictionary, pad := 4, passes := 3) -> ImageTexture:
 	var w: int = (rows[0] as String).length() + pad * 2
 	var h: int = rows.size() + pad * 2
@@ -56,7 +56,7 @@ static func size(rows: Array) -> Vector2:
 	return Vector2((rows[0] as String).length(), rows.size())
 
 
-## Como texture(), com um contorno de 1 ponto à volta da figura (outline transparente = sem contorno).
+## Like texture(), with a 1-dot outline around the figure (transparent outline = none).
 static func outlined(rows: Array, palette: Dictionary, outline: Color, scale := 1) -> ImageTexture:
 	var w: int = (rows[0] as String).length()
 	var h := rows.size()

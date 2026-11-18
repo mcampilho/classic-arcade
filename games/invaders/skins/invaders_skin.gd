@@ -1,25 +1,19 @@
 class_name InvadersSkin
-extends Node2D
-## Base dos estilos visuais do Space Invaders: desenha o estado do InvadersGame,
-## gere os sons (incluindo o som contínuo do disco voador) e as explosões.
+extends SkinBase
+## Base of the Space Invaders visual styles: draws the InvadersGame state,
+## manages the sounds (including the saucer's continuous sound) and the explosions.
 
 const S := InvadersGame.SCALE
 
 var game: InvadersGame
-var sfx := {}
-var booms: Array[Dictionary] = []      # explosões de invasores {pos (unidades), life, kind}
-var popups: Array[Dictionary] = []     # pontos do disco voador {pos, text, life}
-var _players: Array[AudioStreamPlayer] = []
-var _next_player := 0
+var booms: Array[Dictionary] = []      # invader explosions {pos (units), life, kind}
+var popups: Array[Dictionary] = []     # saucer points {pos, text, life}
 var _loop: AudioStreamPlayer
 
 
 func attach(g: InvadersGame) -> void:
 	game = g
-	for i in 8:
-		var p := AudioStreamPlayer.new()
-		add_child(p)
-		_players.append(p)
+	add_voices(8)
 	_loop = AudioStreamPlayer.new()
 	add_child(_loop)
 	g.match_started.connect(_on_match_started)
@@ -36,24 +30,13 @@ func attach(g: InvadersGame) -> void:
 	g.extra_life.connect(_on_extra_life)
 	g.wave_cleared.connect(_on_wave_cleared)
 	g.game_over.connect(_on_game_over)
-	var cached: Variant = Synth.cache_get(get_script().resource_path)
-	if cached != null:
-		sfx = cached
-	else:
-		_build_sfx()
-		Synth.cache_set(get_script().resource_path, sfx)
+	load_sfx()
 	_setup()
 
 
-func play(id: String, pitch := 1.0, volume_db := 0.0) -> void:
-	if game == null or game.mode == InvadersGame.Mode.DEMO or not sfx.has(id):
-		return
-	var p := _players[_next_player]
-	_next_player = (_next_player + 1) % _players.size()
-	p.stream = sfx[id]
-	p.pitch_scale = pitch
-	p.volume_db = volume_db
-	p.play()
+## The menu demo is silent.
+func _is_silent() -> bool:
+	return game == null or game.mode == InvadersGame.Mode.DEMO
 
 
 func start_loop(id: String) -> void:
@@ -86,17 +69,13 @@ func _process(delta: float) -> void:
 	queue_redraw()
 
 
-func ui_palette() -> Dictionary:
-	return UI.LAUNCHER_PALETTE
-
-
-# ---------------------------------------------------------------- ajudas de desenho
+# ---------------------------------------------------------------- drawing helpers
 
 func px(u: Vector2) -> Vector2:
 	return game.to_px(u)
 
 
-## Desenha um desenho de píxeis (lista de strings) no ponto `u` (unidades do jogo).
+## Draws a pixel drawing (list of strings) at point `u` (game units).
 func draw_bits(rows: Array, u: Vector2, color: Color, ci: CanvasItem = null) -> void:
 	var target: CanvasItem = ci if ci else self
 	var o := px(u)
@@ -113,7 +92,7 @@ func draw_bits(rows: Array, u: Vector2, color: Color, ci: CanvasItem = null) -> 
 				x += 1
 
 
-## Desenha um abrigo linha a linha. `color_for_row` (opcional): Callable(y_unidades) -> Color.
+## Draws a shelter row by row. `color_for_row` (optional): Callable(y_units) -> Color.
 func draw_bunker(i: int, color: Color, ci: CanvasItem = null, color_for_row := Callable()) -> void:
 	var target: CanvasItem = ci if ci else self
 	var bk: PackedByteArray = game.bunkers[i]
@@ -140,7 +119,7 @@ func bomb_frame(b: Dictionary) -> Array:
 	return InvaderSprites.BOMBS[b.kind][int(b.frame) % 2]
 
 
-## Mostra a explosão do jogador (2 fotogramas a alternar) durante a animação de morte.
+## Shows the player's explosion (2 alternating frames) during the death animation.
 func player_dying() -> bool:
 	return game.state == InvadersGame.State.DYING
 
@@ -158,13 +137,9 @@ func panel_right_x() -> float:
 	return r + (1280.0 - r) / 2
 
 
-# ---------------------------------------------------------------- para os estilos reescreverem
+# ---------------------------------------------------------------- for the styles to override
 
 func _setup() -> void:
-	pass
-
-
-func _build_sfx() -> void:
 	pass
 
 

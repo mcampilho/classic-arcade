@@ -1,13 +1,13 @@
 class_name ChuckieSkin
-extends Node2D
-## Base dos estilos do Chuckie Egg: desenhos originais (agricultor, galinhas, pato, ovos e grão),
-## cenário estático gravado numa textura a cada nível, sons e pequenas animações.
-## Os estilos escolhem as cores, o cenário (_draw_static) e o HUD.
+extends SkinBase
+## Base of the Chuckie Egg styles: original drawings (farmer, hens, duck, eggs and grain),
+## static scenery baked into a texture on each level, sounds and small animations.
+## The styles choose the colours, the scenery (_draw_static) and the HUD.
 
 const S := ChuckieGame.SCALE
 const T := ChuckieGame.TILE
 
-# Agricultor de chapéu de palha (8 x 16), virado para a direita.
+# Farmer in a straw hat (8 x 16), facing right.
 const FARMER_HEAD := [
 	"..HHHH..",
 	".HbbbbH.",
@@ -46,7 +46,7 @@ const FARMER_CLIMB := [
 	"..OO.KKK",
 	".KKK....",
 ]
-# Galinha (8 x 12), virada para a direita.
+# Hen (8 x 12), facing right.
 const HEN := {
 	"walk0": [
 		".....C..",
@@ -105,7 +105,7 @@ const HEN := {
 		".YY..YY.",
 	],
 }
-# Pato gigante (16 x 16) a voar, virado para a direita.
+# Giant duck (16 x 16) flying, facing right.
 const DUCK := [
 	[
 		"..........DDD...",
@@ -148,17 +148,14 @@ const EGG := [".EE.", "EEEE", "EEWE", "EEEE", ".EE."]
 const GRAIN := ["..GG..", ".GgGG.", "GGGgGG"]
 
 var game: ChuckieGame
-var sfx := {}
 var tex := {}
 var time := 0.0
-var popups: Array[Dictionary] = []    # pos (unidades), text, life
+var popups: Array[Dictionary] = []    # pos (units), text, life
 var bursts: Array[Dictionary] = []    # pos, life, color
-var _players: Array[AudioStreamPlayer] = []
-var _next_player := 0
 var _step_t := 0.0
-var sprite_pad := 0              # 1 quando os desenhos têm contorno
-var tex_scale := 1.0             # píxeis da textura por ponto do desenho
-var glow_map := {}               # textura -> brilho (estilos com néon)
+var sprite_pad := 0              # 1 when the drawings have an outline
+var tex_scale := 1.0             # texture pixels per drawing dot
+var glow_map := {}               # texture -> glow (neon styles)
 var glow_pad := 4
 var glow_alpha := 0.85
 var static_vp: SubViewport
@@ -167,10 +164,7 @@ var static_canvas: Node2D
 
 func attach(g: ChuckieGame) -> void:
 	game = g
-	for i in 8:
-		var p := AudioStreamPlayer.new()
-		add_child(p)
-		_players.append(p)
+	add_voices(8)
 	static_vp = SubViewport.new()
 	static_vp.size = Vector2i(1280, 720)
 	static_vp.disable_3d = true
@@ -191,17 +185,12 @@ func attach(g: ChuckieGame) -> void:
 	g.level_cleared.connect(_on_level_cleared)
 	g.extra_life.connect(_on_extra_life)
 	g.game_over.connect(_on_game_over)
-	var cached: Variant = Synth.cache_get(get_script().resource_path)
-	if cached != null:
-		sfx = cached
-	else:
-		_build_sfx()
-		Synth.cache_set(get_script().resource_path, sfx)
+	load_sfx()
 	_setup()
 	rebake()
 
 
-## Volta a gravar o cenário estático (plataformas e escadas) na textura.
+## Bakes the static scenery (platforms and ladders) into the texture again.
 func rebake() -> void:
 	if static_vp == null:
 		return
@@ -209,15 +198,9 @@ func rebake() -> void:
 	static_canvas.queue_redraw()
 
 
-func play(id: String, pitch := 1.0, volume_db := 0.0) -> void:
-	if game == null or game.mode == ChuckieGame.Mode.DEMO or not sfx.has(id):
-		return
-	var p := _players[_next_player]
-	_next_player = (_next_player + 1) % _players.size()
-	p.stream = sfx[id]
-	p.pitch_scale = pitch
-	p.volume_db = volume_db
-	p.play()
+## The menu demo is silent.
+func _is_silent() -> bool:
+	return game == null or game.mode == ChuckieGame.Mode.DEMO
 
 
 func _process(delta: float) -> void:
@@ -226,7 +209,7 @@ func _process(delta: float) -> void:
 	if not game.paused:
 		time += delta
 		if game.state == ChuckieGame.State.PLAY:
-			# passos e degraus
+			# footsteps and steps
 			var walking := game.move == ChuckieGame.Move.WALK and _moving()
 			var climbing := game.move == ChuckieGame.Move.CLIMB and _moving()
 			if walking or climbing:
@@ -255,7 +238,7 @@ func _moving() -> bool:
 	return m
 
 
-# ---------------------------------------------------------------- ajudas
+# ---------------------------------------------------------------- helpers
 
 func px(u: Vector2) -> Vector2:
 	return game.to_px(u)
@@ -282,7 +265,7 @@ func farmer_rows(frame: String) -> Array:
 	return FARMER_HEAD + FARMER_LEGS[frame]
 
 
-## Nome do desenho atual do agricultor e se está espelhado.
+## Name of the farmer's current drawing and whether it is mirrored.
 func farmer_frame() -> Array:
 	var g := game
 	if g.move == ChuckieGame.Move.CLIMB:
@@ -314,7 +297,7 @@ func hen_frame(h: Dictionary) -> String:
 	return "walk0" if int(float(h.anim) * 6.0) % 2 == 0 else "walk1"
 
 
-## Cria as texturas dos desenhos com as paletes do estilo (podem ter contorno).
+## Creates the drawings' textures with the style's palettes (they may have an outline).
 func build_sprites(farmer_pal: Dictionary, hen_pal: Dictionary, duck_pal: Dictionary, egg_pal: Dictionary, grain_pal: Dictionary, outline := Color(0, 0, 0, 0)) -> void:
 	for f: String in FARMER_LEGS:
 		tex["farmer_" + f] = make_tex(farmer_rows(f), farmer_pal, outline)
@@ -328,12 +311,12 @@ func build_sprites(farmer_pal: Dictionary, hen_pal: Dictionary, duck_pal: Dictio
 	sprite_pad = 1 if outline.a > 0.0 else 0
 
 
-## Os estilos podem trocar a forma de fazer as texturas (ex.: ponto de cruz).
+## Styles can change how the textures are made (e.g. cross-stitch).
 func make_tex(rows: Array, pal: Dictionary, outline: Color) -> Texture2D:
 	return PixelArt.outlined(rows, pal, outline, 1)
 
 
-## Desenha uma textura com a base (pés) em `feet` (unidades), centrada em x.
+## Draws a texture with its base (feet) at `feet` (units), centred on x.
 func draw_feet(t: Texture2D, feet: Vector2, flip := false, modulate_c := Color.WHITE, scale_k := 1.0) -> void:
 	var size := t.get_size() * S * scale_k / tex_scale
 	var pos := px(feet) - Vector2(size.x / 2, size.y - sprite_pad * S * scale_k)
@@ -352,7 +335,7 @@ func draw_feet(t: Texture2D, feet: Vector2, flip := false, modulate_c := Color.W
 		draw_texture_rect(t, Rect2(pos, size), false, modulate_c)
 
 
-# ---------------------------------------------------------------- desenho por omissão
+# ---------------------------------------------------------------- default drawing
 
 func _draw() -> void:
 	if game == null:
@@ -388,7 +371,7 @@ func _draw_player() -> void:
 	var fr := farmer_frame()
 	var t: Texture2D = tex["farmer_" + fr[0]]
 	if g.state == ChuckieGame.State.DYING:
-		# rodopia e afunda
+		# spins and sinks
 		var k := clampf(1.0 - g.timer / 2.0, 0.0, 1.0)
 		var c := px(Vector2(g.px, g.py - 8.0))
 		draw_set_transform(c, k * TAU * 2.0, Vector2.ONE * (1.0 - k * 0.6))
@@ -458,13 +441,9 @@ func _draw_back() -> void:
 	pass
 
 
-# ---------------------------------------------------------------- para os estilos reescreverem
+# ---------------------------------------------------------------- for the styles to override
 
 func _setup() -> void:
-	pass
-
-
-func _build_sfx() -> void:
 	pass
 
 
@@ -478,10 +457,6 @@ func _draw_static(_ci: CanvasItem) -> void:
 
 func _draw_hud() -> void:
 	pass
-
-
-func ui_palette() -> Dictionary:
-	return UI.LAUNCHER_PALETTE
 
 
 func _on_match_started() -> void:

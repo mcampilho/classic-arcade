@@ -1,6 +1,6 @@
 class_name CentipedeSkin
-extends Node2D
-## Base dos estilos visuais do Centipede: desenhos em píxeis (originais), sons e explosões.
+extends SkinBase
+## Base of the Centipede visual styles: (original) pixel drawings, sounds and explosions.
 
 const S := CentipedeGame.SCALE
 const C := CentipedeGame.CELL
@@ -41,11 +41,8 @@ const SCORPION := [
 ]
 
 var game: CentipedeGame
-var sfx := {}
-var booms: Array[Dictionary] = []      # {pos (unidades), life, color}
-var popups: Array[Dictionary] = []     # {pos (unidades), text, life}
-var _players: Array[AudioStreamPlayer] = []
-var _next_player := 0
+var booms: Array[Dictionary] = []      # {pos (units), life, color}
+var popups: Array[Dictionary] = []     # {pos (units), text, life}
 var _spider_loop: AudioStreamPlayer
 var _beat_t := 0.0
 var _beat_note := 0
@@ -54,10 +51,7 @@ var time := 0.0
 
 func attach(g: CentipedeGame) -> void:
 	game = g
-	for i in 10:
-		var p := AudioStreamPlayer.new()
-		add_child(p)
-		_players.append(p)
+	add_voices(10)
 	_spider_loop = AudioStreamPlayer.new()
 	add_child(_spider_loop)
 	g.match_started.connect(_on_match_started)
@@ -73,24 +67,13 @@ func attach(g: CentipedeGame) -> void:
 	g.extra_life.connect(_on_extra_life)
 	g.wave_cleared.connect(_on_wave_cleared)
 	g.game_over.connect(_on_game_over)
-	var cached: Variant = Synth.cache_get(get_script().resource_path)
-	if cached != null:
-		sfx = cached
-	else:
-		_build_sfx()
-		Synth.cache_set(get_script().resource_path, sfx)
+	load_sfx()
 	_setup()
 
 
-func play(id: String, pitch := 1.0, volume_db := 0.0) -> void:
-	if game == null or game.mode == CentipedeGame.Mode.DEMO or not sfx.has(id):
-		return
-	var p := _players[_next_player]
-	_next_player = (_next_player + 1) % _players.size()
-	p.stream = sfx[id]
-	p.pitch_scale = pitch
-	p.volume_db = volume_db
-	p.play()
+## The menu demo is silent.
+func _is_silent() -> bool:
+	return game == null or game.mode == CentipedeGame.Mode.DEMO
 
 
 func _process(delta: float) -> void:
@@ -110,7 +93,7 @@ func _process(delta: float) -> void:
 		_spider_loop.stop()
 	if not game.paused:
 		time += delta
-		# passos da centopeia: um ritmo que acelera com a velocidade
+		# centipede footsteps: a rhythm that speeds up with its speed
 		if game.state == CentipedeGame.State.PLAY and not game.segments.is_empty():
 			_beat_t -= delta
 			if _beat_t <= 0.0:
@@ -128,11 +111,7 @@ func _process(delta: float) -> void:
 	queue_redraw()
 
 
-func ui_palette() -> Dictionary:
-	return UI.LAUNCHER_PALETTE
-
-
-# ---------------------------------------------------------------- ajudas
+# ---------------------------------------------------------------- helpers
 
 func px(u: Vector2) -> Vector2:
 	return game.to_px(u)
@@ -151,7 +130,7 @@ func panel_right_x() -> float:
 	return r + (1280.0 - r) / 2
 
 
-## Linhas visíveis de um cogumelo conforme a vida (encolhe de baixo para cima).
+## Visible rows of a mushroom by its health (it shrinks from the bottom up).
 static func mushroom_rows(hp: int) -> Array:
 	return MUSHROOM.slice(0, [0, 3, 5, 6, 8][hp])
 
@@ -164,13 +143,9 @@ func player_dying() -> bool:
 	return game.state == CentipedeGame.State.DYING
 
 
-# ---------------------------------------------------------------- para os estilos reescreverem
+# ---------------------------------------------------------------- for the styles to override
 
 func _setup() -> void:
-	pass
-
-
-func _build_sfx() -> void:
 	pass
 
 

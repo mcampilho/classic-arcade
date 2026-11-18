@@ -1,47 +1,28 @@
 class_name PongSkin
-extends Node2D
-## Base dos estilos visuais do Pong. Um skin desenha o estado do PongGame em _draw(),
-## cria os seus sons em _build_sfx() e reage aos eventos (toques, pontos, etc.).
-## Para criar um estilo novo basta estender esta classe.
+extends SkinBase
+## Base of the Pong visual styles. A skin draws the PongGame state in _draw(),
+## creates its sounds in _build_sfx() and reacts to the events (hits, points, etc.).
+## To create a new style, just extend this class.
 
 var game: PongGame
-var sfx := {}
-var _players: Array[AudioStreamPlayer] = []
-var _next_player := 0
 
 
 func attach(g: PongGame) -> void:
 	game = g
-	for i in 6:
-		var p := AudioStreamPlayer.new()
-		add_child(p)
-		_players.append(p)
+	add_voices(6)
 	g.match_started.connect(_on_match_started)
 	g.served.connect(_on_served)
 	g.paddle_hit.connect(_on_paddle_hit)
 	g.wall_hit.connect(_on_wall_hit)
 	g.point_scored.connect(_on_point_scored)
 	g.game_over.connect(_on_game_over)
-	# Os sons de cada estilo só são gerados uma vez (ou já vêm prontos do Synth.prewarm).
-	var cached: Variant = Synth.cache_get(get_script().resource_path)
-	if cached != null:
-		sfx = cached
-	else:
-		_build_sfx()
-		Synth.cache_set(get_script().resource_path, sfx)
+	load_sfx()
 	_setup()
 
 
-func play(id: String, pitch := 1.0, volume_db := 0.0) -> void:
-	# O modo demonstração (fundo do menu) é silencioso, como nas máquinas de 1972.
-	if game == null or game.mode == PongGame.Mode.DEMO or not sfx.has(id):
-		return
-	var p := _players[_next_player]
-	_next_player = (_next_player + 1) % _players.size()
-	p.stream = sfx[id]
-	p.pitch_scale = pitch
-	p.volume_db = volume_db
-	p.play()
+## The menu demo is silent.
+func _is_silent() -> bool:
+	return game == null or game.mode == PongGame.Mode.DEMO
 
 
 func _process(delta: float) -> void:
@@ -52,18 +33,9 @@ func _process(delta: float) -> void:
 	queue_redraw()
 
 
-## Cores para os menus deste estilo (ver UI.make_theme).
-func ui_palette() -> Dictionary:
-	return UI.LAUNCHER_PALETTE
-
-
-# ---- métodos para os estilos reescreverem ----
+# ---- methods for the styles to override ----
 
 func _setup() -> void:
-	pass
-
-
-func _build_sfx() -> void:
 	pass
 
 
