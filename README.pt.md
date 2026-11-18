@@ -2,7 +2,7 @@
 
 *[English version](README.md)*
 
-### ▶ [Jogar no browser](https://mcampilho.github.io/classic-games/)
+### ▶ [Jogar no browser](https://mcampilho.github.io/classic-arcade/)
 
 18 jogos originais inspirados nos clássicos dos anos 70, 80 e 90, feitos em **Godot 4.7** (GDScript), com builds para **Windows, Linux e Android**.
 
@@ -707,7 +707,7 @@ Os presets de exportação já estão em `export_presets.cfg` (Windows, Linux, A
 
 ### Android
 Precisa de, uma vez: **JDK 17**, **Android SDK** (com *platform-tools* e *build-tools*) e uma keystore de debug — tudo configurado em **Editor → Editor Settings → Export → Android**. Guia oficial: <https://docs.godotengine.org/en/stable/tutorials/export/exporting_for_android.html>.
-O APK sai assinado com a chave de debug, pronto a instalar (`adb install builds/android/ArcadeClassico.apk`). Para a Play Store será preciso uma keystore de release e o formato AAB (Gradle build).
+O APK sai assinado com a chave de debug, pronto a instalar (`adb install builds/android/ClassicArcade.apk`). Para a Play Store será preciso uma keystore de release e o formato AAB (Gradle build).
 
 ### Web
 A versão Web é exportada sem threads (*Thread Support* desligado), por isso funciona em qualquer servidor de ficheiros, incluindo o GitHub Pages, sem cabeçalhos especiais. Para testar localmente: exporta para uma pasta e corre `python3 -m http.server` nessa pasta.
@@ -715,7 +715,7 @@ A versão Web é exportada sem threads (*Thread Support* desligado), por isso fu
 ### Automático (GitHub Actions)
 `.github/workflows/builds.yml` corre a cada push para `main`:
 - gera as builds de Windows, Linux, Android e Web e deixa-as em **Actions → Artifacts**;
-- publica a versão Web no **GitHub Pages** (é preciso ativar uma vez em **Settings → Pages → Source: GitHub Actions**); fica em [https://mcampilho.github.io/classic-games/](https://mcampilho.github.io/classic-games/);
+- publica a versão Web no **GitHub Pages** (é preciso ativar uma vez em **Settings → Pages → Source: GitHub Actions**); fica em [https://mcampilho.github.io/classic-arcade/](https://mcampilho.github.io/classic-arcade/);
 - ao criar uma tag `v*` (`git tag v1.0.0 && git push --tags`), cria também uma **Release** com os ficheiros para descarregar.
 
 ## Licença

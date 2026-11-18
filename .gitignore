@@ -1,34 +1,28 @@
-<<<<<<< HEAD
-# Godot
+# Godot 4+
 .godot/
-/android/
-builds/
+.import/
+.nomedia
+*.translation
 *.tmp
-export_credentials.cfg
-=======
-# Godot 4.2+ specific ignores
 ~*.dll
 
-# Godot 4+ specific ignores
-.godot/
-.nomedia
-
-# Godot-specific ignores
-.import/
+# Export credentials and local export settings (never commit keystores/passwords)
 export.cfg
 export_credentials.cfg
-*.tmp
 
-# Imported translations (automatically generated from CSV files)
-*.translation
+# Android build template (installed by the editor)
+/android/
 
-# Mono-specific ignores
+# Export outputs: build.sh, the editor presets and CI write everything to builds/
+builds/
+*.exe
+*.apk
+*.apk.idsig
+*.pck
+*.wasm
+*.x86_64
+
+# Mono-specific
 .mono/
 data_*/
 mono_crash.*.json
-
-# Export outputs
-*.exe
-# Uncomment if your project does not version PCK files as runtime dependencies.
-# *.pck
->>>>>>> 89dc11ea1b63dd63dbd660ad7154b5c95d98800b

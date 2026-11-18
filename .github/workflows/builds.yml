@@ -63,22 +63,22 @@ jobs:
           GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD: android
         run: |
           mkdir -p builds/windows builds/linux builds/android builds/web
-          godot --headless --export-release "Windows" builds/windows/ArcadeClassico.exe
-          godot --headless --export-release "Linux" builds/linux/ArcadeClassico.x86_64
-          godot --headless --export-debug "Android" builds/android/ArcadeClassico.apk
+          godot --headless --export-release "Windows" builds/windows/ClassicArcade.exe
+          godot --headless --export-release "Linux" builds/linux/ClassicArcade.x86_64
+          godot --headless --export-debug "Android" builds/android/ClassicArcade.apk
           godot --headless --export-release "Web" builds/web/index.html
 
       - uses: actions/upload-artifact@v4
         with:
-          name: ArcadeClassico-windows
+          name: ClassicArcade-windows
           path: builds/windows
       - uses: actions/upload-artifact@v4
         with:
-          name: ArcadeClassico-linux
+          name: ClassicArcade-linux
           path: builds/linux
       - uses: actions/upload-artifact@v4
         with:
-          name: ArcadeClassico-android
+          name: ClassicArcade-android
           path: builds/android
 
       - name: Preparar a versão Web para o GitHub Pages
@@ -90,12 +90,12 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         run: |
           cd builds
-          (cd windows && zip -qr ../ArcadeClassico-windows.zip .)
-          (cd linux && zip -qr ../ArcadeClassico-linux.zip .)
-          cp android/ArcadeClassico.apk ArcadeClassico-android.apk
-          (cd web && zip -qr ../ArcadeClassico-web.zip .)
-          gh release create "$GITHUB_REF_NAME" --title "Arcade Clássico $GITHUB_REF_NAME" --generate-notes \
-            ArcadeClassico-windows.zip ArcadeClassico-linux.zip ArcadeClassico-android.apk ArcadeClassico-web.zip
+          (cd windows && zip -qr ../ClassicArcade-windows.zip .)
+          (cd linux && zip -qr ../ClassicArcade-linux.zip .)
+          cp android/ClassicArcade.apk ClassicArcade-android.apk
+          (cd web && zip -qr ../ClassicArcade-web.zip .)
+          gh release create "$GITHUB_REF_NAME" --title "Classic Arcade $GITHUB_REF_NAME" --generate-notes \
+            ClassicArcade-windows.zip ClassicArcade-linux.zip ClassicArcade-android.apk ClassicArcade-web.zip
         env:
           GH_TOKEN: ${{ github.token }}
 

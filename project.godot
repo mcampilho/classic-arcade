@@ -14,8 +14,12 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 
 [application]
 
-config/name="Arcade Clássico"
-config/description="18 jogos originais inspirados nos clássicos dos anos 70, 80 e 90, cada um com três estilos visuais."
+config/name="Classic Arcade"
+config/name_localized={
+"es": "Arcade Clásico",
+"pt": "Arcade Clássico"
+}
+config/description="18 original games inspired by the classics of the 70s, 80s and 90s, each with three visual styles."
 config/version="0.1.0"
 run/main_scene="res://core/main.tscn"
 config/quit_on_go_back=false

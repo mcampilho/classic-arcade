@@ -18,14 +18,14 @@ build() {
 }
 
 case "$target" in
-  windows) build "Windows" builds/windows/ArcadeClassico.exe ;;
-  linux)   build "Linux" builds/linux/ArcadeClassico.x86_64 ;;
-  android) build "Android" builds/android/ArcadeClassico.apk ;;
+  windows) build "Windows" builds/windows/ClassicArcade.exe ;;
+  linux)   build "Linux" builds/linux/ClassicArcade.x86_64 ;;
+  android) build "Android" builds/android/ClassicArcade.apk ;;
   web)     build "Web" builds/web/index.html ;;
   all)
-    build "Windows" builds/windows/ArcadeClassico.exe
-    build "Linux" builds/linux/ArcadeClassico.x86_64
-    build "Android" builds/android/ArcadeClassico.apk || echo "!! Android falhou: confirma o SDK/keystore nas Definições do Editor."
+    build "Windows" builds/windows/ClassicArcade.exe
+    build "Linux" builds/linux/ClassicArcade.x86_64
+    build "Android" builds/android/ClassicArcade.apk || echo "!! Android falhou: confirma o SDK/keystore nas Definições do Editor."
     build "Web" builds/web/index.html
     ;;
   *) echo "Alvo desconhecido: $target"; exit 1 ;;
